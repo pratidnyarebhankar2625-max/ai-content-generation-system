@@ -1,52 +1,48 @@
+import StatCard from "./StatCard";
+import { FolderKanban, Bot, FileText, Zap } from "lucide-react";
+
 const stats = [
   {
     title: "Total Projects",
     value: "24",
-    icon: "📁",
+    change: "+3 this week",
+    icon: <FolderKanban className="h-8 w-8 text-primary" />,
   },
   {
     title: "AI Generations",
     value: "152",
-    icon: "🤖",
+    change: "+18 today",
+    icon: <Bot className="h-8 w-8 text-primary" />,
   },
   {
     title: "Templates Used",
     value: "18",
-    icon: "📝",
+    change: "+2 this month",
+    icon: <FileText className="h-8 w-8 text-primary" />,
   },
   {
     title: "Active Projects",
     value: "7",
-    icon: "⚡",
+    change: "Currently active",
+    icon: <Zap className="h-8 w-8 text-primary" />,
   },
 ];
+
+
 export default function StatsCards() {
   return (
-    <section>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => (
-                <div key={stat.title}>
-                    <div className="rounded-lg border bg-white p-6 shadow-sm">
-  <div className="text-3xl">
-    {stat.icon}
-  </div>
-
-  <h3 className="mt-4 text-sm text-gray-500">
-    {stat.title}
-  </h3>
-
-  <p className="mt-2 text-3xl font-bold">
-    {stat.value}
-  </p>
-</div>
-
-</div>
-
-
-            ))}
-
-</div>
-
+    <section className="mb-10">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <StatCard
+            key={stat.title}
+            title={stat.title}
+            value={stat.value}
+            change={stat.change}
+            icon={stat.icon}
+          />
+        ))}
+      </div>
     </section>
   );
 }

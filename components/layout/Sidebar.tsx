@@ -1,11 +1,33 @@
 import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  FileText,
+  History,
+  User,
+  Settings,
+} from "lucide-react";
 
 const menuItems = [
-  { name: "Dashboard" },
-  { name: "Templates" },
-  { name: "History" },
-  { name: "Profile" },
-  { name: "Settings" },
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Templates",
+    icon: FileText,
+  },
+  {
+    name: "History",
+    icon: History,
+  },
+  {
+    name: "Profile",
+    icon: User,
+  },
+  {
+    name: "Settings",
+    icon: Settings,
+  },
 ];
 
 export default function Sidebar() {
@@ -24,9 +46,27 @@ export default function Sidebar() {
           <Button
             key={item.name}
             variant="ghost"
-            className="w-full justify-start"
+            className={`
+w-full
+justify-start
+gap-3
+rounded-xl
+px-4
+py-6
+text-base
+transition-all
+duration-200
+${
+  item.name === "Dashboard"
+    ? "bg-muted font-semibold"
+    : "hover:bg-muted"
+}
+`}
           >
-            {item.name}
+            <>
+  <item.icon className="mr-3 h-4 w-4" />
+  {item.name}
+</>
           </Button>
         ))}
       </nav>

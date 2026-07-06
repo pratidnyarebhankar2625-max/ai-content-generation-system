@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 
 export default function Navbar() {
   return (
@@ -15,11 +16,16 @@ export default function Navbar() {
           </h1>
         </div>
 
+       {/* Search Bar */}
+<div className="flex flex-1 justify-center px-8">
+  <Input
+    placeholder="Search templates, history..."
+    className="h-10 max-w-md rounded-full px-5"
+  />
+</div>
+
         {/* Right Side */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost">Templates</Button>
-
-          <Button variant="ghost">History</Button>
 
           <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground">
