@@ -10,20 +10,34 @@ export default function TemplateCard({
   category,
 }: TemplateCardProps) {
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md">
-      <h3 className="text-xl font-semibold">{title}</h3>
+    <div className="group rounded-xl border bg-card p-5 space-y-4 transition hover:shadow-lg">
 
-      <p className="mt-2 text-muted-foreground">
-        {description}
-      </p>
+      <div className="flex items-center justify-between">
+        <div className="rounded-lg bg-muted p-3">
+          ✨
+        </div>
 
-      <span className="mt-4 inline-block rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">
-        {category}
-      </span>
+        <span className="rounded-full bg-muted px-3 py-1 text-xs">
+          {category}
+        </span>
+      </div>
 
-      <button className="mt-6 w-full rounded-xl bg-primary py-2 text-primary-foreground">
+
+      <div>
+        <h2 className="text-xl font-semibold">
+          {title}
+        </h2>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          {description}
+        </p>
+      </div>
+
+
+      <button className="w-full rounded-lg bg-primary py-2 text-primary-foreground transition hover:opacity-90">
         Use Template
       </button>
+
     </div>
   );
 }
