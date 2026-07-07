@@ -12,19 +12,7 @@ export default function StatCard({
   icon,
 }: StatCardProps) {
   return (
-    <div
-      className="
-        rounded-2xl
-        border
-        bg-white
-        p-6
-        shadow-sm
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:shadow-md
-      "
-    >
+    <div className="rounded-2xl border bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       <div className="text-3xl">
         {icon}
       </div>
@@ -33,13 +21,13 @@ export default function StatCard({
         {title}
       </h3>
 
-      <p className="mt-2 text-3xl font-bold tracking-tight">
+      <h2 className="mt-2 text-3xl font-bold tracking-tight">
         {value}
+      </h2>
 
-        <p className="mt-2 text-xs text-muted-foreground">
-  {change}
-</p>
-      </p>
+      <div className="mt-2 text-xs text-muted-foreground">
+        {change}
+      </div>
     </div>
   );
 }

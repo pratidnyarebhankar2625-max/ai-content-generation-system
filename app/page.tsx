@@ -16,9 +16,9 @@ export default function HomePage() {
 
         <main className="flex-1 p-8">
           <WelcomeSection />
-          <StatsCards />
-          <QuickActions />
-          <RecentProjects />
+{/* <StatsCards /> */}
+<QuickActions />
+<RecentProjects />
         </main>
       </div>
     </>
