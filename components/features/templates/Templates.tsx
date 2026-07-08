@@ -15,16 +15,22 @@ useEffect(() => {
   const savedTemplates = localStorage.getItem("userTemplates");
 
   if (savedTemplates) {
+    const parsed = JSON.parse(savedTemplates);
+
+    const validTemplates = parsed.filter(
+      (t: any) => t.id != null
+    );
+
     setTemplateList([
       ...templates,
-      ...JSON.parse(savedTemplates),
+      ...validTemplates,
     ]);
   }
 }, []);
 
 useEffect(() => {
   const userTemplates = templateList.filter(
-    (template) => template.id > 1000
+    (template) => template.id != null && template.id > 1000
   );
 
   localStorage.setItem(
@@ -34,12 +40,16 @@ useEffect(() => {
 }, [templateList]);
 
   const categories = [
-    "All",
-    "Blog",
-    "Social Media",
-    "Email",
-    "Marketing",
-  ];
+  "All",
+  "Writing",
+  "Email",
+  "Social Media",
+  "Marketing",
+  "Business",
+  "Education",
+  "Developer",
+  "AI Utility",
+];
 
   const deleteTemplate = (id: number) => {
   setTemplateList((prev) =>
@@ -63,8 +73,23 @@ const filteredTemplates = templateList.filter((template) => {
     return matchesCategory && matchesSearch;
   });
 
-  return (
+  console.log(
+  "Template IDs:",
+  JSON.stringify(templateList.map((t) => t.id))
+);
+console.log("Template IDs:", templateList.map((t) => t.id));
+
+const ids = templateList.map((t) => t.id);
+
+console.log("IDs:", ids);
+console.log(
+  "Duplicates:",
+  ids.filter((id, index) => ids.indexOf(id) !== index)
+);
+
+  return ( 
     <div className="space-y-6">
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -91,12 +116,14 @@ const filteredTemplates = templateList.filter((template) => {
     onClose={() => setShowCreateForm(false)}
     onCreate={(newTemplate) => {
 
+      console.log("New Template:", newTemplate);
+      
       setTemplateList((prev) => [
         ...prev,
         {
-          id: Date.now(),
-          ...newTemplate,
-        },
+  ...newTemplate,
+  id: Date.now(),
+},
       ])
 
       setShowCreateForm(false);
@@ -138,7 +165,7 @@ const filteredTemplates = templateList.filter((template) => {
   title={template.title}
   description={template.description}
   category={template.category}
-  isUserTemplate={template.id > 1000}
+  isUserTemplate={template.id != null && template.id > 1000}
   onDelete={deleteTemplate}
 />
           ))}

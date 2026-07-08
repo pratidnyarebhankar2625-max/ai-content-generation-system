@@ -2,24 +2,35 @@
 
 import { useState } from "react";
 
+type Template = {
+  id?: number;
+  title: string;
+  description: string;
+  category: string;
+};
+
 type CreateTemplateFormProps = {
   onClose: () => void;
-  onCreate: (template: {
-    title: string;
-    description: string;
-    category: string;
-  }) => void;
+  onCreate: (template: Template) => void;
+  initialData?: Template;
+  isEditing?: boolean;
 };
 
 export default function CreateTemplateForm({
   onClose,
   onCreate,
+  initialData,
+  isEditing = false,
 }: CreateTemplateFormProps) {
 console.log("onCreate received:", onCreate);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Blog");
+ const [title, setTitle] = useState(initialData?.title || "");
+const [description, setDescription] = useState(
+  initialData?.description || ""
+);
+const [category, setCategory] = useState(
+  initialData?.category || "Blog"
+);
 
 
   const handleSubmit = () => {
@@ -36,11 +47,12 @@ console.log("onCreate received:", onCreate);
     category,
   });
 
-  onCreate({
-    title,
-    description,
-    category,
-  });
+ onCreate({
+  id: initialData?.id,
+  title,
+  description,
+  category,
+});
 
   onClose();
 };
@@ -61,8 +73,8 @@ console.log("onCreate received:", onCreate);
 
 
         <h2 className="text-xl font-semibold">
-          Create New Template
-        </h2>
+  {isEditing ? "Edit Template" : "Create New Template"}
+</h2>
 
 
         <div className="mt-4 space-y-4">
@@ -99,7 +111,7 @@ console.log("onCreate received:", onCreate);
             onClick={handleSubmit}
             className="w-full rounded-lg bg-primary px-4 py-2 text-primary-foreground"
           >
-            Create Template
+            {isEditing ? "Save Changes" : "Create Template"}
           </button>
 
         </div>
