@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TemplateCard from "./TemplateCard";
 import CreateTemplateForm from "./CreateTemplateForm";
 import { templates } from "./templateData";
@@ -11,6 +11,28 @@ export default function Templates() {
   const [searchQuery, setSearchQuery] = useState("");
   const [templateList, setTemplateList] = useState(templates);
 
+useEffect(() => {
+  const savedTemplates = localStorage.getItem("userTemplates");
+
+  if (savedTemplates) {
+    setTemplateList([
+      ...templates,
+      ...JSON.parse(savedTemplates),
+    ]);
+  }
+}, []);
+
+useEffect(() => {
+  const userTemplates = templateList.filter(
+    (template) => template.id > 1000
+  );
+
+  localStorage.setItem(
+    "userTemplates",
+    JSON.stringify(userTemplates)
+  );
+}, [templateList]);
+
   const categories = [
     "All",
     "Blog",
@@ -19,7 +41,13 @@ export default function Templates() {
     "Marketing",
   ];
 
-  const filteredTemplates = templateList.filter((template) => {
+  const deleteTemplate = (id: number) => {
+  setTemplateList((prev) =>
+    prev.filter((template) => template.id !== id)
+  );
+};
+
+const filteredTemplates = templateList.filter((template) => {
     const matchesCategory =
       selectedCategory === "All" ||
       template.category === selectedCategory;
@@ -66,7 +94,7 @@ export default function Templates() {
       setTemplateList((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: Date.now(),
           ...newTemplate,
         },
       ])
@@ -105,11 +133,14 @@ export default function Templates() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
             <TemplateCard
-              key={template.id}
-              title={template.title}
-              description={template.description}
-              category={template.category}
-            />
+  key={template.id}
+  id={template.id}
+  title={template.title}
+  description={template.description}
+  category={template.category}
+  isUserTemplate={template.id > 1000}
+  onDelete={deleteTemplate}
+/>
           ))}
         </div>
       ) : (

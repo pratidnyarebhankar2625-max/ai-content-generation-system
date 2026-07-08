@@ -23,7 +23,6 @@ console.log("onCreate received:", onCreate);
 
 
   const handleSubmit = () => {
-  alert("Submit clicked");
   console.log("Create button clicked");
 
   if (!title || !description) {
