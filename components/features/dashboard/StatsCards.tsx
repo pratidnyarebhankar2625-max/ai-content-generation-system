@@ -5,41 +5,47 @@ const stats = [
   {
     title: "Total Projects",
     value: "24",
-    change: "+3 this week",
-    icon: <FolderKanban className="h-8 w-8 text-primary" />,
+    change: "+12% this week",
+    trend: "up" as const,
+    icon: <FolderKanban className="h-7 w-7" />,
   },
   {
     title: "AI Generations",
     value: "152",
-    change: "+18 today",
-    icon: <Bot className="h-8 w-8 text-primary" />,
+    change: "+18% today",
+    trend: "up" as const,
+    icon: <Bot className="h-7 w-7" />,
   },
   {
     title: "Templates Used",
     value: "18",
-    change: "+2 this month",
-    icon: <FileText className="h-8 w-8 text-primary" />,
+    change: "+8% this month",
+    trend: "up" as const,
+    icon: <FileText className="h-7 w-7" />,
   },
   {
     title: "Active Projects",
     value: "7",
     change: "Currently active",
-    icon: <Zap className="h-8 w-8 text-primary" />,
+    trend: "neutral" as const,
+    icon: <Zap className="h-7 w-7" />,
   },
 ];
 
 
 export default function StatsCards() {
   return (
-    <section className="mb-10">
+    <section>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
+        {stats.map((stat, index) => (
           <StatCard
             key={stat.title}
             title={stat.title}
             value={stat.value}
             change={stat.change}
+            trend={stat.trend}
             icon={stat.icon}
+            index={index}
           />
         ))}
       </div>

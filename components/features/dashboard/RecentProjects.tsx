@@ -25,18 +25,19 @@ const projects = [
 
 export default function RecentProjects() {
   return (
-    <section className="mt-10">
-      <h2 className="mb-6 text-2xl font-bold">
+    <section>
+      <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
         Recent Projects
       </h2>
 
       <div className="space-y-4">
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <ProjectCard
             key={project.title}
             title={project.title}
             category={project.category}
             status={project.status}
+            index={index}
           />
         ))}
       </div>

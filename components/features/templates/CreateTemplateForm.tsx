@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 
 type Template = {
   id?: number;
@@ -22,8 +23,6 @@ export default function CreateTemplateForm({
   initialData,
   isEditing = false,
 }: CreateTemplateFormProps) {
-console.log("onCreate received:", onCreate);
-
  const [title, setTitle] = useState(initialData?.title || "");
 const [description, setDescription] = useState(
   initialData?.description || ""
@@ -34,21 +33,11 @@ const [category, setCategory] = useState(
 
 
   const handleSubmit = () => {
-  console.log("Create button clicked");
-
   if (!title || !description) {
-    console.log("Missing fields");
     return;
   }
 
-  console.log({
-    title,
-    description,
-    category,
-  });
-
  onCreate({
-  id: initialData?.id,
   title,
   description,
   category,
@@ -59,31 +48,31 @@ const [category, setCategory] = useState(
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
 
-      <div className="relative w-full max-w-md rounded-xl bg-background p-6 shadow-lg">
+      <div className="relative w-full max-w-md rounded-[24px] border border-border bg-card p-8 shadow-[var(--shadow-elevated)] animate-scale-in">
 
 
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-xl"
+          className="absolute right-5 top-5 rounded-xl p-1.5 text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground"
         >
-          ×
+          <X className="h-5 w-5" />
         </button>
 
 
-        <h2 className="text-xl font-semibold">
+        <h2 className="font-heading text-2xl font-semibold text-foreground">
   {isEditing ? "Edit Template" : "Create New Template"}
 </h2>
 
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-6 space-y-4">
 
           <input
             placeholder="Template name"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
           />
 
 
@@ -91,14 +80,14 @@ const [category, setCategory] = useState(
             placeholder="Template description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
           />
 
 
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
           >
             <option>Blog</option>
             <option>Social Media</option>
@@ -109,7 +98,7 @@ const [category, setCategory] = useState(
 
           <button
             onClick={handleSubmit}
-            className="w-full rounded-lg bg-primary px-4 py-2 text-primary-foreground"
+            className="w-full rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-4 py-3.5 text-sm font-medium text-[#D4A843] transition-all duration-300 hover:shadow-lg hover:shadow-[#D4A843]/10"
           >
             {isEditing ? "Save Changes" : "Create Template"}
           </button>

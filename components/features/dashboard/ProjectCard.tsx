@@ -1,49 +1,77 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCircle2, Pencil, Loader2 } from "lucide-react";
 
 type ProjectCardProps = {
   title: string;
   category: string;
   status: string;
+  index?: number;
+};
+
+const statusConfig: Record<string, { icon: React.ReactNode; className: string }> = {
+  Completed: {
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+    className: "bg-emerald-50/80 text-emerald-700 border-emerald-100",
+  },
+  Draft: {
+    icon: <Pencil className="h-3.5 w-3.5" />,
+    className: "bg-amber-50/80 text-amber-700 border-amber-100",
+  },
+  "In Progress": {
+    icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
+    className: "bg-[#D4A843]/8 text-[#B8860B] border-[#D4A843]/20",
+  },
 };
 
 export default function ProjectCard({
   title,
   category,
   status,
+  index = 0,
 }: ProjectCardProps) {
+  const config = statusConfig[status] || {
+    icon: null,
+    className: "bg-muted text-muted-foreground",
+  };
+
   return (
     <div
       className="
+        card-shimmer
+        gold-glow
+        group
         flex
         items-center
         justify-between
-        rounded-xl
+        rounded-[20px]
         border
-        bg-white
-        p-5
-        shadow-sm
+        border-border
+        bg-card
+        p-6
         transition-all
-        duration-300
+        duration-400
         hover:-translate-y-1
-        hover:shadow-md
+        hover:border-[#D4A843]/30
+        animate-fade-in-up
       "
+      style={{ animationDelay: `${(index + 1) * 70}ms` }}
     >
-      <div>
-        <h3 className="font-semibold text-lg">
+      <div className="space-y-1.5">
+        <h3 className="font-semibold text-lg text-foreground">
           {title}
         </h3>
 
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground">
           {category}
         </p>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${config.className}`}>
+          {config.icon}
           {status}
         </span>
 
-        <ArrowRight className="h-5 w-5 text-muted-foreground" />
+        <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-[#D4A843] group-hover:translate-x-1" />
       </div>
     </div>
   );
