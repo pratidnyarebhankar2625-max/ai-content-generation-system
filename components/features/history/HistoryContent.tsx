@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useContent, type Generation, type GenerationStatus } from "@/lib/content-store";
 import {
   Clock,
   FileText,
@@ -24,18 +25,13 @@ import {
   TrendingUp,
   Minus,
   FolderOpen,
+  Pencil,
+  Undo2,
+  Upload,
+  X,
 } from "lucide-react";
 
-type HistoryItem = {
-  id: number;
-  title: string;
-  template: string;
-  category: string;
-  status: "completed" | "draft" | "failed";
-  createdAt: string;
-  wordCount: number;
-  preview: string;
-};
+// ─── Shared Constants ────────────────────────────────────────────────────────
 
 const categoryIcons: Record<string, React.ReactNode> = {
   "Blog Writing": <FileText className="h-4 w-4" />,
@@ -66,117 +62,7 @@ const statusConfig = {
   },
 };
 
-const sampleHistory: HistoryItem[] = [
-  {
-    id: 1,
-    title: "10 Tips for Better Productivity",
-    template: "Blog Post Generator",
-    category: "Blog Writing",
-    status: "completed",
-    createdAt: "2025-07-09T14:30:00",
-    wordCount: 1250,
-    preview:
-      "Discover the top 10 productivity tips that will transform your daily routine. From time-blocking techniques to the Pomodoro method...",
-  },
-  {
-    id: 2,
-    title: "Summer Sale Announcement",
-    template: "Email Campaign",
-    category: "Email",
-    status: "completed",
-    createdAt: "2025-07-08T11:15:00",
-    wordCount: 420,
-    preview:
-      "Get ready for our biggest summer sale yet! Enjoy up to 50% off on selected items. Limited time offer, don't miss out...",
-  },
-  {
-    id: 3,
-    title: "New Product Launch Post",
-    template: "Instagram Caption",
-    category: "Social Media",
-    status: "completed",
-    createdAt: "2025-07-08T09:45:00",
-    wordCount: 180,
-    preview:
-      "✨ Introducing our latest innovation! We've been working behind the scenes to bring you something truly special...",
-  },
-  {
-    id: 4,
-    title: "Q3 Marketing Strategy",
-    template: "Marketing Plan",
-    category: "Marketing",
-    status: "draft",
-    createdAt: "2025-07-07T16:20:00",
-    wordCount: 2100,
-    preview:
-      "Our Q3 marketing strategy focuses on expanding our digital presence through targeted campaigns, influencer partnerships...",
-  },
-  {
-    id: 5,
-    title: "Employee Welcome Email",
-    template: "Professional Email",
-    category: "Email",
-    status: "completed",
-    createdAt: "2025-07-07T10:00:00",
-    wordCount: 350,
-    preview:
-      "Welcome to the team! We're thrilled to have you on board. Here's everything you need to know for your first week...",
-  },
-  {
-    id: 6,
-    title: "API Documentation Draft",
-    template: "Technical Documentation",
-    category: "Developer",
-    status: "draft",
-    createdAt: "2025-07-06T13:50:00",
-    wordCount: 3200,
-    preview:
-      "REST API Reference v2.0 — This document provides comprehensive documentation for all available endpoints, authentication...",
-  },
-  {
-    id: 7,
-    title: "Brand Story Article",
-    template: "Blog Post Generator",
-    category: "Blog Writing",
-    status: "completed",
-    createdAt: "2025-07-05T15:30:00",
-    wordCount: 1800,
-    preview:
-      "Every great brand has a story worth telling. Ours began in a small garage with a big dream and an even bigger whiteboard...",
-  },
-  {
-    id: 8,
-    title: "Course Introduction Script",
-    template: "Educational Content",
-    category: "Education",
-    status: "failed",
-    createdAt: "2025-07-05T08:10:00",
-    wordCount: 0,
-    preview: "Generation failed — API rate limit exceeded. Please try again later.",
-  },
-  {
-    id: 9,
-    title: "LinkedIn Thought Leadership",
-    template: "LinkedIn Post",
-    category: "Social Media",
-    status: "completed",
-    createdAt: "2025-07-04T17:45:00",
-    wordCount: 290,
-    preview:
-      "The future of work isn't about replacing humans with AI — it's about augmenting human potential. Here's what I've learned...",
-  },
-  {
-    id: 10,
-    title: "AI-Powered Content Workflow",
-    template: "AI Summary",
-    category: "AI Utility",
-    status: "completed",
-    createdAt: "2025-07-03T12:00:00",
-    wordCount: 600,
-    preview:
-      "Streamline your content creation with this AI-powered workflow that reduces production time by 60% while maintaining quality...",
-  },
-];
+// ─── Helper Functions ────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr);
@@ -202,53 +88,353 @@ function formatTime(dateStr: string) {
   });
 }
 
+// ─── Edit Modal ──────────────────────────────────────────────────────────────
+
+function EditModal({
+  generation,
+  onSave,
+  onClose,
+}: {
+  generation: Generation;
+  onSave: (id: number, updates: Partial<Omit<Generation, "id">>) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(generation.title);
+  const [preview, setPreview] = useState(generation.preview);
+  const [status, setStatus] = useState<GenerationStatus>(generation.status);
+  const [wordCount, setWordCount] = useState(generation.wordCount);
+
+  function handleSave() {
+    onSave(generation.id, { title, preview, status, wordCount });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading text-2xl font-bold text-foreground">
+            Edit Generation
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            />
+          </div>
+
+          {/* Content */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Content Preview</label>
+            <textarea
+              value={preview}
+              onChange={(e) => {
+                setPreview(e.target.value);
+                setWordCount(
+                  e.target.value
+                    .trim()
+                    .split(/\s+/)
+                    .filter((w) => w.length > 0).length
+                );
+              }}
+              rows={4}
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            />
+          </div>
+
+          {/* Status */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Status</label>
+            <div className="flex gap-2">
+              {(["completed", "draft", "failed"] as GenerationStatus[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className={`rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all duration-300 ${
+                    status === s
+                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Word Count */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Word Count: <span className="text-[#B8860B]">{wordCount}</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-8 flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Import Modal ────────────────────────────────────────────────────────────
+
+function ImportModal({
+  onImport,
+  onClose,
+}: {
+  onImport: (gen: Omit<Generation, "id" | "createdAt">) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [template, setTemplate] = useState("Imported Content");
+  const [category, setCategory] = useState("Blog Writing");
+  const [content, setContent] = useState("");
+  const [status, setStatus] = useState<GenerationStatus>("completed");
+
+  const wordCount = content
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0).length;
+
+  const categories = [
+    "Blog Writing",
+    "Email",
+    "Social Media",
+    "Marketing",
+    "Business",
+    "Education",
+    "Developer",
+    "AI Utility",
+  ];
+
+  function handleImport() {
+    if (!title.trim() || !content.trim()) return;
+    onImport({
+      title: title.trim(),
+      template,
+      category,
+      status,
+      wordCount,
+      preview: content.trim(),
+    });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading text-2xl font-bold text-foreground">
+            Import Content
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Title *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. My Blog Post"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            />
+          </div>
+
+          {/* Template */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Template Name</label>
+            <input
+              type="text"
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            />
+          </div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Category</label>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-300 ${
+                    category === cat
+                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Status</label>
+            <div className="flex gap-2">
+              {(["completed", "draft"] as GenerationStatus[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className={`rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all duration-300 ${
+                    status === s
+                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Content *</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              placeholder="Paste your content here..."
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            />
+            <p className="text-xs text-muted-foreground">
+              {wordCount} words
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-8 flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleImport}
+            disabled={!title.trim() || !content.trim()}
+            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Import
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export default function HistoryContent() {
+  const {
+    generations,
+    stats,
+    deleteGeneration,
+    updateGeneration,
+    importGeneration,
+    restoreLastDeleted,
+    lastDeleted,
+    isLoaded,
+  } = useContent();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "words">("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [items, setItems] = useState<HistoryItem[]>(sampleHistory);
+  const [editingGen, setEditingGen] = useState<Generation | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
 
-  const categories = ["all", ...Array.from(new Set(items.map((i) => i.category)))];
+  const categories = useMemo(
+    () => ["all", ...Array.from(new Set(generations.map((i) => i.category)))],
+    [generations]
+  );
 
-  const filtered = items
-    .filter((item) => {
-      const matchesSearch =
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.template.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.preview.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        filterStatus === "all" || item.status === filterStatus;
-      const matchesCategory =
-        filterCategory === "all" || item.category === filterCategory;
-      return matchesSearch && matchesStatus && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortBy === "newest")
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      if (sortBy === "oldest")
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return b.wordCount - a.wordCount;
-    });
+  const filtered = useMemo(() => {
+    return generations
+      .filter((item) => {
+        const matchesSearch =
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.template.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.preview.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus =
+          filterStatus === "all" || item.status === filterStatus;
+        const matchesCategory =
+          filterCategory === "all" || item.category === filterCategory;
+        return matchesSearch && matchesStatus && matchesCategory;
+      })
+      .sort((a, b) => {
+        if (sortBy === "newest")
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sortBy === "oldest")
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return b.wordCount - a.wordCount;
+      });
+  }, [generations, searchQuery, filterStatus, filterCategory, sortBy]);
 
-  const stats = {
-    total: items.length,
-    completed: items.filter((i) => i.status === "completed").length,
-    drafts: items.filter((i) => i.status === "draft").length,
-    totalWords: items.reduce((sum, i) => sum + i.wordCount, 0),
-  };
-
-  function handleCopy(item: HistoryItem) {
+  function handleCopy(item: Generation) {
     navigator.clipboard.writeText(item.preview);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 2000);
   }
 
   function handleDelete(id: number) {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    deleteGeneration(id);
+    setShowDeleteToast(true);
+    setTimeout(() => setShowDeleteToast(false), 5000);
   }
+
+  function handleRestore() {
+    restoreLastDeleted();
+    setShowDeleteToast(false);
+  }
+
+  if (!isLoaded) return null;
 
   return (
     <div className="space-y-10 animate-fade-in">
@@ -267,38 +453,47 @@ export default function HistoryContent() {
             Browse and manage all your AI-generated content in one place.
           </p>
         </div>
+
+        {/* Import Button */}
+        <button
+          onClick={() => setShowImport(true)}
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-3 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-[#D4A843]/40 hover:scale-[1.02]"
+        >
+          <Upload className="h-4 w-4" />
+          Import Content
+        </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards — all dynamic from context */}
       <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
         {[
           {
             label: "Total Generated",
-            value: stats.total,
+            value: stats.totalGenerations,
             icon: <FileText className="h-5 w-5" />,
-            trend: "+3 this week",
-            trendType: "up",
+            trend: `${stats.thisWeek} this week`,
+            trendType: stats.thisWeek > 0 ? "up" : "neutral",
           },
           {
             label: "Completed",
             value: stats.completed,
             icon: <CheckCircle2 className="h-5 w-5" />,
-            trend: "+5 this week",
-            trendType: "up",
+            trend: `${stats.drafts} drafts pending`,
+            trendType: stats.completed > 0 ? "up" : "neutral",
           },
           {
             label: "Drafts",
             value: stats.drafts,
             icon: <AlertCircle className="h-5 w-5" />,
-            trend: "2 pending",
+            trend: `${stats.drafts} pending`,
             trendType: "neutral",
           },
           {
             label: "Total Words",
             value: stats.totalWords.toLocaleString(),
             icon: <Sparkles className="h-5 w-5" />,
-            trend: "+2.4k this week",
-            trendType: "up",
+            trend: `${stats.templatesUsed} templates used`,
+            trendType: stats.totalWords > 0 ? "up" : "neutral",
           },
         ].map((stat, index) => (
           <div
@@ -444,7 +639,7 @@ export default function HistoryContent() {
         <p className="text-sm text-muted-foreground">
           Showing{" "}
           <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-          of {items.length} results
+          of {generations.length} results
         </p>
       </div>
 
@@ -512,6 +707,15 @@ export default function HistoryContent() {
                     </button>
 
                     <button
+                      onClick={() => setEditingGen(item)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-[#D4A843]/10 hover:text-[#B8860B]"
+                      title="Edit content"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+
+                    <button
                       onClick={() => handleCopy(item)}
                       className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-medium shadow-[var(--shadow-button)] transition-all duration-300 ${
                         copiedId === item.id
@@ -566,6 +770,45 @@ export default function HistoryContent() {
             Clear All Filters
           </button>
         </div>
+      )}
+
+      {/* Delete Undo Toast */}
+      {showDeleteToast && lastDeleted && (
+        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-2xl border border-border bg-card px-6 py-4 shadow-xl animate-fade-in-up">
+          <p className="text-sm text-foreground">
+            Deleted <span className="font-semibold">{lastDeleted.title}</span>
+          </p>
+          <button
+            onClick={handleRestore}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#D4A843]/15 px-3 py-1.5 text-xs font-medium text-[#B8860B] transition-all hover:bg-[#D4A843]/25"
+          >
+            <Undo2 className="h-3.5 w-3.5" />
+            Undo
+          </button>
+          <button
+            onClick={() => setShowDeleteToast(false)}
+            className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingGen && (
+        <EditModal
+          generation={editingGen}
+          onSave={updateGeneration}
+          onClose={() => setEditingGen(null)}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImport && (
+        <ImportModal
+          onImport={importGeneration}
+          onClose={() => setShowImport(false)}
+        />
       )}
     </div>
   );

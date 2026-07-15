@@ -90,10 +90,10 @@
   --surface-elevated: #FFFFFF;
 
   /* ─── Premium Shadow Tokens ─── */
-  --shadow-card: 0 1px 3px rgba(28,25,23,0.04), 0 4px 12px rgba(28,25,23,0.03);
-  --shadow-card-hover: 0 8px 30px rgba(28,25,23,0.08), 0 2px 8px rgba(28,25,23,0.04);
-  --shadow-button: 0 1px 2px rgba(28,25,23,0.06);
-  --shadow-elevated: 0 12px 40px rgba(28,25,23,0.1), 0 4px 12px rgba(28,25,23,0.05);
+  --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04), 0 4px 12px rgba(28, 25, 23, 0.03);
+  --shadow-card-hover: 0 8px 30px rgba(28, 25, 23, 0.08), 0 2px 8px rgba(28, 25, 23, 0.04);
+  --shadow-button: 0 1px 2px rgba(28, 25, 23, 0.06);
+  --shadow-elevated: 0 12px 40px rgba(28, 25, 23, 0.1), 0 4px 12px rgba(28, 25, 23, 0.05);
 }
 
 .dark {
@@ -134,9 +134,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -172,6 +174,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -182,6 +185,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -193,6 +197,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -204,6 +209,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -215,6 +221,7 @@
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -225,15 +232,19 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
 }
 
 @keyframes goldPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(212, 168, 67, 0);
   }
+
   50% {
     box-shadow: 0 0 20px 2px rgba(212, 168, 67, 0.15);
   }
@@ -243,9 +254,11 @@
   0% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 0.3;
   }
+
   100% {
     opacity: 0.6;
   }
@@ -255,6 +268,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -265,6 +279,7 @@
     transform: translateY(0);
     box-shadow: var(--shadow-card);
   }
+
   to {
     transform: translateY(-6px);
     box-shadow: var(--shadow-card-hover);
@@ -272,9 +287,12 @@
 }
 
 @keyframes borderGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     border-color: rgba(212, 168, 67, 0.1);
   }
+
   50% {
     border-color: rgba(212, 168, 67, 0.35);
   }
@@ -302,35 +320,58 @@
 }
 
 /* Stagger delay utilities */
-.stagger-1 { animation-delay: 50ms; }
-.stagger-2 { animation-delay: 100ms; }
-.stagger-3 { animation-delay: 150ms; }
-.stagger-4 { animation-delay: 200ms; }
-.stagger-5 { animation-delay: 250ms; }
-.stagger-6 { animation-delay: 300ms; }
-.stagger-7 { animation-delay: 350ms; }
-.stagger-8 { animation-delay: 400ms; }
+.stagger-1 {
+  animation-delay: 50ms;
+}
+
+.stagger-2 {
+  animation-delay: 100ms;
+}
+
+.stagger-3 {
+  animation-delay: 150ms;
+}
+
+.stagger-4 {
+  animation-delay: 200ms;
+}
+
+.stagger-5 {
+  animation-delay: 250ms;
+}
+
+.stagger-6 {
+  animation-delay: 300ms;
+}
+
+.stagger-7 {
+  animation-delay: 350ms;
+}
+
+.stagger-8 {
+  animation-delay: 400ms;
+}
 
 /* Premium card shimmer effect on hover */
 .card-shimmer {
   position: relative;
   overflow: hidden;
 }
+
 .card-shimmer::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    120deg,
-    transparent 30%,
-    rgba(212, 168, 67, 0.06) 50%,
-    transparent 70%
-  );
+  background: linear-gradient(120deg,
+      transparent 30%,
+      rgba(212, 168, 67, 0.06) 50%,
+      transparent 70%);
   background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
+
 .card-shimmer:hover::after {
   opacity: 1;
   animation: shimmer 1.5s ease-in-out;
@@ -339,10 +380,11 @@
 /* Gold accent border glow */
 .gold-glow {
   transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-card);
 }
+
 .gold-glow:hover {
   box-shadow: var(--shadow-card-hover), 0 0 0 1px rgba(212, 168, 67, 0.1);
 }
@@ -376,6 +418,7 @@
 .premium-focus {
   transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
+
 .premium-focus:focus {
   outline: none;
   border-color: rgba(212, 168, 67, 0.5);

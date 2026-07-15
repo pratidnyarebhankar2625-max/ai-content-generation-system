@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -44,6 +45,17 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    router.push("/login");
+  }
+
+  const displayName = user?.name || "User";
+  const displayInitial = displayName.charAt(0).toUpperCase();
+  const displayRole = user?.provider === "google" ? "Google Account" : "AI Developer";
 
   return (
     <aside className="flex h-screen w-72 flex-col border-r border-[#292524] bg-gradient-to-b from-[#1C1917] via-[#171412] to-[#0C0A09] animate-fade-in">
@@ -124,22 +136,23 @@ export default function Sidebar() {
         <div className="rounded-[20px] border border-[#292524] bg-[#292524]/80 p-4">
           <div className="flex items-center gap-3.5">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#D4A843] to-[#B8860B] text-lg font-semibold text-[#1C1917] shadow-md">
-              P
+              {displayInitial}
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-[#FAF8F5]">
-                Pratidnya
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold text-[#FAF8F5] truncate">
+                {displayName}
               </h3>
 
-              <p className="text-xs text-[#A8A29E]">
-                AI Developer
+              <p className="text-xs text-[#A8A29E] truncate">
+                {displayRole}
               </p>
             </div>
           </div>
 
           <Button
             variant="ghost"
+            onClick={handleLogout}
             className="mt-5 w-full justify-center rounded-xl border border-[#44403C] text-[#A8A29E] hover:border-[#D4A843]/40 hover:bg-[#292524] hover:text-[#D4A843] transition-all duration-300"
           >
             <LogOut className="mr-2 h-4 w-4" />

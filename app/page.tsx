@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import WelcomeSection from "@/components/features/dashboard/WelcomeSection";
 import StatsCards from "@/components/features/dashboard/StatsCards";
@@ -8,7 +9,7 @@ import RecentProjects from "@/components/features/dashboard/RecentProjects";
 
 export default function HomePage() {
   return (
-    <>
+    <ProtectedRoute>
       <Navbar />
 
       <div className="flex">
@@ -23,6 +24,6 @@ export default function HomePage() {
           </div>
         </main>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

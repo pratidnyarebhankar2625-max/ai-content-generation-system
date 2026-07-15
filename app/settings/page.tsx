@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   Settings,
   User,
@@ -60,7 +61,7 @@ const settingSections = [
 
 export default function SettingsPage() {
   return (
-    <>
+    <ProtectedRoute>
       <Navbar />
 
       <div className="flex">
@@ -128,6 +129,6 @@ export default function SettingsPage() {
           </div>
         </main>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

@@ -4,6 +4,7 @@ type ProjectCardProps = {
   title: string;
   category: string;
   status: string;
+  time?: string;
   index?: number;
 };
 
@@ -26,6 +27,7 @@ export default function ProjectCard({
   title,
   category,
   status,
+  time,
   index = 0,
 }: ProjectCardProps) {
   const config = statusConfig[status] || {
@@ -61,7 +63,7 @@ export default function ProjectCard({
         </h3>
 
         <p className="text-sm text-muted-foreground">
-          {category}
+          {category}{time ? ` · ${time}` : ""}
         </p>
       </div>
 

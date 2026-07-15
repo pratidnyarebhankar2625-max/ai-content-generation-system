@@ -1,10 +1,11 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import HistoryContent from "@/components/features/history/HistoryContent";
 
 export default function HistoryPage() {
   return (
-    <>
+    <ProtectedRoute>
       <Navbar />
 
       <div className="flex">
@@ -14,6 +15,6 @@ export default function HistoryPage() {
           <HistoryContent />
         </main>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

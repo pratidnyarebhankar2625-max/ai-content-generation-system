@@ -1,10 +1,11 @@
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Templates from "@/components/features/templates/Templates";
 
 export default function TemplatesPage() {
   return (
-    <>
+    <ProtectedRoute>
       <Navbar />
 
       <div className="flex">
@@ -14,6 +15,6 @@ export default function TemplatesPage() {
           <Templates />
         </main>
       </div>
-    </>
+    </ProtectedRoute>
   );
 }

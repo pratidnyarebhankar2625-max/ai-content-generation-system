@@ -1,5 +1,9 @@
+"use client";
+
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useAuth } from "@/lib/auth-store";
 import {
   User,
   Mail,
@@ -11,6 +15,9 @@ import {
   Zap,
   Award,
   TrendingUp,
+  Shield,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 const stats = [
@@ -28,7 +35,23 @@ const recentActivity = [
   { action: "Created API documentation", template: "Technical Documentation", time: "3 days ago" },
 ];
 
-export default function ProfilePage() {
+function ProfileContent() {
+  const { user } = useAuth();
+
+  const displayName = user?.name || "User";
+  const displayEmail = user?.email || "user@example.com";
+  const displayInitials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+  const isVerified = user?.isVerified ?? false;
+  const provider = user?.provider || "credentials";
+  const joinedDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : "July 2025";
+
   return (
     <>
       <Navbar />
@@ -56,24 +79,24 @@ export default function ProfilePage() {
 
               <div className="relative flex items-center gap-6">
                 <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1C1917] to-[#292524] text-3xl font-bold text-[#D4A843] shadow-lg">
-                  PR
+                  {displayInitials}
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="font-heading text-2xl font-bold text-foreground">Pratidnya Rebhankar</h2>
+                  <h2 className="font-heading text-2xl font-bold text-foreground">{displayName}</h2>
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="h-4 w-4" />
-                      pratidnya@example.com
+                      {displayEmail}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Briefcase className="h-4 w-4" />
-                      AI Developer
+                      {provider === "google" ? "Google Account" : "AI Developer"}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Calendar className="h-4 w-4" />
-                      Joined July 2025
+                      Joined {joinedDate}
                     </span>
                   </div>
 
@@ -82,10 +105,23 @@ export default function ProfilePage() {
                       <Award className="h-3.5 w-3.5" />
                       Pro Member
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 border border-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700">
-                      <TrendingUp className="h-3.5 w-3.5" />
-                      Active
-                    </span>
+                    {isVerified ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 border border-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 border border-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Unverified
+                      </span>
+                    )}
+                    {provider === "google" && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50/80 border border-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700">
+                        <Shield className="h-3.5 w-3.5" />
+                        Google
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -139,5 +175,13 @@ export default function ProfilePage() {
         </main>
       </div>
     </>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
   );
 }

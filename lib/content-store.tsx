@@ -50,6 +50,9 @@ type ContentContextType = {
   updateGeneration: (id: number, updates: Partial<Omit<Generation, "id">>) => void;
   deleteGeneration: (id: number) => void;
   getGeneration: (id: number) => Generation | undefined;
+  importGeneration: (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => void;
+  restoreLastDeleted: () => boolean;
+  lastDeleted: Generation | null;
   isLoaded: boolean;
 };
 
@@ -194,7 +197,7 @@ function saveToStorage(generations: Generation[]) {
   }
 }
 
-function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -259,6 +262,7 @@ const ContentContext = createContext<ContentContextType | null>(null);
 export function ContentProvider({ children }: { children: ReactNode }) {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [lastDeleted, setLastDeleted] = useState<Generation | null>(null);
 
   // Load from storage on mount
   useEffect(() => {
@@ -296,8 +300,31 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteGeneration = useCallback((id: number) => {
-    setGenerations((prev) => prev.filter((g) => g.id !== id));
+    setGenerations((prev) => {
+      const target = prev.find((g) => g.id === id);
+      if (target) setLastDeleted(target);
+      return prev.filter((g) => g.id !== id);
+    });
   }, []);
+
+  const importGeneration = useCallback(
+    (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => {
+      const newGen: Generation = {
+        ...gen,
+        id: Date.now(),
+        createdAt: gen.createdAt || new Date().toISOString(),
+      };
+      setGenerations((prev) => [newGen, ...prev]);
+    },
+    []
+  );
+
+  const restoreLastDeleted = useCallback(() => {
+    if (!lastDeleted) return false;
+    setGenerations((prev) => [lastDeleted, ...prev]);
+    setLastDeleted(null);
+    return true;
+  }, [lastDeleted]);
 
   const getGeneration = useCallback(
     (id: number) => {
@@ -321,6 +348,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       updateGeneration,
       deleteGeneration,
       getGeneration,
+      importGeneration,
+      restoreLastDeleted,
+      lastDeleted,
       isLoaded,
     }),
     [
@@ -331,6 +361,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       updateGeneration,
       deleteGeneration,
       getGeneration,
+      importGeneration,
+      restoreLastDeleted,
+      lastDeleted,
       isLoaded,
     ]
   );
