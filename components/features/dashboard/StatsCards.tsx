@@ -1,42 +1,53 @@
 "use client";
 
-import { useContent } from "@/lib/content-store";
+import { useDashboard } from "@/lib/dashboard-store";
 import StatCard from "./StatCard";
+import { SkeletonStatsGrid } from "./SkeletonCard";
 import { FolderKanban, CheckCircle2, FileText, Zap } from "lucide-react";
 
 export default function StatsCards() {
-  const { stats, isLoaded } = useContent();
+  const { data, isLoading } = useDashboard();
 
-  if (!isLoaded) return null;
+  if (isLoading || !data) {
+    return (
+      <section>
+        <SkeletonStatsGrid />
+      </section>
+    );
+  }
 
   const cards = [
     {
       title: "Total Generations",
-      value: stats.totalGenerations.toLocaleString(),
-      change: `${stats.thisWeek} this week`,
-      trend: stats.thisWeek > 0 ? ("up" as const) : ("neutral" as const),
+      value: data.totalGenerations,
+      change: `${data.thisWeek} this week`,
+      trend: data.thisWeek > 0 ? ("up" as const) : ("neutral" as const),
       icon: <FolderKanban className="h-7 w-7" />,
+      sparklineData: data.generationsTrend,
     },
     {
       title: "Completed",
-      value: stats.completed.toLocaleString(),
-      change: `${stats.drafts} drafts pending`,
-      trend: stats.completed > 0 ? ("up" as const) : ("neutral" as const),
+      value: data.completed,
+      change: `${data.drafts} drafts pending`,
+      trend: data.completed > 0 ? ("up" as const) : ("neutral" as const),
       icon: <CheckCircle2 className="h-7 w-7" />,
+      sparklineData: data.completedTrend,
     },
     {
       title: "Templates Used",
-      value: stats.templatesUsed.toLocaleString(),
-      change: `${stats.totalGenerations} total uses`,
-      trend: stats.templatesUsed > 0 ? ("up" as const) : ("neutral" as const),
+      value: data.templatesUsed,
+      change: `${data.totalGenerations} total uses`,
+      trend: data.templatesUsed > 0 ? ("up" as const) : ("neutral" as const),
       icon: <FileText className="h-7 w-7" />,
+      sparklineData: data.templatesTrend,
     },
     {
       title: "Total Words",
-      value: stats.totalWords.toLocaleString(),
-      change: `${stats.thisWeek} generations this week`,
-      trend: stats.totalWords > 0 ? ("up" as const) : ("neutral" as const),
+      value: data.totalWords,
+      change: `${data.thisWeek} generations this week`,
+      trend: data.totalWords > 0 ? ("up" as const) : ("neutral" as const),
       icon: <Zap className="h-7 w-7" />,
+      sparklineData: data.wordsTrend,
     },
   ];
 
@@ -52,6 +63,7 @@ export default function StatsCards() {
             trend={stat.trend}
             icon={stat.icon}
             index={index}
+            sparklineData={stat.sparklineData}
           />
         ))}
       </div>

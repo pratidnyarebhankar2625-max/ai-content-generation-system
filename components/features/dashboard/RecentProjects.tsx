@@ -1,13 +1,25 @@
 "use client";
 
 import { useContent, formatRelativeTime } from "@/lib/content-store";
+import { useDashboard } from "@/lib/dashboard-store";
 import ProjectCard from "./ProjectCard";
+import { SkeletonProjectsList } from "./SkeletonCard";
 import { FolderOpen } from "lucide-react";
 
 export default function RecentProjects() {
   const { generations, isLoaded } = useContent();
+  const { isLoading } = useDashboard();
 
-  if (!isLoaded) return null;
+  if (!isLoaded || isLoading) {
+    return (
+      <section>
+        <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
+          Recent Projects
+        </h2>
+        <SkeletonProjectsList />
+      </section>
+    );
+  }
 
   // Show the 4 most recent generations
   const recent = [...generations]

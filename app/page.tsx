@@ -4,6 +4,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import WelcomeSection from "@/components/features/dashboard/WelcomeSection";
 import StatsCards from "@/components/features/dashboard/StatsCards";
+import AnalyticsChart from "@/components/features/dashboard/AnalyticsChart";
+import ActivityFeed from "@/components/features/dashboard/ActivityFeed";
 import QuickActions from "@/components/features/dashboard/QuickActions";
 import RecentProjects from "@/components/features/dashboard/RecentProjects";
 
@@ -19,7 +21,18 @@ export default function HomePage() {
           <div className="space-y-12">
             <WelcomeSection />
             <StatsCards />
-            <QuickActions />
+            <AnalyticsChart />
+
+            {/* Two-column layout: Activity Feed + Quick Actions */}
+            <div className="grid gap-6 lg:grid-cols-5">
+              <div className="lg:col-span-3">
+                <ActivityFeed />
+              </div>
+              <div className="lg:col-span-2">
+                <QuickActions />
+              </div>
+            </div>
+
             <RecentProjects />
           </div>
         </main>

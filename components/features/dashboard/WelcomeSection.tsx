@@ -1,7 +1,21 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
+import { useDashboard } from "@/lib/dashboard-store";
+import SkeletonCard from "./SkeletonCard";
 
 export default function WelcomeSection() {
+  const { data, isLoading, isRefreshing, refresh } = useDashboard();
+
+  if (isLoading || !data) {
+    return (
+      <section>
+        <SkeletonCard variant="welcome" />
+      </section>
+    );
+  }
+
   return (
     <section className="animate-fade-in-up">
       <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#1C1917] via-[#292524] to-[#1C1917] p-10 shadow-[var(--shadow-elevated)]">
@@ -12,12 +26,41 @@ export default function WelcomeSection() {
         <div className="relative flex items-center justify-between">
           <div className="space-y-4">
             <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-[#FAF8F5]">
-              Welcome back, Pratidnya 👋
+              {data.greeting}, {data.userName} 👋
             </h1>
 
-            <p className="max-w-2xl text-lg text-[#87817B]">
-              Create amazing AI content faster with your personal AI assistant.
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="max-w-2xl text-lg text-[#87817B]">
+                Create amazing AI content faster with your personal AI assistant.
+              </p>
+
+              {/* Refresh indicator */}
+              <button
+                onClick={refresh}
+                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-[#A8A29E] transition-all duration-300 hover:bg-[#292524] hover:text-[#D4A843]"
+                title="Refresh dashboard"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 transition-transform duration-500 ${
+                    isRefreshing ? "animate-spin" : "group-hover:rotate-45"
+                  }`}
+                />
+                <span className="hidden sm:inline">
+                  {isRefreshing
+                    ? "Refreshing..."
+                    : `Updated ${data.lastRefreshed.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`}
+                </span>
+
+                {/* Live pulse dot */}
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+              </button>
+            </div>
           </div>
 
           <Button
