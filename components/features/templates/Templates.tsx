@@ -11,21 +11,27 @@ export default function Templates() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [templateList, setTemplateList] = useState(templates);
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [usageStats, setUsageStats] = useState<Record<number, number>>({});
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
 
 useEffect(() => {
   const savedTemplates = localStorage.getItem("userTemplates");
+  const savedFavorites = localStorage.getItem("userFavorites");
+  const savedUsage = localStorage.getItem("userUsageStats");
 
   if (savedTemplates) {
     const parsed = JSON.parse(savedTemplates);
-
-    const validTemplates = parsed.filter(
-      (t: any) => t.id != null
-    );
-
-    setTemplateList([
-      ...templates,
-      ...validTemplates,
-    ]);
+    const validTemplates = parsed.filter((t: any) => t.id != null);
+    setTemplateList([...templates, ...validTemplates]);
+  }
+  
+  if (savedFavorites) {
+    setFavorites(JSON.parse(savedFavorites));
+  }
+  
+  if (savedUsage) {
+    setUsageStats(JSON.parse(savedUsage));
   }
 }, []);
 
@@ -33,15 +39,20 @@ useEffect(() => {
   const userTemplates = templateList.filter(
     (template) => template.id != null && template.id > 1000
   );
-
-  localStorage.setItem(
-    "userTemplates",
-    JSON.stringify(userTemplates)
-  );
+  localStorage.setItem("userTemplates", JSON.stringify(userTemplates));
 }, [templateList]);
+
+useEffect(() => {
+  localStorage.setItem("userFavorites", JSON.stringify(favorites));
+}, [favorites]);
+
+useEffect(() => {
+  localStorage.setItem("userUsageStats", JSON.stringify(usageStats));
+}, [usageStats]);
 
   const categories = [
   "All",
+  "Favorites",
   "Writing",
   "Email",
   "Social Media",
@@ -59,9 +70,14 @@ useEffect(() => {
 };
 
 const filteredTemplates = templateList.filter((template) => {
-    const matchesCategory =
-      selectedCategory === "All" ||
-      template.category === selectedCategory;
+    let matchesCategory = false;
+    if (selectedCategory === "All") {
+      matchesCategory = true;
+    } else if (selectedCategory === "Favorites") {
+      matchesCategory = favorites.includes(template.id);
+    } else {
+      matchesCategory = template.category === selectedCategory;
+    }
 
     const matchesSearch =
       template.title
@@ -95,7 +111,10 @@ const filteredTemplates = templateList.filter((template) => {
         </div>
 
         <button
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => {
+            setEditingTemplate(null);
+            setShowCreateForm(true);
+          }}
           className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-3 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-[#D4A843]/40 hover:scale-[1.02]"
         >
           <Plus className="h-4 w-4" />
@@ -105,21 +124,31 @@ const filteredTemplates = templateList.filter((template) => {
 
       {/* Popup */}
       {showCreateForm && (
-  <CreateTemplateForm
-    onClose={() => setShowCreateForm(false)}
-    onCreate={(newTemplate) => {
-      setTemplateList((prev) => [
-        ...prev,
-        {
-  ...newTemplate,
-  id: Date.now(),
-},
-      ])
-
-      setShowCreateForm(false);
-    }}
-  />
-)}
+        <CreateTemplateForm
+          initialData={editingTemplate}
+          isEditing={!!editingTemplate}
+          onClose={() => {
+            setShowCreateForm(false);
+            setEditingTemplate(null);
+          }}
+          onCreate={(newTemplate) => {
+            if (editingTemplate) {
+              setTemplateList((prev) =>
+                prev.map((t) =>
+                  t.id === editingTemplate.id ? { ...t, ...newTemplate } : t
+                )
+              );
+            } else {
+              setTemplateList((prev) => [
+                ...prev,
+                { ...newTemplate, id: Date.now() },
+              ]);
+            }
+            setShowCreateForm(false);
+            setEditingTemplate(null);
+          }}
+        />
+      )}
       {/* Search */}
       <div className="relative animate-fade-in-up stagger-1">
         <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
@@ -153,15 +182,37 @@ const filteredTemplates = templateList.filter((template) => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template, index) => (
             <TemplateCard
-  key={template.id}
-  id={template.id}
-  title={template.title}
-  description={template.description}
-  category={template.category}
-  isUserTemplate={template.id != null && template.id > 1000}
-  onDelete={deleteTemplate}
-  index={index}
-/>
+              key={template.id}
+              id={template.id}
+              title={template.title}
+              description={template.description}
+              category={template.category}
+              isUserTemplate={template.id != null && template.id > 1000}
+              isFavorite={favorites.includes(template.id)}
+              usageCount={usageStats[template.id] || 0}
+              onFavorite={(id) => {
+                setFavorites((prev) =>
+                  prev.includes(id)
+                    ? prev.filter((favId) => favId !== id)
+                    : [...prev, id]
+                );
+              }}
+              onUse={(id) => {
+                setUsageStats((prev) => ({
+                  ...prev,
+                  [id]: (prev[id] || 0) + 1,
+                }));
+              }}
+              onEdit={(id) => {
+                const templateToEdit = templateList.find((t) => t.id === id);
+                if (templateToEdit) {
+                  setEditingTemplate(templateToEdit);
+                  setShowCreateForm(true);
+                }
+              }}
+              onDelete={deleteTemplate}
+              index={index}
+            />
           ))}
         </div>
       ) : (

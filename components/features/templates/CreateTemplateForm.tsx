@@ -28,7 +28,7 @@ const [description, setDescription] = useState(
   initialData?.description || ""
 );
 const [category, setCategory] = useState(
-  initialData?.category || "Blog"
+  initialData?.category || "Writing"
 );
 
 
@@ -89,10 +89,14 @@ const [category, setCategory] = useState(
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
           >
-            <option>Blog</option>
-            <option>Social Media</option>
+            <option>Writing</option>
             <option>Email</option>
+            <option>Social Media</option>
             <option>Marketing</option>
+            <option>Business</option>
+            <option>Education</option>
+            <option>Developer</option>
+            <option>AI Utility</option>
           </select>
 
 

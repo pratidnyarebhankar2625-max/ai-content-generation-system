@@ -7,6 +7,8 @@ import {
   Code2,
   Sparkles,
   Trash2,
+  Star,
+  Edit3,
 } from "lucide-react";
 
 type TemplateCardProps = {
@@ -15,6 +17,11 @@ type TemplateCardProps = {
   description: string;
   category: string;
   isUserTemplate?: boolean;
+  isFavorite?: boolean;
+  usageCount?: number;
+  onFavorite?: (id: number) => void;
+  onUse?: (id: number) => void;
+  onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
   index?: number;
 };
@@ -47,6 +54,11 @@ export default function TemplateCard({
   description,
   category,
   isUserTemplate = false,
+  isFavorite = false,
+  usageCount = 0,
+  onFavorite,
+  onUse,
+  onEdit,
   onDelete,
   index = 0,
 }: TemplateCardProps) {
@@ -73,6 +85,19 @@ export default function TemplateCard({
           <Icon className="h-3 w-3" />
           {category}
         </span>
+        <button
+          onClick={() => onFavorite?.(id)}
+          className={`rounded-full p-2 transition-colors duration-300 ${
+            isFavorite
+              ? "text-yellow-500 hover:text-yellow-600"
+              : "text-muted-foreground hover:text-yellow-500"
+          }`}
+        >
+          <Star
+            className="h-5 w-5"
+            fill={isFavorite ? "currentColor" : "none"}
+          />
+        </button>
       </div>
 
       {/* Content */}
@@ -82,21 +107,35 @@ export default function TemplateCard({
         <p className="text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Used {usageCount} {usageCount === 1 ? "time" : "times"}
+        </p>
       </div>
 
       <div className="flex gap-2.5">
 
-  <button className="flex-1 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] py-3 text-sm font-medium text-[#D4A843] transition-all duration-300 hover:shadow-md hover:shadow-[#D4A843]/10">
+  <button 
+    onClick={() => onUse?.(id)}
+    className="flex-1 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] py-3 text-sm font-medium text-[#D4A843] transition-all duration-300 hover:shadow-md hover:shadow-[#D4A843]/10"
+  >
     Use Template
   </button>
 
   {isUserTemplate && (
-    <button
-      onClick={() => onDelete?.(id)}
-      className="rounded-xl border border-red-200 px-3.5 text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white hover:border-red-500"
-    >
-      <Trash2 className="h-5 w-5" />
-    </button>
+    <>
+      <button
+        onClick={() => onEdit?.(id)}
+        className="rounded-xl border border-border px-3.5 text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground"
+      >
+        <Edit3 className="h-5 w-5" />
+      </button>
+      <button
+        onClick={() => onDelete?.(id)}
+        className="rounded-xl border border-red-200 px-3.5 text-red-400 transition-all duration-300 hover:bg-red-50 hover:text-red-500 hover:border-red-300"
+      >
+        <Trash2 className="h-5 w-5" />
+      </button>
+    </>
   )}
 
 </div>
