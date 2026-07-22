@@ -40,7 +40,7 @@ export default function Navbar() {
     : "?";
 
   return (
-    <nav className="h-16 border-b border-border bg-card/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(28,25,23,0.04)] animate-fade-in-down">
+    <nav className="relative z-50 h-16 border-b border-border bg-card/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(28,25,23,0.04)] animate-fade-in-down">
       <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between px-6">
 
         {/* Logo */}

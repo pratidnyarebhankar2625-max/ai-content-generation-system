@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import TemplateCard from "./TemplateCard";
 import CreateTemplateForm from "./CreateTemplateForm";
@@ -7,6 +8,7 @@ import { templates } from "./templateData";
 import { Search, Sparkles, FileText, Plus } from "lucide-react";
 
 export default function Templates() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -202,6 +204,7 @@ const filteredTemplates = templateList.filter((template) => {
                   ...prev,
                   [id]: (prev[id] || 0) + 1,
                 }));
+                router.push(`/generate/${id}`);
               }}
               onEdit={(id) => {
                 const templateToEdit = templateList.find((t) => t.id === id);
