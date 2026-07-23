@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useContent, type Generation, type GenerationStatus } from "@/lib/content-store";
 import {
   Clock,
@@ -86,6 +86,75 @@ function formatTime(dateStr: string) {
     minute: "2-digit",
     hour12: true,
   });
+}
+
+// ─── View Modal ──────────────────────────────────────────────────────────────
+
+function ViewModal({
+  generation,
+  onClose,
+}: {
+  generation: Generation;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading text-2xl font-bold text-foreground">
+            View Generation
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Title</label>
+            <div className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm text-foreground">
+              {generation.title}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Content Preview</label>
+            <div className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm text-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
+              {generation.preview}
+            </div>
+          </div>
+
+          {/* Meta */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5 capitalize">
+              <span className="font-medium text-foreground">Status:</span> {generation.status}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-foreground">Category:</span> {generation.category}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-foreground">Words:</span> <span className="text-[#B8860B]">{generation.wordCount}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
@@ -387,8 +456,12 @@ export default function HistoryContent() {
   const [showFilters, setShowFilters] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [editingGen, setEditingGen] = useState<Generation | null>(null);
+  const [viewingGen, setViewingGen] = useState<Generation | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [showDeleteToast, setShowDeleteToast] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const listRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(
     () => ["all", ...Array.from(new Set(generations.map((i) => i.category)))],
@@ -416,6 +489,12 @@ export default function HistoryContent() {
         return b.wordCount - a.wordCount;
       });
   }, [generations, searchQuery, filterStatus, filterCategory, sortBy]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedItems = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   function handleCopy(item: Generation) {
     navigator.clipboard.writeText(item.preview);
@@ -473,6 +552,7 @@ export default function HistoryContent() {
             icon: <FileText className="h-5 w-5" />,
             trend: `${stats.thisWeek} this week`,
             trendType: stats.thisWeek > 0 ? "up" : "neutral",
+            filterAction: () => setFilterStatus("all"),
           },
           {
             label: "Completed",
@@ -480,6 +560,7 @@ export default function HistoryContent() {
             icon: <CheckCircle2 className="h-5 w-5" />,
             trend: `${stats.drafts} drafts pending`,
             trendType: stats.completed > 0 ? "up" : "neutral",
+            filterAction: () => setFilterStatus("completed"),
           },
           {
             label: "Drafts",
@@ -487,6 +568,7 @@ export default function HistoryContent() {
             icon: <AlertCircle className="h-5 w-5" />,
             trend: `${stats.drafts} pending`,
             trendType: "neutral",
+            filterAction: () => setFilterStatus("draft"),
           },
           {
             label: "Total Words",
@@ -494,11 +576,17 @@ export default function HistoryContent() {
             icon: <Sparkles className="h-5 w-5" />,
             trend: `${stats.templatesUsed} templates used`,
             trendType: stats.totalWords > 0 ? "up" : "neutral",
+            filterAction: () => setFilterStatus("all"),
           },
         ].map((stat, index) => (
           <div
             key={stat.label}
-            className="card-shimmer gold-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-6 transition-all duration-400 hover:-translate-y-1 hover:border-[#D4A843]/30 animate-fade-in-up"
+            onClick={() => {
+              stat.filterAction();
+              setCurrentPage(1);
+              listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="card-shimmer gold-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-6 transition-all duration-400 hover:-translate-y-1 hover:border-[#D4A843]/30 animate-fade-in-up cursor-pointer"
             style={{ animationDelay: `${(index + 1) * 80}ms` }}
           >
             <div className="inline-flex items-center justify-center rounded-xl bg-[#D4A843]/8 p-2.5 text-[#B8860B]">
@@ -528,7 +616,7 @@ export default function HistoryContent() {
       </div>
 
       {/* Search & Filters Bar */}
-      <div className="space-y-5 animate-fade-in-up stagger-3">
+      <div ref={listRef} className="space-y-5 animate-fade-in-up stagger-3 scroll-mt-24">
         <div className="flex flex-col gap-3 sm:flex-row">
           {/* Search */}
           <div className="relative flex-1">
@@ -537,7 +625,10 @@ export default function HistoryContent() {
               type="text"
               placeholder="Search by title, template, or content..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full rounded-2xl border border-border bg-[var(--surface-input)] py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
             />
           </div>
@@ -564,15 +655,16 @@ export default function HistoryContent() {
           <div className="relative">
             <button
               className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-6 py-3.5 text-sm font-medium text-muted-foreground shadow-sm transition-all duration-300 hover:bg-muted"
-              onClick={() =>
+              onClick={() => {
                 setSortBy(
                   sortBy === "newest"
                     ? "oldest"
                     : sortBy === "oldest"
                     ? "words"
                     : "newest"
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
             >
               <ArrowUpDown className="h-4 w-4" />
               {sortBy === "newest"
@@ -596,7 +688,10 @@ export default function HistoryContent() {
                 {["all", "completed", "draft", "failed"].map((status) => (
                   <button
                     key={status}
-                    onClick={() => setFilterStatus(status)}
+                    onClick={() => {
+                      setFilterStatus(status);
+                      setCurrentPage(1);
+                    }}
                     className={`rounded-xl px-3.5 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                       filterStatus === status
                         ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
@@ -618,7 +713,10 @@ export default function HistoryContent() {
                 {categories.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setFilterCategory(cat)}
+                    onClick={() => {
+                      setFilterCategory(cat);
+                      setCurrentPage(1);
+                    }}
                     className={`rounded-xl px-3.5 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                       filterCategory === cat
                         ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
@@ -638,15 +736,18 @@ export default function HistoryContent() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Showing{" "}
-          <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-          of {generations.length} results
+          <span className="font-semibold text-foreground">
+            {filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-
+            {Math.min(currentPage * itemsPerPage, filtered.length)}
+          </span>{" "}
+          of {filtered.length} results
         </p>
       </div>
 
       {/* History Items */}
       {filtered.length > 0 ? (
         <div className="space-y-5">
-          {filtered.map((item, index) => {
+          {paginatedItems.map((item, index) => {
             const status = statusConfig[item.status];
             const catIcon = categoryIcons[item.category] || (
               <FileText className="h-4 w-4" />
@@ -699,6 +800,7 @@ export default function HistoryContent() {
                   {/* Right: Actions */}
                   <div className="flex shrink-0 items-center gap-2 md:ml-6">
                     <button
+                      onClick={() => setViewingGen(item)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-[#D4A843]/10 hover:text-[#B8860B]"
                       title="View content"
                     >
@@ -749,6 +851,31 @@ export default function HistoryContent() {
               </div>
             );
           })}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-between border-t border-border pt-6 animate-fade-in">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                Page <span className="text-foreground">{currentPage}</span> of <span className="text-foreground">{totalPages}</span>
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-24 animate-fade-in">
@@ -764,6 +891,7 @@ export default function HistoryContent() {
               setSearchQuery("");
               setFilterStatus("all");
               setFilterCategory("all");
+              setCurrentPage(1);
             }}
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-3 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
           >
@@ -792,6 +920,14 @@ export default function HistoryContent() {
             <X className="h-4 w-4" />
           </button>
         </div>
+      )}
+
+      {/* View Modal */}
+      {viewingGen && (
+        <ViewModal
+          generation={viewingGen}
+          onClose={() => setViewingGen(null)}
+        />
       )}
 
       {/* Edit Modal */}

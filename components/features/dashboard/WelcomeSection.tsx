@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { useDashboard } from "@/lib/dashboard-store";
 import SkeletonCard from "./SkeletonCard";
+import { useRouter } from "next/navigation";
 
 export default function WelcomeSection() {
   const { data, isLoading, isRefreshing, refresh } = useDashboard();
+  const router = useRouter();
 
   if (isLoading || !data) {
     return (
@@ -26,7 +28,7 @@ export default function WelcomeSection() {
         <div className="relative flex items-center justify-between">
           <div className="space-y-4">
             <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-[#FAF8F5]">
-              {data.greeting}, {data.userName} 👋
+              {data.greeting}, {data.userName}!
             </h1>
 
             <div className="flex items-center gap-4">
@@ -65,6 +67,7 @@ export default function WelcomeSection() {
 
           <Button
             size="lg"
+            onClick={() => router.push("/templates")}
             className="rounded-2xl bg-gradient-to-r from-[#D4A843] to-[#B8860B] px-8 py-3 text-[#1C1917] font-semibold shadow-lg shadow-[#D4A843]/20 transition-all duration-400 hover:shadow-xl hover:shadow-[#D4A843]/30 hover:scale-[1.03]"
           >
             <Sparkles className="mr-2 h-5 w-5" />

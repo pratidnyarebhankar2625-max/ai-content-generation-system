@@ -8,7 +8,7 @@ import { FolderOpen } from "lucide-react";
 
 export default function RecentProjects() {
   const { generations, isLoaded } = useContent();
-  const { isLoading } = useDashboard();
+  const { isLoading, filterStatus, setFilterStatus } = useDashboard();
 
   if (!isLoaded || isLoading) {
     return (
@@ -21,20 +21,37 @@ export default function RecentProjects() {
     );
   }
 
-  // Show the 4 most recent generations
-  const recent = [...generations]
+  // Filter by status if filter is active
+  const filteredGenerations = filterStatus === "all"
+    ? generations
+    : generations.filter(g => g.status === filterStatus);
+
+  // Show up to 10 filtered items, or 4 recent if no filter
+  const limit = filterStatus === "all" ? 4 : 10;
+  
+  const recent = [...filteredGenerations]
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 4);
+    .slice(0, limit);
 
   if (recent.length === 0) {
     return (
-      <section>
-        <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
-          Recent Projects
-        </h2>
+      <section id="recent-projects" className="scroll-mt-24">
+        <div className="flex items-center justify-between mb-8 animate-fade-in-up">
+          <h2 className="font-heading text-[28px] font-bold tracking-tight">
+            {filterStatus === "all" ? "Recent Projects" : "Filtered Projects"}
+          </h2>
+          {filterStatus !== "all" && (
+            <button
+              onClick={() => setFilterStatus("all")}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
         <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-16 animate-fade-in">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#D4A843]/8">
             <FolderOpen className="h-8 w-8 text-[#B8860B]/60" />
@@ -57,10 +74,20 @@ export default function RecentProjects() {
   };
 
   return (
-    <section>
-      <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
-        Recent Projects
-      </h2>
+      <section id="recent-projects" className="scroll-mt-24">
+        <div className="flex items-center justify-between mb-8 animate-fade-in-up">
+          <h2 className="font-heading text-[28px] font-bold tracking-tight">
+            {filterStatus === "all" ? "Recent Projects" : "Filtered Projects"}
+          </h2>
+          {filterStatus !== "all" && (
+            <button
+              onClick={() => setFilterStatus("all")}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
 
       <div className="space-y-4">
         {recent.map((gen, index) => (

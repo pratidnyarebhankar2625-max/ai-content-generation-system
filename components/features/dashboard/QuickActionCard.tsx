@@ -3,6 +3,7 @@ type QuickActionCardProps = {
   description: string;
   icon: React.ReactNode;
   index?: number;
+  onClick?: () => void;
 };
 
 export default function QuickActionCard({
@@ -10,9 +11,11 @@ export default function QuickActionCard({
   description,
   icon,
   index = 0,
+  onClick,
 }: QuickActionCardProps) {
   return (
     <button
+      onClick={onClick}
       className="
         card-shimmer
         gold-glow

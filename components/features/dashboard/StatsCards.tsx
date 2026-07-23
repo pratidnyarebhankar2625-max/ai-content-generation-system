@@ -6,7 +6,7 @@ import { SkeletonStatsGrid } from "./SkeletonCard";
 import { FolderKanban, CheckCircle2, FileText, Zap } from "lucide-react";
 
 export default function StatsCards() {
-  const { data, isLoading } = useDashboard();
+  const { data, isLoading, setFilterStatus } = useDashboard();
 
   if (isLoading || !data) {
     return (
@@ -24,6 +24,7 @@ export default function StatsCards() {
       trend: data.thisWeek > 0 ? ("up" as const) : ("neutral" as const),
       icon: <FolderKanban className="h-7 w-7" />,
       sparklineData: data.generationsTrend,
+      filterAction: () => setFilterStatus("all"),
     },
     {
       title: "Completed",
@@ -32,14 +33,25 @@ export default function StatsCards() {
       trend: data.completed > 0 ? ("up" as const) : ("neutral" as const),
       icon: <CheckCircle2 className="h-7 w-7" />,
       sparklineData: data.completedTrend,
+      filterAction: () => setFilterStatus("completed"),
+    },
+    {
+      title: "Drafts",
+      value: data.drafts,
+      change: `${data.drafts} drafts pending`,
+      trend: "neutral" as const,
+      icon: <FolderKanban className="h-7 w-7" />,
+      sparklineData: data.generationsTrend,
+      filterAction: () => setFilterStatus("draft"),
     },
     {
       title: "Templates Used",
       value: data.templatesUsed,
-      change: `${data.totalGenerations} total uses`,
+      change: `${data.templatesUsed} total uses`,
       trend: data.templatesUsed > 0 ? ("up" as const) : ("neutral" as const),
       icon: <FileText className="h-7 w-7" />,
       sparklineData: data.templatesTrend,
+      filterAction: () => setFilterStatus("all"),
     },
     {
       title: "Total Words",
@@ -48,6 +60,7 @@ export default function StatsCards() {
       trend: data.totalWords > 0 ? ("up" as const) : ("neutral" as const),
       icon: <Zap className="h-7 w-7" />,
       sparklineData: data.wordsTrend,
+      filterAction: () => setFilterStatus("all"),
     },
   ];
 
@@ -64,6 +77,10 @@ export default function StatsCards() {
             icon={stat.icon}
             index={index}
             sparklineData={stat.sparklineData}
+            onClick={() => {
+              stat.filterAction();
+              document.getElementById('recent-projects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
           />
         ))}
       </div>

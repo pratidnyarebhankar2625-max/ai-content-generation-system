@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, LogOut, User, Settings, ChevronDown } from "lucide-react";
+import { LogOut, User, Settings, ChevronDown } from "lucide-react";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -52,16 +52,7 @@ export default function Navbar() {
           </h1>
         </div>
 
-       {/* Search Bar */}
-        <div className="flex flex-1 justify-center px-8">
-          <div className="relative w-full max-w-lg">
-            <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground transition-colors duration-300" />
-            <input
-              placeholder="Search templates, projects, history..."
-              className="h-12 w-full rounded-2xl border border-border bg-[var(--surface-input)] pl-12 pr-5 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
-            />
-          </div>
-        </div>
+
 
         {/* Right Side */}
         <div className="flex items-center gap-4">

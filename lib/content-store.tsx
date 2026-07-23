@@ -29,10 +29,12 @@ export type ContentStats = {
   totalGenerations: number;
   completed: number;
   drafts: number;
+  pendingDrafts: number;
   failed: number;
   totalWords: number;
   templatesUsed: number;
   thisWeek: number;
+  thisWeekWords: number;
 };
 
 export type RecentActivityItem = {
@@ -216,20 +218,32 @@ export function formatRelativeTime(dateStr: string): string {
   });
 }
 
+export function formatNumber(num: number): string {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + "m";
+  if (num >= 1000) return (num / 1000).toFixed(1) + "k";
+  return num.toString();
+}
+
 function computeStats(generations: Generation[]): ContentStats {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+  const draftsCount = generations.filter((g) => g.status === "draft").length;
+
   return {
     totalGenerations: generations.length,
     completed: generations.filter((g) => g.status === "completed").length,
-    drafts: generations.filter((g) => g.status === "draft").length,
+    drafts: draftsCount,
+    pendingDrafts: draftsCount,
     failed: generations.filter((g) => g.status === "failed").length,
     totalWords: generations.reduce((sum, g) => sum + g.wordCount, 0),
     templatesUsed: new Set(generations.map((g) => g.template)).size,
     thisWeek: generations.filter(
       (g) => new Date(g.createdAt) >= weekAgo
     ).length,
+    thisWeekWords: generations
+      .filter((g) => new Date(g.createdAt) >= weekAgo)
+      .reduce((sum, g) => sum + g.wordCount, 0),
   };
 }
 

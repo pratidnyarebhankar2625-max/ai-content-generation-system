@@ -17,6 +17,7 @@ type StatCardProps = {
   index?: number;
   loading?: boolean;
   sparklineData?: number[];
+  onClick?: () => void;
 };
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
@@ -102,12 +103,14 @@ export default function StatCard({
   icon,
   index = 0,
   sparklineData,
+  onClick,
 }: StatCardProps) {
   const animatedValue = useAnimatedNumber(value);
 
   return (
     <div
-      className="card-shimmer gold-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#D4A843]/30 animate-fade-in-up"
+      onClick={onClick}
+      className={`card-shimmer gold-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#D4A843]/30 animate-fade-in-up ${onClick ? "cursor-pointer" : ""}`}
       style={{ animationDelay: `${(index + 1) * 80}ms` }}
     >
       {/* Icon */}

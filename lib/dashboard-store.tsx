@@ -73,6 +73,8 @@ type DashboardContextType = {
   isLoading: boolean;
   isRefreshing: boolean;
   refresh: () => void;
+  filterStatus: string;
+  setFilterStatus: (status: string) => void;
 };
 
 // ─── Category Color Palette ──────────────────────────────────────────────────
@@ -239,6 +241,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const initialLoadDone = useRef(false);
 
   // ── Compute dashboard data ───────────────────────────────────────────────
@@ -320,8 +323,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [computeData]);
 
   const value = useMemo<DashboardContextType>(
-    () => ({ data, isLoading, isRefreshing, refresh }),
-    [data, isLoading, isRefreshing, refresh]
+    () => ({ data, isLoading, isRefreshing, refresh, filterStatus, setFilterStatus }),
+    [data, isLoading, isRefreshing, refresh, filterStatus, setFilterStatus]
   );
 
   return (

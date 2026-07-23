@@ -20,23 +20,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-const stats = [
-  { label: "Total Projects", value: "24", icon: FileText, trend: "+12%" },
-  { label: "AI Generations", value: "152", icon: Bot, trend: "+18%" },
-  { label: "Templates Used", value: "18", icon: Sparkles, trend: "+8%" },
-  { label: "Active Streak", value: "7 days", icon: Zap, trend: null },
-];
+import { Minus } from "lucide-react";
 
-const recentActivity = [
-  { action: "Generated blog post", template: "Blog Post Generator", time: "2 hours ago" },
-  { action: "Created email campaign", template: "Email Campaign", time: "5 hours ago" },
-  { action: "Used Instagram template", template: "Instagram Caption", time: "1 day ago" },
-  { action: "Generated marketing copy", template: "Ad Copy", time: "2 days ago" },
-  { action: "Created API documentation", template: "Technical Documentation", time: "3 days ago" },
-];
+import { useDashboard } from "@/lib/dashboard-store";
+import { formatNumber } from "@/lib/content-store";
 
 function ProfileContent() {
   const { user } = useAuth();
+  const { data, isLoading } = useDashboard();
 
   const displayName = user?.name || "User";
   const displayEmail = user?.email || "user@example.com";
@@ -129,7 +120,12 @@ function ProfileContent() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-              {stats.map((stat, index) => (
+              {!isLoading && data && [
+                { label: "Total Projects", value: data.totalGenerations, icon: FileText, trend: `${data.thisWeek} this week`, trendType: data.thisWeek > 0 ? "up" : "neutral" },
+                { label: "AI Generations", value: data.totalGenerations, icon: Bot, trend: `${data.thisWeek} this week`, trendType: data.thisWeek > 0 ? "up" : "neutral" },
+                { label: "Templates Used", value: data.templatesUsed, icon: Sparkles, trend: `${data.totalGenerations} total uses`, trendType: data.templatesUsed > 0 ? "up" : "neutral" },
+                { label: "Total Words", value: formatNumber(data.totalWords), icon: Zap, trend: `${data.thisWeek} generations this week`, trendType: data.totalWords > 0 ? "up" : "neutral" },
+              ].map((stat, index) => (
                 <div
                   key={stat.label}
                   className="card-shimmer gold-glow rounded-[20px] border border-border bg-card p-6 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#D4A843]/30 animate-fade-in-up"
@@ -142,10 +138,17 @@ function ProfileContent() {
                   <p className="mt-2 text-xs text-muted-foreground">{stat.label}</p>
                   {stat.trend && (
                     <div className="mt-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        <TrendingUp className="h-3 w-3" />
-                        {stat.trend}
-                      </span>
+                      {stat.trendType === "up" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          <TrendingUp className="h-3 w-3" />
+                          {stat.trend}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--muted)] px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                          <Minus className="h-3 w-3" />
+                          {stat.trend}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -157,18 +160,22 @@ function ProfileContent() {
               <h3 className="font-heading text-xl font-semibold text-foreground mb-5">Recent Activity</h3>
 
               <div className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="group flex items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-card hover:shadow-sm"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.template}</p>
+                {!isLoading && data?.recentActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No recent activity.</p>
+                ) : (
+                  !isLoading && data?.recentActivity.slice(0, 5).map((activity, index) => (
+                    <div
+                      key={index}
+                      className="group flex items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-card hover:shadow-sm"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">{activity.template}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{activity.time}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{activity.time}</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
