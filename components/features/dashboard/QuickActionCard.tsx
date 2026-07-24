@@ -18,7 +18,7 @@ export default function QuickActionCard({
       onClick={onClick}
       className="
         card-shimmer
-        gold-glow
+        primary-glow
         group
         relative
         flex
@@ -34,15 +34,15 @@ export default function QuickActionCard({
         transition-all
         duration-400
         hover:-translate-y-1.5
-        hover:border-[#D4A843]/30
+        hover:border-[#567C8D]/30
         animate-fade-in-up
       "
       style={{ animationDelay: `${(index + 1) * 80}ms` }}
     >
       {/* Gold accent strip on hover */}
-      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#D4A843] opacity-0 transition-all duration-400 group-hover:opacity-100" />
+      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#567C8D] opacity-0 transition-all duration-400 group-hover:opacity-100" />
 
-      <div className="inline-flex items-center justify-center rounded-2xl bg-[#D4A843]/8 p-3.5 text-[#B8860B] transition-colors duration-300 group-hover:bg-[#D4A843]/15 group-hover:text-[#D4A843]">
+      <div className="inline-flex items-center justify-center rounded-2xl bg-[#567C8D]/8 p-3.5 text-[#567C8D] transition-colors duration-300 group-hover:bg-[#567C8D]/15 group-hover:text-[#567C8D]">
         {icon}
       </div>
 

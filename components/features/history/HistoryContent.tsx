@@ -138,7 +138,7 @@ function ViewModal({
               <span className="font-medium text-foreground">Category:</span> {generation.category}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-medium text-foreground">Words:</span> <span className="text-[#B8860B]">{generation.wordCount}</span>
+              <span className="font-medium text-foreground">Words:</span> <span className="text-primary-foreground">{generation.wordCount}</span>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ function ViewModal({
         <div className="mt-8 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
+            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent"
           >
             Close
           </button>
@@ -201,7 +201,7 @@ function EditModal({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
 
@@ -220,7 +220,7 @@ function EditModal({
                 );
               }}
               rows={4}
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
 
@@ -234,7 +234,7 @@ function EditModal({
                   onClick={() => setStatus(s)}
                   className={`rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                     status === s
-                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      ? "bg-[#2F4156] text-primary-foreground shadow-sm"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -247,7 +247,7 @@ function EditModal({
           {/* Word Count */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Word Count: <span className="text-[#B8860B]">{wordCount}</span>
+              Word Count: <span className="text-primary-foreground">{wordCount}</span>
             </label>
           </div>
         </div>
@@ -262,7 +262,7 @@ function EditModal({
           </button>
           <button
             onClick={handleSave}
-            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
+            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent"
           >
             Save Changes
           </button>
@@ -340,7 +340,7 @@ function ImportModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. My Blog Post"
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
 
@@ -351,7 +351,7 @@ function ImportModal({
               type="text"
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
 
@@ -365,7 +365,7 @@ function ImportModal({
                   onClick={() => setCategory(cat)}
                   className={`rounded-xl px-3.5 py-2 text-xs font-medium transition-all duration-300 ${
                     category === cat
-                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      ? "bg-[#2F4156] text-primary-foreground shadow-sm"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -385,7 +385,7 @@ function ImportModal({
                   onClick={() => setStatus(s)}
                   className={`rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                     status === s
-                      ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                      ? "bg-[#2F4156] text-primary-foreground shadow-sm"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -403,7 +403,7 @@ function ImportModal({
               onChange={(e) => setContent(e.target.value)}
               rows={5}
               placeholder="Paste your content here..."
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
             <p className="text-xs text-muted-foreground">
               {wordCount} words
@@ -422,7 +422,7 @@ function ImportModal({
           <button
             onClick={handleImport}
             disabled={!title.trim() || !content.trim()}
-            className="rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-2.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
@@ -521,14 +521,14 @@ export default function HistoryContent() {
       <div className="flex items-start justify-between animate-fade-in-up">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D4A843] to-[#B8860B] shadow-lg shadow-[#D4A843]/20">
-              <Clock className="h-6 w-6 text-[#1C1917]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
+              <Clock className="h-6 w-6 text-[#2F4156]" />
             </div>
             <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">
               Generation History
             </h1>
           </div>
-          <p className="max-w-2xl text-[#87817B] text-base">
+          <p className="max-w-2xl text-muted-foreground text-base">
             Browse and manage all your AI-generated content in one place.
           </p>
         </div>
@@ -536,84 +536,14 @@ export default function HistoryContent() {
         {/* Import Button */}
         <button
           onClick={() => setShowImport(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-3 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-[#D4A843]/40 hover:scale-[1.02]"
+          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-transparent hover:scale-[1.02]"
         >
           <Upload className="h-4 w-4" />
           Import Content
         </button>
       </div>
 
-      {/* Stats Cards — all dynamic from context */}
-      <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-        {[
-          {
-            label: "Total Generated",
-            value: stats.totalGenerations,
-            icon: <FileText className="h-5 w-5" />,
-            trend: `${stats.thisWeek} this week`,
-            trendType: stats.thisWeek > 0 ? "up" : "neutral",
-            filterAction: () => setFilterStatus("all"),
-          },
-          {
-            label: "Completed",
-            value: stats.completed,
-            icon: <CheckCircle2 className="h-5 w-5" />,
-            trend: `${stats.drafts} drafts pending`,
-            trendType: stats.completed > 0 ? "up" : "neutral",
-            filterAction: () => setFilterStatus("completed"),
-          },
-          {
-            label: "Drafts",
-            value: stats.drafts,
-            icon: <AlertCircle className="h-5 w-5" />,
-            trend: `${stats.drafts} pending`,
-            trendType: "neutral",
-            filterAction: () => setFilterStatus("draft"),
-          },
-          {
-            label: "Total Words",
-            value: stats.totalWords.toLocaleString(),
-            icon: <Sparkles className="h-5 w-5" />,
-            trend: `${stats.templatesUsed} templates used`,
-            trendType: stats.totalWords > 0 ? "up" : "neutral",
-            filterAction: () => setFilterStatus("all"),
-          },
-        ].map((stat, index) => (
-          <div
-            key={stat.label}
-            onClick={() => {
-              stat.filterAction();
-              setCurrentPage(1);
-              listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-            className="card-shimmer gold-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-6 transition-all duration-400 hover:-translate-y-1 hover:border-[#D4A843]/30 animate-fade-in-up cursor-pointer"
-            style={{ animationDelay: `${(index + 1) * 80}ms` }}
-          >
-            <div className="inline-flex items-center justify-center rounded-xl bg-[#D4A843]/8 p-2.5 text-[#B8860B]">
-              {stat.icon}
-            </div>
-            <p className="mt-3 text-sm font-medium text-muted-foreground">
-              {stat.label}
-            </p>
-            <p className="mt-1 font-heading text-[38px] font-bold leading-none tracking-tight text-foreground">
-              {stat.value}
-            </p>
-            <div className="mt-3">
-              {stat.trendType === "up" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                  <TrendingUp className="h-3 w-3" />
-                  {stat.trend}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--muted)] px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  <Minus className="h-3 w-3" />
-                  {stat.trend}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+
 
       {/* Search & Filters Bar */}
       <div ref={listRef} className="space-y-5 animate-fade-in-up stagger-3 scroll-mt-24">
@@ -629,7 +559,7 @@ export default function HistoryContent() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-2xl border border-border bg-[var(--surface-input)] py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="w-full rounded-2xl border border-border bg-[var(--surface-input)] py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
 
@@ -638,7 +568,7 @@ export default function HistoryContent() {
             onClick={() => setShowFilters(!showFilters)}
             className={`inline-flex items-center gap-2 rounded-2xl border px-6 py-3.5 text-sm font-medium shadow-sm transition-all duration-300 ${
               showFilters
-                ? "border-[#D4A843]/40 bg-[#D4A843]/10 text-[#B8860B]"
+                ? "border-[#567C8D]/40 bg-[#567C8D]/10 text-primary-foreground"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
@@ -694,7 +624,7 @@ export default function HistoryContent() {
                     }}
                     className={`rounded-xl px-3.5 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                       filterStatus === status
-                        ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                        ? "bg-[#2F4156] text-primary-foreground shadow-sm"
                         : "bg-muted/60 text-muted-foreground hover:bg-muted"
                     }`}
                   >
@@ -719,7 +649,7 @@ export default function HistoryContent() {
                     }}
                     className={`rounded-xl px-3.5 py-2 text-xs font-medium capitalize transition-all duration-300 ${
                       filterCategory === cat
-                        ? "bg-[#1C1917] text-[#D4A843] shadow-sm"
+                        ? "bg-[#2F4156] text-primary-foreground shadow-sm"
                         : "bg-muted/60 text-muted-foreground hover:bg-muted"
                     }`}
                   >
@@ -756,14 +686,14 @@ export default function HistoryContent() {
             return (
               <div
                 key={item.id}
-                className="card-shimmer gold-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-0.5 hover:border-[#D4A843]/30 animate-fade-in-up"
+                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-0.5 hover:border-[#567C8D]/30 animate-fade-in-up"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   {/* Left: Content */}
                   <div className="flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-semibold tracking-tight text-foreground transition-colors duration-300 group-hover:text-[#B8860B]">
+                      <h3 className="text-lg font-semibold tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary-foreground">
                         {item.title}
                       </h3>
                       <span
@@ -801,7 +731,7 @@ export default function HistoryContent() {
                   <div className="flex shrink-0 items-center gap-2 md:ml-6">
                     <button
                       onClick={() => setViewingGen(item)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-[#D4A843]/10 hover:text-[#B8860B]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
                       title="View content"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -810,7 +740,7 @@ export default function HistoryContent() {
 
                     <button
                       onClick={() => setEditingGen(item)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#D4A843]/30 hover:bg-[#D4A843]/10 hover:text-[#B8860B]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
                       title="Edit content"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -822,7 +752,7 @@ export default function HistoryContent() {
                       className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-medium shadow-[var(--shadow-button)] transition-all duration-300 ${
                         copiedId === item.id
                           ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                          : "border-border bg-card text-muted-foreground hover:border-[#D4A843]/30 hover:bg-[#D4A843]/10 hover:text-[#B8860B]"
+                          : "border-border bg-card text-muted-foreground hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
                       }`}
                       title="Copy content"
                     >
@@ -879,8 +809,8 @@ export default function HistoryContent() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-24 animate-fade-in">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#D4A843]/8">
-            <FolderOpen className="h-9 w-9 text-[#B8860B]/60" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
+            <FolderOpen className="h-9 w-9 text-primary-foreground/60" />
           </div>
           <h3 className="mt-6 font-heading text-2xl font-semibold text-foreground">No results found</h3>
           <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
@@ -893,7 +823,7 @@ export default function HistoryContent() {
               setFilterCategory("all");
               setCurrentPage(1);
             }}
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-6 py-3 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent"
           >
             Clear All Filters
           </button>
@@ -908,7 +838,7 @@ export default function HistoryContent() {
           </p>
           <button
             onClick={handleRestore}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#D4A843]/15 px-3 py-1.5 text-xs font-medium text-[#B8860B] transition-all hover:bg-[#D4A843]/25"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#567C8D]/15 px-3 py-1.5 text-xs font-medium text-primary-foreground transition-all hover:bg-[#567C8D]/25"
           >
             <Undo2 className="h-3.5 w-3.5" />
             Undo

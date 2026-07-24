@@ -45,7 +45,7 @@ const badgeColors: Record<string, string> = {
   Business: "bg-violet-50/80 text-violet-700 border-violet-100",
   Education: "bg-sky-50/80 text-sky-700 border-sky-100",
   Developer: "bg-stone-50/80 text-stone-700 border-stone-100",
-  "AI Utility": "bg-[#D4A843]/8 text-[#B8860B] border-[#D4A843]/20",
+  "AI Utility": "bg-[#567C8D]/8 text-secondary border-[#567C8D]/20",
 };
 
 export default function TemplateCard({
@@ -68,13 +68,13 @@ export default function TemplateCard({
 
   return (
     <div
-      className="card-shimmer gold-glow group rounded-[20px] border border-border bg-card p-6 space-y-5 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#D4A843]/30 animate-fade-in-up"
+      className="card-shimmer primary-glow group rounded-[20px] border border-border bg-card p-6 space-y-5 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#567C8D]/30 animate-fade-in-up"
       style={{ animationDelay: `${(index % 6) * 60}ms` }}
     >
       {/* Top Section */}
       <div className="flex items-center justify-between">
-        <div className="rounded-2xl bg-[var(--muted)] p-3.5 transition-colors duration-300 group-hover:bg-[#D4A843]/10">
-          <Icon className="h-7 w-7 text-[#B8860B]" />
+        <div className="rounded-2xl bg-[var(--muted)] p-3.5 transition-colors duration-300 group-hover:bg-[#567C8D]/10">
+          <Icon className="h-7 w-7 text-secondary" />
         </div>
 
         <span
@@ -116,7 +116,7 @@ export default function TemplateCard({
 
   <button 
     onClick={() => onUse?.(id)}
-    className="flex-1 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] py-3 text-sm font-medium text-[#D4A843] transition-all duration-300 hover:shadow-md hover:shadow-[#D4A843]/10"
+    className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:shadow-md hover:shadow-primary/20"
   >
     Use Template
   </button>

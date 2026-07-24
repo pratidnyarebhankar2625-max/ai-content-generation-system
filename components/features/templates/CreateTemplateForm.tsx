@@ -72,7 +72,7 @@ const [category, setCategory] = useState(
             placeholder="Template name"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
           />
 
 
@@ -80,14 +80,14 @@ const [category, setCategory] = useState(
             placeholder="Template description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
           />
 
 
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+            className="w-full rounded-2xl border border-border bg-[var(--surface-input)] p-3.5 text-sm transition-all duration-300 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
           >
             <option>Writing</option>
             <option>Email</option>
@@ -102,7 +102,7 @@ const [category, setCategory] = useState(
 
           <button
             onClick={handleSubmit}
-            className="w-full rounded-2xl bg-gradient-to-r from-[#1C1917] to-[#292524] px-4 py-3.5 text-sm font-medium text-[#D4A843] transition-all duration-300 hover:shadow-lg hover:shadow-[#D4A843]/10"
+            className="w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
           >
             {isEditing ? "Save Changes" : "Create Template"}
           </button>

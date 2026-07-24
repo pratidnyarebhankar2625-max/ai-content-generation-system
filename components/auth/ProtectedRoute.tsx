@@ -20,11 +20,11 @@ export default function ProtectedRoute({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface-page)] via-[#F4F0EA] to-[var(--surface-page)]">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface-page)] via-[#F5EFEB] to-[var(--surface-page)]">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="relative h-12 w-12">
-            <div className="absolute inset-0 rounded-full border-2 border-[#E7E0D8]" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#D4A843] animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-[#C8D9E6]" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#567C8D] animate-spin" />
           </div>
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>

@@ -96,7 +96,7 @@ export default function VerifyEmailPage() {
 
           <button
             onClick={() => router.push("/")}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
           >
             Go to Dashboard
             <ArrowRight className="h-4 w-4" />
@@ -126,13 +126,13 @@ export default function VerifyEmailPage() {
         {/* Mail illustration */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D4A843]/15 to-[#B8860B]/10 animate-scale-in">
-              <Mail className="h-9 w-9 text-[#B8860B]" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D]/15 to-[#567C8D]/10 animate-scale-in">
+              <Mail className="h-9 w-9 text-primary-foreground" />
             </div>
             {/* Animated dots */}
-            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-[#D4A843] animate-bounce" style={{ animationDelay: "0ms" }} />
-            <div className="absolute -top-1 right-4 h-2 w-2 rounded-full bg-[#D4A843]/60 animate-bounce" style={{ animationDelay: "200ms" }} />
-            <div className="absolute top-3 -right-3 h-2 w-2 rounded-full bg-[#D4A843]/40 animate-bounce" style={{ animationDelay: "400ms" }} />
+            <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-[#567C8D] animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="absolute -top-1 right-4 h-2 w-2 rounded-full bg-[#567C8D]/60 animate-bounce" style={{ animationDelay: "200ms" }} />
+            <div className="absolute top-3 -right-3 h-2 w-2 rounded-full bg-[#567C8D]/40 animate-bounce" style={{ animationDelay: "400ms" }} />
           </div>
         </div>
 
@@ -150,14 +150,14 @@ export default function VerifyEmailPage() {
         </div>
 
         {/* Verify button (simulated) */}
-        <div className="rounded-xl border border-[#D4A843]/20 bg-[#D4A843]/5 p-4 space-y-3">
-          <p className="text-xs text-[#B8860B] font-medium">
+        <div className="rounded-xl border-transparent bg-[#567C8D]/5 p-4 space-y-3">
+          <p className="text-xs text-primary-foreground font-medium">
             ✨ Demo: Click below to simulate clicking the verification link from your email
           </p>
           <button
             onClick={handleVerify}
             disabled={isVerifying}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60"
           >
             {isVerifying ? (
               <>
@@ -179,7 +179,7 @@ export default function VerifyEmailPage() {
           <button
             onClick={handleResend}
             disabled={isResending}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#B8860B] transition-colors hover:text-[#D4A843] disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:text-primary-foreground disabled:opacity-60"
           >
             {isResending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

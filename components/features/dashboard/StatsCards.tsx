@@ -4,9 +4,11 @@ import { useDashboard } from "@/lib/dashboard-store";
 import StatCard from "./StatCard";
 import { SkeletonStatsGrid } from "./SkeletonCard";
 import { FolderKanban, CheckCircle2, FileText, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function StatsCards() {
   const { data, isLoading, setFilterStatus } = useDashboard();
+  const router = useRouter();
 
   if (isLoading || !data) {
     return (
@@ -79,7 +81,7 @@ export default function StatsCards() {
             sparklineData={stat.sparklineData}
             onClick={() => {
               stat.filterAction();
-              document.getElementById('recent-projects')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              router.push('/templates');
             }}
           />
         ))}

@@ -47,8 +47,8 @@ export default function ForgotPasswordPage() {
           {/* Success Illustration */}
           <div className="flex justify-center">
             <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#D4A843]/15 to-[#B8860B]/10 animate-scale-in">
-                <Mail className="h-9 w-9 text-[#B8860B]" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D]/15 to-[#567C8D]/10 animate-scale-in">
+                <Mail className="h-9 w-9 text-primary-foreground" />
               </div>
               <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 shadow-lg animate-scale-in stagger-2">
                 <CheckCircle2 className="h-4 w-4 text-white" />
@@ -64,13 +64,13 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Simulated direct link (since no real email) */}
-          <div className="rounded-xl border border-[#D4A843]/20 bg-[#D4A843]/5 p-4">
-            <p className="text-xs text-[#B8860B] font-medium mb-2">
+          <div className="rounded-xl border-transparent bg-[#567C8D]/5 p-4">
+            <p className="text-xs text-primary-foreground font-medium mb-2">
               ✨ Demo: Click below to simulate clicking the email link
             </p>
             <Link
               href={`/reset-password?token=${resetToken}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#D4A843]/15 px-4 py-2 text-xs font-semibold text-[#B8860B] transition-all hover:bg-[#D4A843]/25"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#567C8D]/15 px-4 py-2 text-xs font-semibold text-primary-foreground transition-all hover:bg-[#567C8D]/25"
             >
               Reset My Password →
             </Link>
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
               Didn&apos;t receive an email? Check spam or{" "}
               <button
                 onClick={() => setSent(false)}
-                className="font-semibold text-[#B8860B] hover:text-[#D4A843]"
+                className="font-semibold text-primary-foreground hover:text-primary-foreground"
               >
                 try again
               </button>
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="relative h-12 w-full rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="relative h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">

@@ -15,12 +15,12 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen">
       {/* ── Left Panel — Brand / Illustration ───────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-gradient-to-br from-[#1C1917] via-[#292524] to-[#0C0A09]">
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-gradient-to-br from-primary to-secondary">
         {/* Decorative elements */}
         <div className="absolute inset-0">
-          <div className="absolute top-[15%] left-[10%] h-72 w-72 rounded-full bg-[#D4A843]/8 blur-3xl animate-fade-in" />
-          <div className="absolute bottom-[20%] right-[5%] h-96 w-96 rounded-full bg-[#B8860B]/6 blur-3xl animate-fade-in stagger-2" />
-          <div className="absolute top-[60%] left-[30%] h-48 w-48 rounded-full bg-[#D4A843]/4 blur-2xl animate-fade-in stagger-4" />
+          <div className="absolute top-[15%] left-[10%] h-72 w-72 rounded-full bg-[#567C8D]/8 blur-3xl animate-fade-in" />
+          <div className="absolute bottom-[20%] right-[5%] h-96 w-96 rounded-full bg-[#567C8D]/6 blur-3xl animate-fade-in stagger-2" />
+          <div className="absolute top-[60%] left-[30%] h-48 w-48 rounded-full bg-[#567C8D]/4 blur-2xl animate-fade-in stagger-4" />
         </div>
 
         {/* Grid pattern overlay */}
@@ -28,7 +28,7 @@ export default function AuthLayout({
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(212,168,67,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(212,168,67,0.3) 1px, transparent 1px)",
+              "linear-gradient(rgba(86, 124, 141,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(86, 124, 141,0.3) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
@@ -37,26 +37,26 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3 animate-fade-in-down">
-            <div className="rounded-2xl bg-gradient-to-br from-[#D4A843] via-[#B8860B] to-[#8B6914] p-3 shadow-[0_0_25px_rgba(212,168,67,0.3)]">
-              <Sparkles className="h-6 w-6 text-[#1C1917]" />
+            <div className="rounded-2xl bg-gradient-to-br from-[#567C8D] via-[#567C8D] to-[#567C8D] p-3 shadow-[0_0_25px_rgba(86, 124, 141,0.3)]">
+              <Sparkles className="h-6 w-6 text-[#2F4156]" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-[#FAF8F5]">
+            <span className="text-xl font-bold tracking-tight text-primary-foreground">
               AI Content Studio
             </span>
           </div>
 
           {/* Hero text */}
           <div className="space-y-6 animate-fade-in-up">
-            <h2 className="font-heading text-4xl font-bold leading-tight tracking-tight text-[#FAF8F5]">
+            <h2 className="font-heading text-4xl font-bold leading-tight tracking-tight text-primary-foreground">
               Create Amazing
               <br />
-              <span className="bg-gradient-to-r from-[#D4A843] to-[#B8860B] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#567C8D] to-[#567C8D] bg-clip-text text-transparent">
                 AI-Powered
               </span>
               <br />
               Content
             </h2>
-            <p className="max-w-md text-base leading-relaxed text-[#A8A29E]">
+            <p className="max-w-md text-base leading-relaxed text-muted-foreground">
               Generate blog posts, emails, social media content, and more with
               your personal AI assistant. Faster, smarter, better.
             </p>
@@ -69,10 +69,10 @@ export default function AuthLayout({
                 { value: "50+", label: "Templates" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <p className="font-heading text-2xl font-bold text-[#D4A843]">
+                  <p className="font-heading text-2xl font-bold text-[#567C8D]">
                     {stat.value}
                   </p>
-                  <p className="text-xs text-[#78716C]">{stat.label}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -86,11 +86,11 @@ export default function AuthLayout({
       </div>
 
       {/* ── Right Panel — Form ──────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col bg-gradient-to-br from-[var(--surface-page)] via-[#F4F0EA] to-[var(--surface-page)]">
+      <div className="flex flex-1 flex-col bg-gradient-to-br from-[var(--surface-page)] via-[#F5EFEB] to-[var(--surface-page)]">
         {/* Mobile logo */}
         <div className="flex items-center gap-3 p-6 lg:hidden">
-          <div className="rounded-xl bg-gradient-to-br from-[#D4A843] to-[#B8860B] p-2.5 shadow-md">
-            <Sparkles className="h-5 w-5 text-[#1C1917]" />
+          <div className="rounded-xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] p-2.5 shadow-md">
+            <Sparkles className="h-5 w-5 text-[#2F4156]" />
           </div>
           <span className="text-lg font-bold tracking-tight text-foreground">
             AI Content Studio

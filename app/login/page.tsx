@@ -94,7 +94,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function LoginPage() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-[#B8860B] transition-colors hover:text-[#D4A843]"
+              className="text-xs font-medium text-primary-foreground transition-colors hover:text-primary-foreground"
             >
               Forgot password?
             </Link>
@@ -121,7 +121,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               autoComplete="current-password"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
             <button
               type="button"
@@ -144,12 +144,12 @@ export default function LoginPage() {
             onClick={() => setRememberMe(!rememberMe)}
             className={`flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-300 ${
               rememberMe
-                ? "border-[#D4A843] bg-[#D4A843]"
-                : "border-border hover:border-[#D4A843]/40"
+                ? "border-[#567C8D] bg-[#567C8D]"
+                : "border-border hover:border-transparent"
             }`}
           >
             {rememberMe && (
-              <svg className="h-3 w-3 text-[#1C1917]" viewBox="0 0 12 12" fill="none">
+              <svg className="h-3 w-3 text-[#2F4156]" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M2 6L5 9L10 3"
                   stroke="currentColor"
@@ -172,7 +172,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="relative h-12 w-full rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="relative h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
@@ -216,7 +216,7 @@ export default function LoginPage() {
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="font-semibold text-[#B8860B] transition-colors hover:text-[#D4A843]"
+            className="font-semibold text-primary-foreground transition-colors hover:text-primary-foreground"
           >
             Create one
           </Link>

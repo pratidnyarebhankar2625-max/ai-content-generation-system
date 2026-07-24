@@ -16,6 +16,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 interface GenerateWorkspaceProps {
   templateId: number;
@@ -30,8 +31,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   const [keywords, setKeywords] = useState("");
   const [tone, setTone] = useState("Professional");
   const [generationId, setGenerationId] = useState<number | null>(null);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isSavedAsDraft, setIsSavedAsDraft] = useState(false);
+  const [editorContent, setEditorContent] = useState("");
 
   const {
     completion,
@@ -60,6 +60,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
           preview: completion,
           wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
         });
+        setEditorContent(completion);
       }
     },
     onError: (err) => {
@@ -98,35 +99,19 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
       if (now - lastUpdateRef.current > 1000) { // Update store every 1 second
         lastUpdateRef.current = now;
         updateGeneration(generationId, {
-          preview: completion,
           wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
         });
+        setEditorContent(completion);
       }
     }
   }, [completion, isLoading, generationId, updateGeneration]);
 
 
-  const handleCopy = () => {
-    if (completion) {
-      navigator.clipboard.writeText(completion);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    }
-  };
-
-  const handleDownload = () => {
-    if (completion) {
-      const element = document.createElement("a");
-      const file = new Blob([completion], { type: 'text/plain' });
-      element.href = URL.createObjectURL(file);
-      element.download = `${topic || 'generated-content'}.txt`;
-      document.body.appendChild(element); // Required for this to work in FireFox
-      element.click();
-    }
-  };
-
-  const handleManualSaveDraft = () => {
-    if (!generationId && template && (topic || completion)) {
+  const handleEditorSave = (content: string) => {
+    const plainText = content.replace(/<[^>]*>?/gm, '');
+    const words = plainText.trim().split(/\s+/).filter(w => w.length > 0).length;
+    
+    if (!generationId && template && (topic || content)) {
       const newId = Date.now();
       setGenerationId(newId);
       addGeneration({
@@ -134,20 +119,16 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         template: template.title,
         category: template.category,
         status: "draft",
-        wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
-        preview: completion || "Empty draft",
+        wordCount: words,
+        preview: content || "Empty draft",
       });
-      setIsSavedAsDraft(true);
-      setTimeout(() => setIsSavedAsDraft(false), 2000);
     } else if (generationId) {
       updateGeneration(generationId, {
         title: topic || `New ${template.title}`,
         status: "draft",
-        preview: completion,
-        wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
+        preview: content,
+        wordCount: words,
       });
-      setIsSavedAsDraft(true);
-      setTimeout(() => setIsSavedAsDraft(false), 2000);
     }
   };
 
@@ -175,7 +156,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   if (!template) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#D4A843]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
       </div>
     );
   }
@@ -192,10 +173,10 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         </button>
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-[#D4A843]" />
+            <Sparkles className="h-6 w-6 text-primary-foreground" />
             {template.title} Generator
           </h1>
-          <p className="text-[#87817B] text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {template.description}
           </p>
         </div>
@@ -217,7 +198,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                     setInput(e.target.value); // Sync with useCompletion input
                   }}
                   placeholder="e.g. 10 tips for better productivity..."
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none h-28 focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none h-28 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
                   required
                 />
               </div>
@@ -229,7 +210,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   placeholder="e.g. focus, time management, tools"
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
                 />
               </div>
 
@@ -238,7 +219,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                 <select
                   value={tone}
                   onChange={(e) => setTone(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
                 >
                   <option>Professional</option>
                   <option>Casual</option>
@@ -251,7 +232,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
               <button
                 type="submit"
                 disabled={isLoading || !topic.trim()}
-                className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] py-3.5 text-sm font-medium text-[#D4A843] border border-[#D4A843]/20 shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-md hover:border-[#D4A843]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-md hover:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
@@ -271,89 +252,23 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
 
         {/* Right Output Panel */}
         <div className="lg:col-span-8 flex flex-col animate-fade-in-up stagger-2 h-full min-h-[500px]">
-          <div className="flex-1 rounded-[20px] border border-border bg-card shadow-sm flex flex-col overflow-hidden">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between border-b border-border bg-muted/20 px-6 py-3.5">
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Generated Output
-              </h3>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleManualSaveDraft}
-                  disabled={!completion && !topic}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30"
-                  title="Save as Draft"
-                >
-                  {isSavedAsDraft ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Save className="h-3.5 w-3.5" />}
-                  Save Draft
-                </button>
-                <div className="w-px h-4 bg-border mx-1"></div>
-                <button
-                  onClick={handleCopy}
-                  disabled={!completion}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30"
-                >
-                  {isCopied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  Copy
-                </button>
-                <button
-                  onClick={handleDownload}
-                  disabled={!completion}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </button>
-                <button
-                  onClick={(e) => {
-                    // Trigger the form submit again to regenerate
-                    if (topic) {
-                      setGenerationId(null); // Reset generation id to create a new one, or keep it to overwrite? Let's create new.
-                      complete(topic);
-                    }
-                  }}
-                  disabled={isLoading || !completion}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[#D4A843] bg-[#D4A843]/10 hover:bg-[#D4A843]/20 transition-colors disabled:opacity-30"
-                >
-                  <RotateCcw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                  Regenerate
-                </button>
-              </div>
+          {error && (
+            <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error.message || "An error occurred during generation."}</p>
             </div>
-
-            {/* Content Area */}
-            <div className="flex-1 p-6 overflow-y-auto bg-gradient-to-b from-card to-muted/10 relative">
-              {error && (
-                <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error.message || "An error occurred during generation."}</p>
-                </div>
-              )}
-              
-              {!completion && !isLoading && !error ? (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground/60 space-y-4">
-                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center border border-dashed border-muted-foreground/30">
-                    <Sparkles className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-sm">Your generated content will appear here</p>
-                </div>
-              ) : (
-                <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-muted prose-pre:border prose-pre:border-border whitespace-pre-wrap text-foreground">
-                  {completion}
-                  {isLoading && (
-                    <span className="inline-block w-2 h-4 ml-1 bg-[#D4A843] animate-pulse"></span>
-                  )}
-                </div>
-              )}
-            </div>
+          )}
+          
+          <div className="flex-1 flex flex-col h-full">
+            <RichTextEditor 
+              initialContent={editorContent || completion || ""} 
+              isStreaming={isLoading}
+              onSave={handleEditorSave}
+              onChange={(content) => setEditorContent(content)}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-// Ensure the icon exists since we imported it but it might have been missing
-import { FileText } from "lucide-react";

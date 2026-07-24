@@ -15,7 +15,7 @@ export default function SkeletonCard({
   if (variant === "welcome") {
     return (
       <div
-        className="animate-fade-in-up rounded-[20px] bg-gradient-to-r from-[#1C1917] via-[#292524] to-[#1C1917] p-10"
+        className="animate-fade-in-up rounded-[20px] bg-gradient-to-r from-primary to-secondary p-10"
         style={{ animationDelay: delay }}
       >
         <div className="flex items-center justify-between">

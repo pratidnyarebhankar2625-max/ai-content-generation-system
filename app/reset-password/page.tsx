@@ -82,7 +82,7 @@ function ResetPasswordForm() {
 
           <Link
             href="/login"
-            className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
           >
             Go to Sign In
           </Link>
@@ -107,7 +107,7 @@ function ResetPasswordForm() {
 
           <Link
             href="/forgot-password"
-            className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
+            className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01]"
           >
             Request New Link
           </Link>
@@ -140,7 +140,7 @@ function ResetPasswordForm() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password"
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
             <button
               type="button"
@@ -160,7 +160,7 @@ function ResetPasswordForm() {
                     key={i}
                     className="h-1.5 flex-1 rounded-full transition-all duration-500"
                     style={{
-                      backgroundColor: i < strength.score ? strength.color : "#E7E0D8",
+                      backgroundColor: i < strength.score ? strength.color : "#C8D9E6",
                     }}
                   />
                 ))}
@@ -203,7 +203,7 @@ function ResetPasswordForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#D4A843]/50 focus:shadow-[0_0_0_3px_rgba(212,168,67,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
             />
             {confirmPassword && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -221,7 +221,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="relative h-12 w-full rounded-xl bg-gradient-to-r from-[#1C1917] to-[#292524] text-sm font-semibold text-[#D4A843] shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="relative h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
@@ -251,7 +251,7 @@ export default function ResetPasswordPage() {
       fallback={
         <AuthLayout title="Loading..." subtitle="Please wait.">
           <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-[#D4A843]" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary-foreground" />
           </div>
         </AuthLayout>
       }

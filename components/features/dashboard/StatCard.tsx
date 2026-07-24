@@ -73,14 +73,14 @@ function Sparkline({ data }: { data: number[] }) {
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
           <defs>
             <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#D4A843" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#D4A843" stopOpacity={0} />
+              <stop offset="0%" stopColor="#567C8D" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#567C8D" stopOpacity={0} />
             </linearGradient>
           </defs>
           <Area
             type="monotone"
             dataKey="v"
-            stroke="#D4A843"
+            stroke="#567C8D"
             strokeWidth={1.5}
             fill="url(#sparkGrad)"
             dot={false}
@@ -110,11 +110,11 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`card-shimmer gold-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#D4A843]/30 animate-fade-in-up ${onClick ? "cursor-pointer" : ""}`}
+      className={`card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#567C8D]/30 animate-fade-in-up ${onClick ? "cursor-pointer" : ""}`}
       style={{ animationDelay: `${(index + 1) * 80}ms` }}
     >
       {/* Icon */}
-      <div className="inline-flex items-center justify-center rounded-2xl bg-[#D4A843]/8 p-3 text-[#B8860B]">
+      <div className="inline-flex items-center justify-center rounded-2xl bg-[#567C8D]/8 p-3 text-[#567C8D]">
         {icon}
       </div>
 
