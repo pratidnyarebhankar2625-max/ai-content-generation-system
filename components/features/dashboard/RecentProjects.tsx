@@ -53,8 +53,8 @@ export default function RecentProjects() {
           )}
         </div>
         <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-16 animate-fade-in">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#567C8D]/8">
-            <FolderOpen className="h-8 w-8 text-[#567C8D]/60" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#113680]/10">
+            <FolderOpen className="h-8 w-8 text-[#113680]/60" />
           </div>
           <h3 className="mt-5 font-heading text-xl font-semibold text-foreground">
             No projects yet

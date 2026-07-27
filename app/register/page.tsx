@@ -121,7 +121,7 @@ export default function RegisterPage() {
               onChange={(e) => setName(e.target.value)}
               placeholder="John Doe"
               autoComplete="name"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#113680]/50 focus:shadow-[0_0_0_3px_rgba(17,54,128,0.15)]"
             />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#113680]/50 focus:shadow-[0_0_0_3px_rgba(17,54,128,0.15)]"
             />
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password"
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-12 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#113680]/50 focus:shadow-[0_0_0_3px_rgba(17,54,128,0.15)]"
             />
             <button
               type="button"
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                     key={i}
                     className="h-1.5 flex-1 rounded-full transition-all duration-500"
                     style={{
-                      backgroundColor: i < strength.score ? strength.color : "#C8D9E6",
+                      backgroundColor: i < strength.score ? strength.color : "#e2e8f0",
                     }}
                   />
                 ))}
@@ -226,7 +226,7 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm your password"
               autoComplete="new-password"
-              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+              className="h-12 w-full rounded-xl border border-border bg-[var(--surface-input)] pl-11 pr-4 text-sm transition-all duration-300 placeholder:text-muted-foreground/50 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#113680]/50 focus:shadow-[0_0_0_3px_rgba(17,54,128,0.15)]"
             />
             {confirmPassword && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -244,7 +244,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="relative h-12 w-full rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="relative h-12 w-full rounded-xl bg-[#113680] text-sm font-semibold text-white shadow-md shadow-[#113680]/20 transition-all duration-300 hover:bg-[#0d2960] hover:shadow-lg hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
@@ -288,7 +288,7 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-semibold text-primary-foreground transition-colors hover:text-primary-foreground"
+            className="font-semibold text-[#fe4443] transition-colors hover:underline"
           >
             Sign in
           </Link>

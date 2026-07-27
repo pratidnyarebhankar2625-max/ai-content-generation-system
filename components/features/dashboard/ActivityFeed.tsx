@@ -37,8 +37,8 @@ const activityConfig: Record<
 
 const defaultConfig = {
   icon: <Zap className="h-4 w-4" />,
-  bgClass: "bg-[#567C8D]/10 text-[#567C8D]",
-  ringClass: "ring-[#567C8D]/20",
+  bgClass: "bg-[#113680]/10 text-[#113680]",
+  ringClass: "ring-[#113680]/20",
 };
 
 // ─── Activity Feed Component ─────────────────────────────────────────────────
@@ -53,11 +53,11 @@ export default function ActivityFeed() {
   const { recentActivity } = data;
 
   return (
-    <div className="card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:border-[#567C8D]/30 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+    <div className="card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:border-[#113680]/30 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center justify-center rounded-2xl bg-[#567C8D]/8 p-2.5 text-[#567C8D]">
+          <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-2.5 text-[#113680]">
             <Clock className="h-5 w-5" />
           </div>
           <h3 className="text-lg font-semibold text-foreground">
@@ -67,7 +67,7 @@ export default function ActivityFeed() {
 
         <Link
           href="/history"
-          className="group flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[#567C8D] transition-all duration-300 hover:bg-[#567C8D]/8"
+          className="group flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#fe4443] transition-all duration-300 hover:bg-[#fe4443]/10"
         >
           View all
           <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" />

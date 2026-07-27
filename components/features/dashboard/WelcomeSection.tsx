@@ -21,9 +21,9 @@ export default function WelcomeSection() {
   return (
     <section className="animate-fade-in-up">
       <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-primary to-secondary p-10 shadow-[var(--shadow-elevated)]">
-        {/* Decorative gold accent */}
-        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#567C8D]/10 blur-3xl" />
-        <div className="absolute -left-6 -bottom-6 h-32 w-32 rounded-full bg-[#567C8D]/8 blur-2xl" />
+        {/* Decorative accent */}
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#fe4443]/20 blur-3xl" />
+        <div className="absolute -left-6 -bottom-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
 
         <div className="relative flex items-center justify-between">
           <div className="space-y-4">

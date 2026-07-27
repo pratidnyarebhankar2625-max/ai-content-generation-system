@@ -45,7 +45,7 @@ const badgeColors: Record<string, string> = {
   Business: "bg-violet-50/80 text-violet-700 border-violet-100",
   Education: "bg-sky-50/80 text-sky-700 border-sky-100",
   Developer: "bg-stone-50/80 text-stone-700 border-stone-100",
-  "AI Utility": "bg-[#567C8D]/8 text-secondary border-[#567C8D]/20",
+  "AI Utility": "bg-[#113680]/10 text-[#113680] border-[#113680]/20",
 };
 
 export default function TemplateCard({
@@ -68,12 +68,12 @@ export default function TemplateCard({
 
   return (
     <div
-      className="card-shimmer primary-glow group rounded-[20px] border border-border bg-card p-6 space-y-5 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#567C8D]/30 animate-fade-in-up"
+      className="card-shimmer primary-glow group rounded-[20px] border border-border bg-card p-6 space-y-5 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#113680]/30 animate-fade-in-up"
       style={{ animationDelay: `${(index % 6) * 60}ms` }}
     >
       {/* Top Section */}
       <div className="flex items-center justify-between">
-        <div className="rounded-2xl bg-[var(--muted)] p-3.5 transition-colors duration-300 group-hover:bg-[#567C8D]/10">
+        <div className="rounded-2xl bg-[var(--muted)] p-3.5 transition-colors duration-300 group-hover:bg-[#113680]/10">
           <Icon className="h-7 w-7 text-secondary" />
         </div>
 

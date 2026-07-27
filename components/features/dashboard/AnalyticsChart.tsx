@@ -60,9 +60,9 @@ export default function AnalyticsChart() {
 
       <div className="grid gap-6 grid-cols-1">
         {/* ── Donut Chart: Category Breakdown ──────────────────────────── */}
-        <div className="card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:border-[#567C8D]/30 min-h-[300px]">
+        <div className="card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:border-[#113680]/30 min-h-[300px]">
           <div className="flex items-center gap-3 mb-6">
-            <div className="inline-flex items-center justify-center rounded-2xl bg-[#567C8D]/8 p-2.5 text-[#567C8D]">
+            <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-2.5 text-[#113680]">
               <PieChartIcon className="h-5 w-5" />
             </div>
             <div>

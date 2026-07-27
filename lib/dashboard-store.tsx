@@ -80,17 +80,17 @@ type DashboardContextType = {
 // ─── Category Color Palette ──────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Blog Writing": "#D4A843",
-  Email: "#B8860B",
-  "Social Media": "#8B6914",
-  Marketing: "#78716C",
-  Developer: "#44403C",
-  Education: "#A8A29E",
-  "AI Utility": "#1C1917",
+  "Blog Writing": "#113680",   // Deep Royal Navy (Primary Theme)
+  Email: "#1e56b8",            // Bright Royal Blue
+  "Social Media": "#fe4443",   // Vibrant Coral/Red (Secondary Theme)
+  Marketing: "#ff7877",        // Soft Coral/Salmon
+  Developer: "#0a2250",        // Midnight Navy
+  Education: "#5282d1",        // Sky Blue
+  "AI Utility": "#64748b",     // Slate Blue/Gray (aligns with #f8fafc)
 };
 
 function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] || "#78716C";
+  return CATEGORY_COLORS[category] || "#113680";
 }
 
 // ─── Time-of-Day Greeting ────────────────────────────────────────────────────

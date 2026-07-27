@@ -16,7 +16,7 @@ export default function DashboardLayout({
         <Navbar />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[var(--surface-page)] via-[#F5EFEB] to-[var(--surface-page)]">
+          <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[var(--surface-page)] via-[#f8fafc] to-[var(--surface-page)]">
             <PageTransition>{children}</PageTransition>
           </main>
         </div>

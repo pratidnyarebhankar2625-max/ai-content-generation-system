@@ -49,14 +49,14 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <button
             onClick={toggleSidebar}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition-all hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[#567C8D]/50"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition-all hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
             aria-label="Toggle Sidebar"
           >
             <Menu className="h-5 w-5 text-sidebar" />
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-sm"></div>
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-sm"></div>
             <h1 className="text-lg font-semibold tracking-tight text-sidebar">
               AI Content Studio
             </h1>

@@ -34,15 +34,15 @@ export default function QuickActionCard({
         transition-all
         duration-400
         hover:-translate-y-1.5
-        hover:border-[#567C8D]/30
+        hover:border-[#113680]/30
         animate-fade-in-up
       "
       style={{ animationDelay: `${(index + 1) * 80}ms` }}
     >
-      {/* Gold accent strip on hover */}
-      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#567C8D] opacity-0 transition-all duration-400 group-hover:opacity-100" />
+      {/* Accent strip on hover */}
+      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#fe4443] opacity-0 transition-all duration-400 group-hover:opacity-100" />
 
-      <div className="inline-flex items-center justify-center rounded-2xl bg-[#567C8D]/8 p-3.5 text-[#567C8D] transition-colors duration-300 group-hover:bg-[#567C8D]/15 group-hover:text-[#567C8D]">
+      <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-3.5 text-[#113680] transition-colors duration-300 group-hover:bg-[#113680]/15 group-hover:text-[#113680]">
         {icon}
       </div>
 

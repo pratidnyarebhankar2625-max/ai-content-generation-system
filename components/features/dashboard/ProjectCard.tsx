@@ -19,7 +19,7 @@ const statusConfig: Record<string, { icon: React.ReactNode; className: string }>
   },
   "In Progress": {
     icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />,
-    className: "bg-[#567C8D]/8 text-[#567C8D] border-[#567C8D]/20",
+    className: "bg-[#113680]/10 text-[#113680] border-[#113680]/20",
   },
 };
 
@@ -52,7 +52,7 @@ export default function ProjectCard({
         transition-all
         duration-400
         hover:-translate-y-1
-        hover:border-[#567C8D]/30
+        hover:border-[#113680]/30
         animate-fade-in-up
       "
       style={{ animationDelay: `${(index + 1) * 70}ms` }}
@@ -73,7 +73,7 @@ export default function ProjectCard({
           {status}
         </span>
 
-        <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-[#567C8D] group-hover:translate-x-1" />
+        <ArrowRight className="h-5 w-5 text-muted-foreground transition-all duration-300 group-hover:text-[#fe4443] group-hover:translate-x-1" />
       </div>
     </div>
   );
