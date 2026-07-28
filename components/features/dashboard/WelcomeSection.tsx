@@ -20,26 +20,26 @@ export default function WelcomeSection() {
 
   return (
     <section className="animate-fade-in-up">
-      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-primary to-secondary p-10 shadow-[var(--shadow-elevated)]">
+      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#113680] to-[#fe4443] dark:from-[#112A46] dark:to-[#0B192C] p-10 shadow-[var(--shadow-elevated)] border border-transparent dark:border-[rgba(248,250,252,0.1)]">
         {/* Decorative accent */}
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#fe4443]/20 blur-3xl" />
         <div className="absolute -left-6 -bottom-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
 
         <div className="relative flex items-center justify-between">
           <div className="space-y-4">
-            <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-primary-foreground">
+            <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-white dark:text-[#F8FAFC]">
               {data.greeting}, {data.userName}!
             </h1>
 
             <div className="flex items-center gap-4">
-              <p className="max-w-2xl text-lg text-primary-foreground/80">
+              <p className="max-w-2xl text-lg text-white/80 dark:text-[#F8FAFC]/80">
                 Create amazing AI content faster with your personal AI assistant.
               </p>
 
               {/* Refresh indicator */}
               <button
                 onClick={refresh}
-                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-primary-foreground/70 transition-all duration-300 hover:bg-white/10 hover:text-primary-foreground"
+                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-white/70 dark:text-[#F8FAFC]/70 transition-all duration-300 hover:bg-white/10 hover:text-white dark:hover:text-[#F8FAFC]"
                 title="Refresh dashboard"
               >
                 <RefreshCw
@@ -68,7 +68,7 @@ export default function WelcomeSection() {
           <Button
             size="lg"
             onClick={() => router.push("/templates")}
-            className="rounded-2xl bg-white px-8 py-3 text-primary font-semibold shadow-lg shadow-black/5 transition-all duration-400 hover:shadow-xl hover:scale-[1.03]"
+            className="rounded-2xl bg-white dark:bg-[#FE4443] px-8 py-3 text-[#113680] dark:text-white font-semibold shadow-lg shadow-black/5 transition-all duration-400 hover:shadow-xl hover:scale-[1.03]"
           >
             <Sparkles className="mr-2 h-5 w-5" />
             Create Content

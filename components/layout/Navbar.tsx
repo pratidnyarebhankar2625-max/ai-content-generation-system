@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Settings, ChevronDown, Menu } from "lucide-react";
 
 export default function Navbar() {
@@ -42,7 +42,7 @@ export default function Navbar() {
     : "?";
 
   return (
-    <nav className="relative z-50 h-16 border-b border-border bg-white text-sidebar shadow-[0_1px_3px_rgba(28,25,23,0.04)] animate-fade-in-down">
+    <nav className="relative z-50 h-16 border-b border-border bg-white dark:bg-card text-sidebar dark:text-foreground shadow-[0_1px_3px_rgba(28,25,23,0.04)] animate-fade-in-down">
       <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between px-6">
 
         {/* Left Side: Toggle & Logo */}
@@ -52,12 +52,22 @@ export default function Navbar() {
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition-all hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
             aria-label="Toggle Sidebar"
           >
-            <Menu className="h-5 w-5 text-sidebar" />
+            <Menu className="h-5 w-5 text-sidebar dark:text-foreground" />
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-sm"></div>
-            <h1 className="text-lg font-semibold tracking-tight text-sidebar">
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="h-8 w-8 rounded-xl object-cover bg-white shadow-sm" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                target.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <div className="hidden h-8 w-8 rounded-lg bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-sm"></div>
+            <h1 className="text-lg font-semibold tracking-tight text-sidebar dark:text-foreground">
               AI Content Studio
             </h1>
           </div>
@@ -74,29 +84,30 @@ export default function Navbar() {
                 className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-all duration-300 hover:bg-muted"
               >
                 <Avatar className="ring-2 ring-border ring-offset-2 ring-offset-white transition-all duration-300 hover:ring-sidebar/40">
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                   <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-sidebar leading-none">{user.name}</p>
-                  <p className="text-xs text-sidebar/70 mt-0.5">{user.email}</p>
+                  <p className="text-sm font-medium text-sidebar dark:text-foreground leading-none">{user.name}</p>
+                  <p className="text-xs text-sidebar/70 dark:text-foreground/70 mt-0.5">{user.email}</p>
                 </div>
-                <ChevronDown className={`hidden md:block h-4 w-4 text-sidebar/70 transition-transform duration-300 ${showDropdown ? "rotate-180" : ""}`} />
+                <ChevronDown className={`hidden md:block h-4 w-4 text-sidebar/70 dark:text-foreground/70 transition-transform duration-300 ${showDropdown ? "rotate-180" : ""}`} />
               </button>
 
               {/* Dropdown */}
               {showDropdown && (
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card p-1.5 shadow-xl animate-fade-in-down z-50">
                   <div className="px-3 py-2.5 border-b border-border mb-1.5">
-                    <p className="text-sm font-semibold text-sidebar">{user.name}</p>
-                    <p className="text-xs text-sidebar/70">{user.email}</p>
+                    <p className="text-sm font-semibold text-sidebar dark:text-foreground">{user.name}</p>
+                    <p className="text-xs text-sidebar/70 dark:text-foreground/70">{user.email}</p>
                   </div>
 
                   <Link
                     href="/profile"
                     onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 transition-all duration-200 hover:bg-muted hover:text-sidebar"
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 dark:text-foreground/70 transition-all duration-200 hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
                   >
                     <User className="h-4 w-4" />
                     Profile
@@ -105,7 +116,7 @@ export default function Navbar() {
                   <Link
                     href="/settings"
                     onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 transition-all duration-200 hover:bg-muted hover:text-sidebar"
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 dark:text-foreground/70 transition-all duration-200 hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
                   >
                     <Settings className="h-4 w-4" />
                     Settings

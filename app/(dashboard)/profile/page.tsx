@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 
 import { useAuth } from "@/lib/auth-store";
 import {
@@ -29,70 +29,107 @@ function ProfileContent() {
     ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "July 2025";
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <div className="mx-auto max-w-4xl space-y-10 p-10 animate-fade-in">
 
             {/* Header */}
             <div className="flex items-center gap-3 animate-fade-in-up">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
-                <User className="h-6 w-6 text-[#2F4156]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#113680] to-[#113680] shadow-lg shadow-[#113680]/20">
+                <User className="h-6 w-6 text-white" />
               </div>
               <div className="space-y-1">
                 <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">Profile</h1>
-                <p className="text-muted-foreground text-base">Manage your profile and view your activity.</p>
+                <p className="text-foreground/70 text-base">Manage your profile and view your activity.</p>
               </div>
             </div>
 
             {/* Profile Card */}
-            <div className="card-shimmer primary-glow relative overflow-hidden rounded-[20px] border border-border bg-card p-10 animate-fade-in-up stagger-1">
-              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#567C8D]/5 blur-3xl" />
+            <div 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="group card-shimmer primary-glow relative overflow-hidden rounded-[20px] border border-border bg-card p-10 animate-fade-in-up stagger-1 cursor-pointer transition-all duration-300 hover:shadow-lg"
+            >
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#113680]/5 blur-3xl transition-opacity duration-300 group-hover:bg-[#113680]/10" />
 
-              <div className="relative flex items-center gap-6">
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2F4156] to-[#C8D9E6] text-3xl font-bold text-[#567C8D] shadow-lg">
-                  {displayInitials}
-                </div>
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
+                {user?.avatar ? (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-[#113680] to-[#3b82f6] shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-[1.02] overflow-hidden p-0.5">
+                    <img 
+                      src={user.avatar} 
+                      alt="Avatar" 
+                      className="h-full w-full rounded-[14px] object-cover bg-white" 
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-[#113680] to-[#3b82f6] text-3xl font-bold text-white shadow-lg shrink-0 transition-transform duration-300 group-hover:scale-[1.02]">
+                    {displayInitials}
+                  </div>
+                )}
 
-                <div className="space-y-3">
-                  <h2 className="font-heading text-2xl font-bold text-foreground">{displayName}</h2>
-
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Mail className="h-4 w-4" />
-                      {displayEmail}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Briefcase className="h-4 w-4" />
-                      {provider === "google" ? "Google Account" : "AI Developer"}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4" />
-                      Joined {joinedDate}
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading text-2xl font-bold text-foreground">{displayName}</h2>
+                    <span className="text-xs font-semibold text-[#113680] dark:text-[#F8FAFC] bg-[#113680]/10 dark:bg-[#F8FAFC]/10 px-3 py-1.5 rounded-full transition-colors group-hover:bg-[#113680]/20 dark:group-hover:bg-[#F8FAFC]/20">
+                      {isExpanded ? "Hide Details" : "View Details"}
                     </span>
                   </div>
+                  
+                  {!isExpanded && (
+                    <p className="text-sm text-foreground/70">Click to view email, account type, and join date.</p>
+                  )}
 
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#567C8D]/8 border border-[#567C8D]/20 px-3 py-1.5 text-xs font-medium text-[#567C8D]">
-                      <Award className="h-3.5 w-3.5" />
-                      Pro Member
-                    </span>
-                    {isVerified ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 border border-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 border border-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        Unverified
-                      </span>
-                    )}
-                    {provider === "google" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50/80 border border-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700">
-                        <Shield className="h-3.5 w-3.5" />
-                        Google
-                      </span>
-                    )}
-                  </div>
+                  {isExpanded && (
+                    <div className="animate-fade-in-down space-y-4 pt-4 mt-4 border-t border-border/50">
+                      <div className="flex flex-col gap-3.5 text-sm text-foreground/70">
+                        <span className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#113680]/5 dark:bg-[#F8FAFC]/10">
+                            <Mail className="h-4 w-4 text-[#113680] dark:text-[#F8FAFC]" />
+                          </div>
+                          <span className="font-medium text-foreground w-28">Email:</span> 
+                          <span className="text-foreground">{displayEmail}</span>
+                        </span>
+                        <span className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#113680]/5 dark:bg-[#F8FAFC]/10">
+                            <Briefcase className="h-4 w-4 text-[#113680] dark:text-[#F8FAFC]" />
+                          </div>
+                          <span className="font-medium text-foreground w-28">Account Type:</span> 
+                          <span className="text-foreground">{provider === "google" ? "Google Account" : "AI Developer"}</span>
+                        </span>
+                        <span className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#113680]/5 dark:bg-[#F8FAFC]/10">
+                            <Calendar className="h-4 w-4 text-[#113680] dark:text-[#F8FAFC]" />
+                          </div>
+                          <span className="font-medium text-foreground w-28">Joined:</span> 
+                          <span className="text-foreground">{joinedDate}</span>
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#113680]/8 dark:bg-[#F8FAFC]/10 border border-[#113680]/20 dark:border-[#F8FAFC]/20 px-3 py-1.5 text-xs font-medium text-[#113680] dark:text-[#F8FAFC]">
+                          <Award className="h-3.5 w-3.5" />
+                          Pro Member
+                        </span>
+                        {isVerified ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 border border-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 border border-amber-100 px-3 py-1.5 text-xs font-medium text-amber-700">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            Unverified
+                          </span>
+                        )}
+                        {provider === "google" && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50/80 border border-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700">
+                            <Shield className="h-3.5 w-3.5" />
+                            Google
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

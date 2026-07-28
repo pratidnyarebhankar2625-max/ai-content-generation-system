@@ -113,50 +113,6 @@ export default function AuthLayout({
           </div>
         </div>
 
-        {/* Decorative Quick Access / Recent Generations Preview Widget (Inspired by Image) */}
-        <div className="hidden sm:block border-t border-slate-200/80 bg-white/90 backdrop-blur-md p-5 px-8 shadow-sm">
-          <div className="max-w-xl mx-auto space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#113680]">Quick Access</span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#113680] px-3 py-1 text-xs font-semibold text-white shadow-sm">
-                <Sparkles className="h-3 w-3 text-[#fe4443]" /> Create Content
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
-              <div className="flex items-center gap-2 rounded-xl bg-[#113680] px-3.5 py-2 text-xs font-semibold text-white shadow-md shadow-[#113680]/20 shrink-0">
-                <LayoutGrid className="h-3.5 w-3.5 text-white" />
-                <span>Dashboard</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium text-slate-700 shrink-0">
-                <FileText className="h-3.5 w-3.5 text-slate-500" />
-                <span>Templates</span>
-              </div>
-              <div className="flex items-center justify-center rounded-xl border-2 border-[#fe4443] bg-red-50/80 p-2 shadow-[0_0_15px_rgba(254,68,67,0.3)] shrink-0 animate-pulse">
-                <Sparkles className="h-3.5 w-3.5 text-[#fe4443]" />
-              </div>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium text-slate-700 shrink-0">
-                <History className="h-3.5 w-3.5 text-slate-500" />
-                <span>History</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium text-slate-700 shrink-0">
-                <Settings className="h-3.5 w-3.5 text-slate-500" />
-                <span>Settings</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-semibold text-[#113680] truncate">10 Tips for Better Productivity</span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-500">Draft outlines and articles</span>
-              </div>
-              <span className="shrink-0 rounded-md bg-red-50 border border-red-200 px-2 py-0.5 font-semibold text-[#fe4443]">
-                Draft
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

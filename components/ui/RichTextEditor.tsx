@@ -5,7 +5,6 @@ import StarterKit from '@tiptap/starter-kit';
 import { CharacterCount } from '@tiptap/extension-character-count';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { TextStyle } from '@tiptap/extension-text-style';
-import { Underline } from '@tiptap/extension-underline';
 import { BulletList } from '@tiptap/extension-bullet-list';
 import { OrderedList } from '@tiptap/extension-ordered-list';
 import { ListItem } from '@tiptap/extension-list-item';
@@ -81,6 +80,7 @@ export function RichTextEditor({ initialContent, onChange, onSave, isStreaming }
   const [isSaved, setIsSaved] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastNotifiedContentRef = useRef(initialContent);
 
   const editor = useEditor({
     extensions: [
@@ -94,13 +94,14 @@ export function RichTextEditor({ initialContent, onChange, onSave, isStreaming }
       CustomOrderedList,
       TextStyle,
       FontFamily,
-      Underline,
       CharacterCount,
     ],
     content: initialContent,
     editable: !isStreaming,
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
+      lastNotifiedContentRef.current = html;
       const words = editor.storage.characterCount.words();
       const chars = editor.storage.characterCount.characters();
       
@@ -116,14 +117,11 @@ export function RichTextEditor({ initialContent, onChange, onSave, isStreaming }
   });
 
   useEffect(() => {
-    if (editor && isStreaming) {
-      const currentText = editor.getText();
-      if (initialContent !== currentText) {
-        const formattedContent = initialContent.split('\n').map(p => p ? `<p>${p}</p>` : '<p></p>').join('');
-        editor.commands.setContent(formattedContent, { emitUpdate: false });
-      }
+    if (editor && initialContent !== lastNotifiedContentRef.current) {
+      editor.commands.setContent(initialContent, { emitUpdate: false });
+      lastNotifiedContentRef.current = initialContent;
     }
-  }, [initialContent, isStreaming, editor]);
+  }, [initialContent, editor]);
 
   useEffect(() => {
     if (editor) editor.setEditable(!isStreaming);

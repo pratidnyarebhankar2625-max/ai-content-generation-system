@@ -88,6 +88,10 @@ function formatTime(dateStr: string) {
   });
 }
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>?/gm, '');
+}
+
 // ─── View Modal ──────────────────────────────────────────────────────────────
 
 function ViewModal({
@@ -124,9 +128,10 @@ function ViewModal({
           {/* Content */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Content Preview</label>
-            <div className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm text-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
-              {generation.preview}
-            </div>
+            <div 
+              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-6 py-5 max-h-[50vh] overflow-y-auto html-content shadow-inner"
+              dangerouslySetInnerHTML={{ __html: generation.preview }}
+            />
           </div>
 
           {/* Meta */}
@@ -723,7 +728,7 @@ export default function HistoryContent() {
                     </div>
 
                     <p className="line-clamp-2 max-w-3xl text-sm leading-relaxed text-muted-foreground/80">
-                      {item.preview}
+                      {stripHtml(item.preview)}
                     </p>
                   </div>
 

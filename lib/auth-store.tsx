@@ -20,6 +20,7 @@ export type AuthUser = {
   isVerified: boolean;
   provider: "credentials" | "google";
   createdAt: string;
+  avatar?: string;
 };
 
 type StoredUser = AuthUser & {
@@ -38,6 +39,7 @@ type AuthContextType = {
   resetPassword: (token: string, newPassword: string) => Promise<AuthResult>;
   verifyEmail: (token: string) => Promise<AuthResult>;
   resendVerification: () => Promise<AuthResult>;
+  updateUser: (data: Partial<AuthUser>) => Promise<AuthResult>;
 };
 
 type AuthResult = {
@@ -474,6 +476,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSession();
   }, []);
 
+  // ── Update User ──────────────────────────────────────────────────────────
+  const updateUser = useCallback(
+    async (data: Partial<AuthUser>): Promise<AuthResult> => {
+      if (!user) return { success: false, error: "Not logged in." };
+      
+      const users = getUsers();
+      const userIndex = users.findIndex((u) => u.id === user.id);
+      
+      if (userIndex === -1) {
+        return { success: false, error: "User not found." };
+      }
+      
+      users[userIndex] = { ...users[userIndex], ...data };
+      saveUsers(users);
+      
+      const updatedUser = stripPassword(users[userIndex]);
+      setUser(updatedUser);
+      
+      // Update session payload if name or email changed
+      if (data.name || data.email) {
+        const remembered = localStorage.getItem(REMEMBER_KEY) === "true";
+        const token = await createToken(
+          { userId: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
+          remembered ? "30d" : "24h"
+        );
+        saveSession(token);
+      }
+      
+      return { success: true, message: "Profile updated successfully!" };
+    },
+    [user]
+  );
+
   // ── Context Value ────────────────────────────────────────────────────────
   const value = useMemo<AuthContextType>(
     () => ({
@@ -488,6 +523,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetPassword,
       verifyEmail,
       resendVerification,
+      updateUser,
     }),
     [
       user,
@@ -500,6 +536,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetPassword,
       verifyEmail,
       resendVerification,
+      updateUser,
     ]
   );
 

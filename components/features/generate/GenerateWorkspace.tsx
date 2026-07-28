@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useCompletion } from "@ai-sdk/react";
+
 import { templates } from "../templates/templateData";
 import { useContent } from "@/lib/content-store";
 import {
@@ -33,45 +33,78 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   const [generationId, setGenerationId] = useState<number | null>(null);
   const [editorContent, setEditorContent] = useState("");
 
-  const {
-    completion,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    error,
-    complete,
-  } = useCompletion({
-    api: "/api/generate",
-    streamProtocol: "text",
-    body: {
-      template: template?.title || "Custom Template",
-      context: {
-        keywords,
-        tone,
-      },
-    },
-    onFinish: (prompt, completion) => {
-      // Stream finished
-      if (generationId) {
-        updateGeneration(generationId, {
-          status: "completed",
-          preview: completion,
-          wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
-        });
-        setEditorContent(completion);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!topic.trim()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    setEditorContent("Generating...");
+    
+    let currentGenerationId = generationId;
+    if (!currentGenerationId && template) {
+      const newId = Date.now();
+      setGenerationId(newId);
+      currentGenerationId = newId;
+      addGeneration({
+        title: topic || `New ${template.title}`,
+        template: template.title,
+        category: template.category,
+        status: "draft",
+        wordCount: 0,
+        preview: "Generating...",
+      });
+    }
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: topic,
+          template: template?.title || "Custom Template",
+          context: {
+            keywords,
+            tone,
+          },
+        })
+      });
+
+      if (!res.ok) {
+         const errData = await res.json();
+         throw new Error(errData.error || "Generation failed");
       }
-    },
-    onError: (err) => {
-      if (generationId) {
-        updateGeneration(generationId, {
+
+      const data = await res.json();
+      let htmlContent = data.text;
+      if (htmlContent.startsWith("```html")) {
+         htmlContent = htmlContent.replace(/```html\n?/g, "").replace(/```\n?/g, "");
+      }
+      
+      setEditorContent(htmlContent);
+      
+      if (currentGenerationId) {
+        updateGeneration(currentGenerationId, {
+          status: "completed",
+          preview: htmlContent,
+          wordCount: htmlContent.replace(/<[^>]*>?/gm, '').trim().split(/\\s+/).filter((w: string) => w.length > 0).length,
+        });
+      }
+    } catch(err: any) {
+      setError(err);
+      if (currentGenerationId) {
+        updateGeneration(currentGenerationId, {
           status: "failed",
           preview: "Generation failed.",
         });
       }
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
     // Load template
@@ -91,20 +124,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
     }
   }, [templateId, router]);
 
-  // Effect to continuously update the draft content while streaming (throttle or update occasionally)
-  const lastUpdateRef = useRef<number>(0);
-  useEffect(() => {
-    if (isLoading && generationId && completion.length > 0) {
-      const now = Date.now();
-      if (now - lastUpdateRef.current > 1000) { // Update store every 1 second
-        lastUpdateRef.current = now;
-        updateGeneration(generationId, {
-          wordCount: completion.trim().split(/\s+/).filter(w => w.length > 0).length,
-        });
-        setEditorContent(completion);
-      }
-    }
-  }, [completion, isLoading, generationId, updateGeneration]);
+
 
 
   const handleEditorSave = (content: string) => {
@@ -132,26 +152,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
     }
   };
 
-  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!topic.trim()) return;
-    
-    // We create the draft here before submitting
-    if (!generationId && template) {
-      const newId = Date.now();
-      setGenerationId(newId);
-      addGeneration({
-        title: topic || `New ${template.title}`,
-        template: template.title,
-        category: template.category,
-        status: "draft",
-        wordCount: 0,
-        preview: "Generating...",
-      });
-    }
 
-    handleSubmit(e);
-  };
 
   if (!template) {
     return (
@@ -195,7 +196,6 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                   value={topic}
                   onChange={(e) => {
                     setTopic(e.target.value);
-                    setInput(e.target.value); // Sync with useCompletion input
                   }}
                   placeholder="e.g. 10 tips for better productivity..."
                   className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none h-28 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
@@ -261,7 +261,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
           
           <div className="flex-1 flex flex-col h-full">
             <RichTextEditor 
-              initialContent={editorContent || completion || ""} 
+              initialContent={editorContent || ""} 
               isStreaming={isLoading}
               onSave={handleEditorSave}
               onChange={(content) => setEditorContent(content)}
