@@ -29,7 +29,7 @@ export type CategoryBreakdown = {
 };
 
 export type EnrichedActivity = {
-  id: number;
+  id: string;
   action: string;
   description: string;
   template: string;

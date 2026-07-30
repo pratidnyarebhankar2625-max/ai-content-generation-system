@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { templates } from "../templates/templateData";
 import { useContent } from "@/lib/content-store";
@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { marked } from "marked";
 
 interface GenerateWorkspaceProps {
   templateId: number;
@@ -24,32 +25,50 @@ interface GenerateWorkspaceProps {
 
 export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps) {
   const router = useRouter();
-  const { addGeneration, updateGeneration } = useContent();
+  const searchParams = useSearchParams();
+  const { addGeneration, updateGeneration, getGeneration, isLoaded } = useContent();
+
+
 
   const [template, setTemplate] = useState<any>(null);
   const [topic, setTopic] = useState("");
   const [keywords, setKeywords] = useState("");
   const [tone, setTone] = useState("Professional");
-  const [generationId, setGenerationId] = useState<number | null>(null);
+  const [generationId, setGenerationId] = useState<string | null>(null);
   const [editorContent, setEditorContent] = useState("");
+  const [messages, setMessages] = useState<any[]>([]);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const editGenerationId = searchParams.get("generationId");
+    if (editGenerationId && !generationId && isLoaded) {
+      const gen = getGeneration(editGenerationId);
+      if (gen) {
+        setGenerationId(gen.id);
+        setTopic(gen.title);
+        setEditorContent(gen.preview);
+      }
+    }
+  }, [searchParams, generationId, isLoaded, getGeneration]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const onFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onFormSubmit = async (e?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>, isContinue = false) => {
+    if (e) e.preventDefault();
     if (!topic.trim()) return;
     
     setIsLoading(true);
     setError(null);
-    setEditorContent("Generating...");
+    if (!isContinue) {
+      setEditorContent("Generating...");
+      setMessages([]);
+      setIsTruncated(false);
+    }
     
     let currentGenerationId = generationId;
     if (!currentGenerationId && template) {
-      const newId = Date.now();
-      setGenerationId(newId);
-      currentGenerationId = newId;
-      addGeneration({
+      const newId = await addGeneration({
         title: topic || `New ${template.title}`,
         template: template.title,
         category: template.category,
@@ -57,6 +76,17 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         wordCount: 0,
         preview: "Generating...",
       });
+      if (newId) {
+        setGenerationId(newId);
+        currentGenerationId = newId;
+      }
+    }
+
+    let currentMessages: any[] = [];
+    if (isContinue) {
+      currentMessages = [...messages];
+    } else {
+      currentMessages = [{ role: "user", content: `Topic: ${topic}\nKeywords: ${keywords}\nTone: ${tone}` }];
     }
 
     try {
@@ -70,6 +100,8 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
             keywords,
             tone,
           },
+          messages: currentMessages,
+          isContinue
         })
       });
 
@@ -79,18 +111,34 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
       }
 
       const data = await res.json();
-      let htmlContent = data.text;
-      if (htmlContent.startsWith("```html")) {
-         htmlContent = htmlContent.replace(/```html\n?/g, "").replace(/```\n?/g, "");
+      let rawText = data.text;
+      
+      let finalRawContent = rawText;
+      
+      if (isContinue) {
+         // Get previous assistant message and append new text
+         const prevMsg = currentMessages[currentMessages.length - 1]?.content || "";
+         // Remove the truncation warning from previous text if it exists
+         const strippedPrev = prevMsg.replace(/\n\n\[Response truncated — click Continue to generate the remaining content\.\]$/, "");
+         finalRawContent = strippedPrev + rawText;
+         // Replace the last message
+         currentMessages[currentMessages.length - 1] = { role: "assistant", content: finalRawContent };
+         setMessages([...currentMessages]);
+      } else {
+         setMessages([...currentMessages, { role: "assistant", content: finalRawContent }]);
       }
+
+      // Convert Markdown to HTML for the RichTextEditor
+      let htmlContent = await marked.parse(finalRawContent);
       
       setEditorContent(htmlContent);
+      setIsTruncated(data.isTruncated);
       
       if (currentGenerationId) {
         updateGeneration(currentGenerationId, {
           status: "completed",
           preview: htmlContent,
-          wordCount: htmlContent.replace(/<[^>]*>?/gm, '').trim().split(/\\s+/).filter((w: string) => w.length > 0).length,
+          wordCount: htmlContent.replace(/<[^>]*>?/gm, '').trim().split(/\s+/).filter((w: string) => w.length > 0).length,
         });
       }
     } catch(err: any) {
@@ -127,14 +175,12 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
 
 
 
-  const handleEditorSave = (content: string) => {
+  const handleEditorSave = async (content: string) => {
     const plainText = content.replace(/<[^>]*>?/gm, '');
     const words = plainText.trim().split(/\s+/).filter(w => w.length > 0).length;
     
     if (!generationId && template && (topic || content)) {
-      const newId = Date.now();
-      setGenerationId(newId);
-      addGeneration({
+      const newId = await addGeneration({
         title: topic || `New ${template.title}`,
         template: template.title,
         category: template.category,
@@ -142,6 +188,7 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         wordCount: words,
         preview: content || "Empty draft",
       });
+      if (newId) setGenerationId(newId);
     } else if (generationId) {
       updateGeneration(generationId, {
         title: topic || `New ${template.title}`,
@@ -266,6 +313,25 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
               onSave={handleEditorSave}
               onChange={(content) => setEditorContent(content)}
             />
+            
+            {isTruncated && (
+              <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                  <p className="text-sm text-blue-800">
+                    The generation reached its maximum length and was paused. Click Continue to finish the content.
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => onFormSubmit(e as any, true)}
+                  disabled={isLoading}
+                  className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                  Continue Generation
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

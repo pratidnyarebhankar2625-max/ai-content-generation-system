@@ -66,11 +66,14 @@ export default function RegisterPage() {
 
     if (result.success) {
       setSuccess(result.message || "Account created!");
-      // Store the verify token so the verify-email page can access it
-      if (result.data?.verifyToken) {
-        sessionStorage.setItem("pendingVerifyToken", result.data.verifyToken);
+      if (result.data?.requireVerification) {
+        if (result.data?.verifyToken) {
+          sessionStorage.setItem("pendingVerifyToken", result.data.verifyToken);
+        }
+        setTimeout(() => router.push("/verify-email"), 800);
+      } else {
+        setTimeout(() => router.push("/"), 800);
       }
-      setTimeout(() => router.push("/verify-email"), 800);
     } else {
       setError(result.error || "Registration failed.");
     }

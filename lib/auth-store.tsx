@@ -9,7 +9,8 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { createToken, verifyToken, isTokenExpired } from "@/lib/jwt";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,10 +22,6 @@ export type AuthUser = {
   provider: "credentials" | "google";
   createdAt: string;
   avatar?: string;
-};
-
-type StoredUser = AuthUser & {
-  passwordHash: string; // simple hash for demo — NOT real cryptography
 };
 
 type AuthContextType = {
@@ -49,467 +46,207 @@ type AuthResult = {
   data?: Record<string, string>;
 };
 
-// ─── Storage Keys ────────────────────────────────────────────────────────────
-
-const USERS_KEY = "ai-auth-users";
-const SESSION_KEY = "ai-auth-session";
-const REMEMBER_KEY = "ai-auth-remember";
-const RESET_TOKENS_KEY = "ai-auth-reset-tokens";
-const VERIFY_TOKENS_KEY = "ai-auth-verify-tokens";
-
-// ─── Simple Password Hashing (demo only) ────────────────────────────────────
-// In production, use bcrypt on the server. This is a deterministic hash
-// for client-side demo purposes only.
-
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0;
-  }
-  return "h_" + Math.abs(hash).toString(36) + "_" + str.length;
-}
-
-// ─── Storage Helpers ─────────────────────────────────────────────────────────
-
-function getUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveUsers(users: StoredUser[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function getSession(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(SESSION_KEY);
-}
-
-function saveSession(token: string) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(SESSION_KEY, token);
-}
-
-function clearSession() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem(REMEMBER_KEY);
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
-}
-
-function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function mapSupabaseUser(user: User): AuthUser {
+  return {
+    id: user.id,
+    name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+    email: user.email || "",
+    isVerified: !!user.email_confirmed_at,
+    provider: user.app_metadata?.provider === "google" ? "google" : "credentials",
+    createdAt: user.created_at,
+    avatar: user.user_metadata?.avatar_url,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
-  // ── Restore session on mount ─────────────────────────────────────────────
   useEffect(() => {
-    async function restoreSession() {
-      const token = getSession();
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (isTokenExpired(token)) {
-        clearSession();
-        setIsLoading(false);
-        return;
-      }
-
-      const payload = await verifyToken(token);
-      if (!payload) {
-        clearSession();
-        setIsLoading(false);
-        return;
-      }
-
-      // Find user in storage
-      const users = getUsers();
-      const found = users.find((u) => u.id === payload.userId);
-      if (found) {
-        setUser(stripPassword(found));
-      } else {
-        clearSession();
-      }
-
+    // Initial fetch
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUser(mapSupabaseUser(user));
       setIsLoading(false);
-    }
+    });
 
-    restoreSession();
-  }, []);
-
-  // ── Session refresh on activity ──────────────────────────────────────────
-  useEffect(() => {
-    if (!user) return;
-
-    const refreshInterval = setInterval(async () => {
-      const token = getSession();
-      if (!token || isTokenExpired(token)) {
-        setUser(null);
-        clearSession();
-        return;
-      }
-
-      // Refresh if within 1 hour of expiry
-      const payload = await verifyToken(token);
-      if (payload && payload.expiresAt) {
-        const timeLeft = payload.expiresAt - Date.now();
-        if (timeLeft < 60 * 60 * 1000) {
-          const remembered = localStorage.getItem(REMEMBER_KEY) === "true";
-          const newToken = await createToken(
-            { userId: payload.userId, email: payload.email, name: payload.name },
-            remembered ? "30d" : "24h"
-          );
-          saveSession(newToken);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setUser(mapSupabaseUser(session.user));
+        } else {
+          setUser(null);
         }
+        setIsLoading(false);
       }
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    );
 
-    return () => clearInterval(refreshInterval);
-  }, [user]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   // ── Register ─────────────────────────────────────────────────────────────
   const register = useCallback(
     async (name: string, email: string, password: string): Promise<AuthResult> => {
-      const users = getUsers();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      });
 
-      if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-        return { success: false, error: "An account with this email already exists." };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      const newUser: StoredUser = {
-        id: generateId(),
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        passwordHash: simpleHash(password),
-        isVerified: false,
-        provider: "credentials",
-        createdAt: new Date().toISOString(),
-      };
-
-      users.push(newUser);
-      saveUsers(users);
-
-      // Create a verification token
-      const verifyTokenStr = generateToken();
-      const verifyTokens = JSON.parse(
-        localStorage.getItem(VERIFY_TOKENS_KEY) || "{}"
-      );
-      verifyTokens[newUser.email] = {
-        token: verifyTokenStr,
-        createdAt: Date.now(),
-      };
-      localStorage.setItem(VERIFY_TOKENS_KEY, JSON.stringify(verifyTokens));
-
-      // Create session
-      const token = await createToken(
-        { userId: newUser.id, email: newUser.email, name: newUser.name },
-        "24h"
-      );
-      saveSession(token);
-      setUser(stripPassword(newUser));
+      if (data.session) {
+        return {
+          success: true,
+          message: "Account created successfully!",
+          data: { requireVerification: false }
+        };
+      }
 
       return {
         success: true,
-        message: "Account created! Please verify your email.",
-        data: { verifyToken: verifyTokenStr },
+        message: "Account created! Please check your email to verify.",
+        data: { requireVerification: true }
       };
     },
-    []
+    [supabase.auth]
   );
 
   // ── Login ────────────────────────────────────────────────────────────────
   const login = useCallback(
-    async (
-      email: string,
-      password: string,
-      rememberMe: boolean = false
-    ): Promise<AuthResult> => {
-      const users = getUsers();
-      const found = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase().trim()
-      );
+    async (email: string, password: string, rememberMe?: boolean): Promise<AuthResult> => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (!found) {
-        return { success: false, error: "No account found with this email." };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      if (found.provider === "google") {
-        return {
-          success: false,
-          error: "This account uses Google sign-in. Please use the Google button.",
-        };
-      }
-
-      if (found.passwordHash !== simpleHash(password)) {
-        return { success: false, error: "Invalid password. Please try again." };
-      }
-
-      const expiresIn = rememberMe ? "30d" : "24h";
-      const token = await createToken(
-        { userId: found.id, email: found.email, name: found.name },
-        expiresIn
-      );
-      saveSession(token);
-
-      if (rememberMe) {
-        localStorage.setItem(REMEMBER_KEY, "true");
-      }
-
-      setUser(stripPassword(found));
       return { success: true, message: "Welcome back!" };
     },
-    []
+    [supabase.auth]
   );
 
-  // ── Google Sign-In (Simulated) ───────────────────────────────────────────
+  // ── Google Sign-In ───────────────────────────────────────────────────────
   const googleSignIn = useCallback(async (): Promise<AuthResult> => {
-    const users = getUsers();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-    // Simulate a Google user
-    const googleEmail = "user@gmail.com";
-    const googleName = "Google User";
-
-    let found = users.find((u) => u.email === googleEmail);
-
-    if (!found) {
-      const newUser: StoredUser = {
-        id: generateId(),
-        name: googleName,
-        email: googleEmail,
-        passwordHash: "",
-        isVerified: true,
-        provider: "google",
-        createdAt: new Date().toISOString(),
-      };
-      users.push(newUser);
-      saveUsers(users);
-      found = newUser;
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const token = await createToken(
-      { userId: found.id, email: found.email, name: found.name },
-      "30d"
-    );
-    saveSession(token);
-    localStorage.setItem(REMEMBER_KEY, "true");
-    setUser(stripPassword(found));
-
-    return { success: true, message: "Signed in with Google!" };
-  }, []);
+    return { success: true };
+  }, [supabase.auth]);
 
   // ── Forgot Password ──────────────────────────────────────────────────────
   const forgotPassword = useCallback(
     async (email: string): Promise<AuthResult> => {
-      const users = getUsers();
-      const found = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase().trim()
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-      if (!found) {
-        // Don't reveal if email exists (security best practice)
-        return {
-          success: true,
-          message:
-            "If an account with that email exists, a reset link has been sent.",
-        };
+      if (error) {
+        return { success: false, error: error.message };
       }
-
-      if (found.provider === "google") {
-        return {
-          success: false,
-          error: "This account uses Google sign-in. Password reset is not available.",
-        };
-      }
-
-      const resetToken = generateToken();
-      const resetTokens = JSON.parse(
-        localStorage.getItem(RESET_TOKENS_KEY) || "{}"
-      );
-      resetTokens[found.email] = {
-        token: resetToken,
-        createdAt: Date.now(),
-      };
-      localStorage.setItem(RESET_TOKENS_KEY, JSON.stringify(resetTokens));
 
       return {
         success: true,
-        message: "If an account with that email exists, a reset link has been sent.",
-        data: { resetToken, email: found.email },
+        message: "If an account exists, a reset link has been sent.",
       };
     },
-    []
+    [supabase.auth]
   );
 
   // ── Reset Password ───────────────────────────────────────────────────────
   const resetPassword = useCallback(
     async (token: string, newPassword: string): Promise<AuthResult> => {
-      const resetTokens = JSON.parse(
-        localStorage.getItem(RESET_TOKENS_KEY) || "{}"
-      );
+      // In Supabase Auth flow, the user clicks the link in email and returns authenticated.
+      // We just update the password.
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
-      // Find email for this token
-      let targetEmail: string | null = null;
-      for (const [email, data] of Object.entries(resetTokens)) {
-        const tokenData = data as { token: string; createdAt: number };
-        if (tokenData.token === token) {
-          // Check if token is less than 1 hour old
-          if (Date.now() - tokenData.createdAt > 60 * 60 * 1000) {
-            return { success: false, error: "Reset link has expired. Please request a new one." };
-          }
-          targetEmail = email;
-          break;
-        }
+      if (error) {
+        return { success: false, error: error.message };
       }
-
-      if (!targetEmail) {
-        return { success: false, error: "Invalid or expired reset link." };
-      }
-
-      const users = getUsers();
-      const userIndex = users.findIndex((u) => u.email === targetEmail);
-      if (userIndex === -1) {
-        return { success: false, error: "User not found." };
-      }
-
-      users[userIndex].passwordHash = simpleHash(newPassword);
-      saveUsers(users);
-
-      // Remove used token
-      delete resetTokens[targetEmail];
-      localStorage.setItem(RESET_TOKENS_KEY, JSON.stringify(resetTokens));
 
       return {
         success: true,
         message: "Password reset successfully! You can now log in.",
       };
     },
-    []
+    [supabase.auth]
   );
 
   // ── Verify Email ─────────────────────────────────────────────────────────
   const verifyEmail = useCallback(
     async (token: string): Promise<AuthResult> => {
-      const verifyTokens = JSON.parse(
-        localStorage.getItem(VERIFY_TOKENS_KEY) || "{}"
-      );
-
-      let targetEmail: string | null = null;
-      for (const [email, data] of Object.entries(verifyTokens)) {
-        if ((data as { token: string }).token === token) {
-          targetEmail = email;
-          break;
-        }
-      }
-
-      if (!targetEmail) {
-        return { success: false, error: "Invalid verification link." };
-      }
-
-      const users = getUsers();
-      const userIndex = users.findIndex((u) => u.email === targetEmail);
-      if (userIndex === -1) {
-        return { success: false, error: "User not found." };
-      }
-
-      users[userIndex].isVerified = true;
-      saveUsers(users);
-
-      // Update current user state
-      if (user && user.email === targetEmail) {
-        setUser({ ...user, isVerified: true });
-      }
-
-      // Remove used token
-      delete verifyTokens[targetEmail];
-      localStorage.setItem(VERIFY_TOKENS_KEY, JSON.stringify(verifyTokens));
-
+      // Supabase handles verification via click on the email link.
       return { success: true, message: "Email verified successfully!" };
     },
-    [user]
+    []
   );
 
   // ── Resend Verification ──────────────────────────────────────────────────
   const resendVerification = useCallback(async (): Promise<AuthResult> => {
-    if (!user) {
-      return { success: false, error: "Not logged in." };
+    if (!user) return { success: false, error: "Not logged in." };
+    
+    // Resend confirmation
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const verifyTokenStr = generateToken();
-    const verifyTokens = JSON.parse(
-      localStorage.getItem(VERIFY_TOKENS_KEY) || "{}"
-    );
-    verifyTokens[user.email] = {
-      token: verifyTokenStr,
-      createdAt: Date.now(),
-    };
-    localStorage.setItem(VERIFY_TOKENS_KEY, JSON.stringify(verifyTokens));
-
-    return {
-      success: true,
-      message: "Verification email resent!",
-      data: { verifyToken: verifyTokenStr },
-    };
-  }, [user]);
+    return { success: true, message: "Verification email resent!" };
+  }, [user, supabase.auth]);
 
   // ── Logout ───────────────────────────────────────────────────────────────
-  const logout = useCallback(() => {
-    setUser(null);
-    clearSession();
-  }, []);
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, [supabase.auth]);
 
   // ── Update User ──────────────────────────────────────────────────────────
   const updateUser = useCallback(
     async (data: Partial<AuthUser>): Promise<AuthResult> => {
       if (!user) return { success: false, error: "Not logged in." };
-      
-      const users = getUsers();
-      const userIndex = users.findIndex((u) => u.id === user.id);
-      
-      if (userIndex === -1) {
-        return { success: false, error: "User not found." };
+
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: data.name },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
       }
-      
-      users[userIndex] = { ...users[userIndex], ...data };
-      saveUsers(users);
-      
-      const updatedUser = stripPassword(users[userIndex]);
-      setUser(updatedUser);
-      
-      // Update session payload if name or email changed
-      if (data.name || data.email) {
-        const remembered = localStorage.getItem(REMEMBER_KEY) === "true";
-        const token = await createToken(
-          { userId: updatedUser.id, email: updatedUser.email, name: updatedUser.name },
-          remembered ? "30d" : "24h"
-        );
-        saveSession(token);
-      }
-      
+
       return { success: true, message: "Profile updated successfully!" };
     },
-    [user]
+    [user, supabase.auth]
   );
 
-  // ── Context Value ────────────────────────────────────────────────────────
   const value = useMemo<AuthContextType>(
     () => ({
       user,
@@ -551,11 +288,4 @@ export function useAuth(): AuthContextType {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function stripPassword(user: StoredUser): AuthUser {
-  const { passwordHash: _, ...rest } = user;
-  return rest;
 }

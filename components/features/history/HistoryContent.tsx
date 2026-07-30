@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { templates } from "@/components/features/templates/templateData";
 import { useContent, type Generation, type GenerationStatus } from "@/lib/content-store";
 import {
   Clock,
@@ -155,121 +157,6 @@ function ViewModal({
             className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent"
           >
             Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Edit Modal ──────────────────────────────────────────────────────────────
-
-function EditModal({
-  generation,
-  onSave,
-  onClose,
-}: {
-  generation: Generation;
-  onSave: (id: number, updates: Partial<Omit<Generation, "id">>) => void;
-  onClose: () => void;
-}) {
-  const [title, setTitle] = useState(generation.title);
-  const [preview, setPreview] = useState(generation.preview);
-  const [status, setStatus] = useState<GenerationStatus>(generation.status);
-  const [wordCount, setWordCount] = useState(generation.wordCount);
-
-  function handleSave() {
-    onSave(generation.id, { title, preview, status, wordCount });
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-heading text-2xl font-bold text-foreground">
-            Edit Generation
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="space-y-5">
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
-            />
-          </div>
-
-          {/* Content */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Content Preview</label>
-            <textarea
-              value={preview}
-              onChange={(e) => {
-                setPreview(e.target.value);
-                setWordCount(
-                  e.target.value
-                    .trim()
-                    .split(/\s+/)
-                    .filter((w) => w.length > 0).length
-                );
-              }}
-              rows={4}
-              className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
-            />
-          </div>
-
-          {/* Status */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Status</label>
-            <div className="flex gap-2">
-              {(["completed", "draft", "failed"] as GenerationStatus[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatus(s)}
-                  className={`rounded-xl px-4 py-2 text-xs font-medium capitalize transition-all duration-300 ${
-                    status === s
-                      ? "bg-[#2F4156] text-primary-foreground shadow-sm"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Word Count */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              Word Count: <span className="text-primary-foreground">{wordCount}</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-8 flex gap-3 justify-end">
-          <button
-            onClick={onClose}
-            className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground border-transparent transition-all duration-300 hover:shadow-md hover:border-transparent"
-          >
-            Save Changes
           </button>
         </div>
       </div>
@@ -459,14 +346,23 @@ export default function HistoryContent() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "words">("newest");
   const [showFilters, setShowFilters] = useState(false);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [editingGen, setEditingGen] = useState<Generation | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewingGen, setViewingGen] = useState<Generation | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const listRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  function handleEdit(item: Generation) {
+    const foundTemplate = templates.find((t) => t.title === item.template);
+    if (foundTemplate) {
+      router.push(`/generate/${foundTemplate.id}?generationId=${item.id}`);
+    } else {
+      router.push(`/generate/1?generationId=${item.id}`);
+    }
+  }
 
   const categories = useMemo(
     () => ["all", ...Array.from(new Set(generations.map((i) => i.category)))],
@@ -507,7 +403,7 @@ export default function HistoryContent() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
-  function handleDelete(id: number) {
+  function handleDelete(id: string) {
     deleteGeneration(id);
     setShowDeleteToast(true);
     setTimeout(() => setShowDeleteToast(false), 5000);
@@ -744,7 +640,7 @@ export default function HistoryContent() {
                     </button>
 
                     <button
-                      onClick={() => setEditingGen(item)}
+                      onClick={() => handleEdit(item)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
                       title="Edit content"
                     >
@@ -862,15 +758,6 @@ export default function HistoryContent() {
         <ViewModal
           generation={viewingGen}
           onClose={() => setViewingGen(null)}
-        />
-      )}
-
-      {/* Edit Modal */}
-      {editingGen && (
-        <EditModal
-          generation={editingGen}
-          onSave={updateGeneration}
-          onClose={() => setEditingGen(null)}
         />
       )}
 

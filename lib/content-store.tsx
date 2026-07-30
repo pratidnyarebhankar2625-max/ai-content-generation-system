@@ -9,13 +9,15 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-store";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type GenerationStatus = "completed" | "draft" | "failed";
 
 export type Generation = {
-  id: number;
+  id: string; // Changed to string (UUID) for Supabase
   title: string;
   template: string;
   category: string;
@@ -38,7 +40,7 @@ export type ContentStats = {
 };
 
 export type RecentActivityItem = {
-  id: number;
+  id: string;
   action: string;
   template: string;
   time: string;
@@ -48,156 +50,17 @@ type ContentContextType = {
   generations: Generation[];
   stats: ContentStats;
   recentActivity: RecentActivityItem[];
-  addGeneration: (gen: Omit<Generation, "id" | "createdAt">) => void;
-  updateGeneration: (id: number, updates: Partial<Omit<Generation, "id">>) => void;
-  deleteGeneration: (id: number) => void;
-  getGeneration: (id: number) => Generation | undefined;
-  importGeneration: (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => void;
-  restoreLastDeleted: () => boolean;
+  addGeneration: (gen: Omit<Generation, "id" | "createdAt">) => Promise<string | undefined>;
+  updateGeneration: (id: string, updates: Partial<Omit<Generation, "id">>) => Promise<void>;
+  deleteGeneration: (id: string) => Promise<void>;
+  getGeneration: (id: string) => Generation | undefined;
+  importGeneration: (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => Promise<void>;
+  restoreLastDeleted: () => Promise<boolean>;
   lastDeleted: Generation | null;
   isLoaded: boolean;
 };
 
-// ─── Seed Data ───────────────────────────────────────────────────────────────
-// Used only when localStorage is empty (first visit)
-
-const seedData: Generation[] = [
-  {
-    id: 1,
-    title: "10 Tips for Better Productivity",
-    template: "Blog Post Generator",
-    category: "Blog Writing",
-    status: "completed",
-    createdAt: "2025-07-09T14:30:00",
-    wordCount: 1250,
-    preview:
-      "Discover the top 10 productivity tips that will transform your daily routine. From time-blocking techniques to the Pomodoro method...",
-  },
-  {
-    id: 2,
-    title: "Summer Sale Announcement",
-    template: "Email Campaign",
-    category: "Email",
-    status: "completed",
-    createdAt: "2025-07-08T11:15:00",
-    wordCount: 420,
-    preview:
-      "Get ready for our biggest summer sale yet! Enjoy up to 50% off on selected items. Limited time offer, don't miss out...",
-  },
-  {
-    id: 3,
-    title: "New Product Launch Post",
-    template: "Instagram Caption",
-    category: "Social Media",
-    status: "completed",
-    createdAt: "2025-07-08T09:45:00",
-    wordCount: 180,
-    preview:
-      "✨ Introducing our latest innovation! We've been working behind the scenes to bring you something truly special...",
-  },
-  {
-    id: 4,
-    title: "Q3 Marketing Strategy",
-    template: "Marketing Plan",
-    category: "Marketing",
-    status: "draft",
-    createdAt: "2025-07-07T16:20:00",
-    wordCount: 2100,
-    preview:
-      "Our Q3 marketing strategy focuses on expanding our digital presence through targeted campaigns, influencer partnerships...",
-  },
-  {
-    id: 5,
-    title: "Employee Welcome Email",
-    template: "Professional Email",
-    category: "Email",
-    status: "completed",
-    createdAt: "2025-07-07T10:00:00",
-    wordCount: 350,
-    preview:
-      "Welcome to the team! We're thrilled to have you on board. Here's everything you need to know for your first week...",
-  },
-  {
-    id: 6,
-    title: "API Documentation Draft",
-    template: "Technical Documentation",
-    category: "Developer",
-    status: "draft",
-    createdAt: "2025-07-06T13:50:00",
-    wordCount: 3200,
-    preview:
-      "REST API Reference v2.0 — This document provides comprehensive documentation for all available endpoints, authentication...",
-  },
-  {
-    id: 7,
-    title: "Brand Story Article",
-    template: "Blog Post Generator",
-    category: "Blog Writing",
-    status: "completed",
-    createdAt: "2025-07-05T15:30:00",
-    wordCount: 1800,
-    preview:
-      "Every great brand has a story worth telling. Ours began in a small garage with a big dream and an even bigger whiteboard...",
-  },
-  {
-    id: 8,
-    title: "Course Introduction Script",
-    template: "Educational Content",
-    category: "Education",
-    status: "failed",
-    createdAt: "2025-07-05T08:10:00",
-    wordCount: 0,
-    preview: "Generation failed — API rate limit exceeded. Please try again later.",
-  },
-  {
-    id: 9,
-    title: "LinkedIn Thought Leadership",
-    template: "LinkedIn Post",
-    category: "Social Media",
-    status: "completed",
-    createdAt: "2025-07-04T17:45:00",
-    wordCount: 290,
-    preview:
-      "The future of work isn't about replacing humans with AI — it's about augmenting human potential. Here's what I've learned...",
-  },
-  {
-    id: 10,
-    title: "AI-Powered Content Workflow",
-    template: "AI Summary",
-    category: "AI Utility",
-    status: "completed",
-    createdAt: "2025-07-03T12:00:00",
-    wordCount: 600,
-    preview:
-      "Streamline your content creation with this AI-powered workflow that reduces production time by 60% while maintaining quality...",
-  },
-];
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "ai-content-generations";
-
-function loadFromStorage(): Generation[] | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function saveToStorage(generations: Generation[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(generations));
-  } catch {
-    // Storage full or unavailable — silently fail
-  }
-}
 
 export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -238,9 +101,7 @@ function computeStats(generations: Generation[]): ContentStats {
     failed: generations.filter((g) => g.status === "failed").length,
     totalWords: generations.reduce((sum, g) => sum + g.wordCount, 0),
     templatesUsed: new Set(generations.map((g) => g.template)).size,
-    thisWeek: generations.filter(
-      (g) => new Date(g.createdAt) >= weekAgo
-    ).length,
+    thisWeek: generations.filter((g) => new Date(g.createdAt) >= weekAgo).length,
     thisWeekWords: generations
       .filter((g) => new Date(g.createdAt) >= weekAgo)
       .reduce((sum, g) => sum + g.wordCount, 0),
@@ -249,10 +110,7 @@ function computeStats(generations: Generation[]): ContentStats {
 
 function computeRecentActivity(generations: Generation[]): RecentActivityItem[] {
   return [...generations]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5)
     .map((gen) => {
       let action = "Generated content";
@@ -269,6 +127,20 @@ function computeRecentActivity(generations: Generation[]): RecentActivityItem[] 
     });
 }
 
+// Map from Supabase row to Generation
+function mapRowToGeneration(row: any): Generation {
+  return {
+    id: row.id,
+    title: row.title,
+    template: row.template,
+    category: row.category,
+    status: row.status as GenerationStatus,
+    wordCount: row.word_count,
+    preview: row.preview,
+    createdAt: row.created_at,
+  };
+}
+
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const ContentContext = createContext<ContentContextType | null>(null);
@@ -277,81 +149,192 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [lastDeleted, setLastDeleted] = useState<Generation | null>(null);
+  
+  const supabase = createClient();
+  const { user, isAuthenticated } = useAuth();
 
-  // Load from storage on mount
+  // Load from Supabase on mount or auth change
   useEffect(() => {
-    const stored = loadFromStorage();
-    setGenerations(stored ?? seedData);
-    setIsLoaded(true);
-  }, []);
-
-  // Persist to storage on every change (after initial load)
-  useEffect(() => {
-    if (isLoaded) {
-      saveToStorage(generations);
+    if (!isAuthenticated || !user) {
+      setGenerations([]);
+      setIsLoaded(true);
+      return;
     }
-  }, [generations, isLoaded]);
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("Error loading projects:", error);
+      } else if (data) {
+        setGenerations(data.map(mapRowToGeneration));
+      }
+      setIsLoaded(true);
+    }
+    
+    loadData();
+  }, [supabase, isAuthenticated, user]);
 
   const addGeneration = useCallback(
-    (gen: Omit<Generation, "id" | "createdAt">) => {
-      const newGen: Generation = {
-        ...gen,
-        id: Date.now(),
-        createdAt: new Date().toISOString(),
+    async (gen: Omit<Generation, "id" | "createdAt">): Promise<string | undefined> => {
+      if (!user) return;
+      
+      const insertData = {
+        user_id: user.id,
+        title: gen.title,
+        template: gen.template,
+        category: gen.category,
+        status: gen.status,
+        preview: gen.preview,
+        word_count: gen.wordCount,
       };
-      setGenerations((prev) => [newGen, ...prev]);
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Failed to add generation:", error);
+        return;
+      }
+
+      setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
+      return data.id;
     },
-    []
+    [supabase, user]
   );
 
   const updateGeneration = useCallback(
-    (id: number, updates: Partial<Omit<Generation, "id">>) => {
+    async (id: string, updates: Partial<Omit<Generation, "id">>) => {
+      if (!user) return;
+
+      const updateData: any = {};
+      if (updates.title !== undefined) updateData.title = updates.title;
+      if (updates.template !== undefined) updateData.template = updates.template;
+      if (updates.category !== undefined) updateData.category = updates.category;
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.preview !== undefined) updateData.preview = updates.preview;
+      if (updates.wordCount !== undefined) updateData.word_count = updates.wordCount;
+      if (updates.createdAt !== undefined) updateData.created_at = updates.createdAt;
+
+      const { data, error } = await supabase
+        .from('projects')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Failed to update generation:", error);
+        return;
+      }
+
       setGenerations((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+        prev.map((g) => (g.id === id ? mapRowToGeneration(data) : g))
       );
     },
-    []
+    [supabase, user]
   );
 
-  const deleteGeneration = useCallback((id: number) => {
-    setGenerations((prev) => {
-      const target = prev.find((g) => g.id === id);
-      if (target) setLastDeleted(target);
-      return prev.filter((g) => g.id !== id);
-    });
-  }, []);
+  const deleteGeneration = useCallback(
+    async (id: string) => {
+      if (!user) return;
+      const target = generations.find((g) => g.id === id);
+      if (target) {
+        setLastDeleted(target);
+      }
+
+      setGenerations((prev) => prev.filter((g) => g.id !== id));
+      
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) {
+        console.error("Failed to delete generation:", error);
+        // Rollback on failure
+        if (target) setGenerations((prev) => [target, ...prev]);
+      }
+    },
+    [generations, supabase, user]
+  );
 
   const importGeneration = useCallback(
-    (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => {
-      const newGen: Generation = {
-        ...gen,
-        id: Date.now(),
-        createdAt: gen.createdAt || new Date().toISOString(),
+    async (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => {
+      if (!user) return;
+      
+      const insertData: any = {
+        user_id: user.id,
+        title: gen.title,
+        template: gen.template,
+        category: gen.category,
+        status: gen.status,
+        preview: gen.preview,
+        word_count: gen.wordCount,
       };
-      setGenerations((prev) => [newGen, ...prev]);
+      
+      if (gen.createdAt) {
+        insertData.created_at = gen.createdAt;
+      }
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Failed to import generation:", error);
+        return;
+      }
+
+      setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
     },
-    []
+    [supabase, user]
   );
 
-  const restoreLastDeleted = useCallback(() => {
-    if (!lastDeleted) return false;
-    setGenerations((prev) => [lastDeleted, ...prev]);
+  const restoreLastDeleted = useCallback(async () => {
+    if (!lastDeleted || !user) return false;
+    
+    const insertData = {
+      id: lastDeleted.id, // Supabase lets us insert with a specific UUID if it doesn't exist
+      user_id: user.id,
+      title: lastDeleted.title,
+      template: lastDeleted.template,
+      category: lastDeleted.category,
+      status: lastDeleted.status,
+      preview: lastDeleted.preview,
+      word_count: lastDeleted.wordCount,
+      created_at: lastDeleted.createdAt,
+    };
+
+    const { data, error } = await supabase
+      .from('projects')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+       console.error("Failed to restore:", error);
+       return false;
+    }
+
+    setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
     setLastDeleted(null);
     return true;
-  }, [lastDeleted]);
+  }, [lastDeleted, supabase, user]);
 
   const getGeneration = useCallback(
-    (id: number) => {
+    (id: string) => {
       return generations.find((g) => g.id === id);
     },
     [generations]
   );
 
   const stats = useMemo(() => computeStats(generations), [generations]);
-  const recentActivity = useMemo(
-    () => computeRecentActivity(generations),
-    [generations]
-  );
+  const recentActivity = useMemo(() => computeRecentActivity(generations), [generations]);
 
   const value = useMemo<ContentContextType>(
     () => ({
@@ -382,9 +365,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     ]
   );
 
-  return (
-    <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
-  );
+  return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 }
 
 export function useContent(): ContentContextType {
