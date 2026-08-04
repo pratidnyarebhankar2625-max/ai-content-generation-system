@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-store";
+import { useSettings } from "@/lib/settings-store";
 import { AvatarSelectionModal } from "@/components/ui/AvatarSelectionModal";
 import { SettingsActionModal, type SettingsActionType } from "@/components/ui/SettingsActionModal";
 
@@ -52,7 +53,7 @@ const settingSections = [
     ],
   },
   {
-    title: "Appearance",
+    title: "Appearance & Localization",
     description: "Customize how the app looks",
     icon: Palette,
     items: [
@@ -64,39 +65,44 @@ const settingSections = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { settings, updateSettings } = useSettings();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<SettingsActionType>(null);
-  
-  // States for toggles
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    "Email Notifications": true,
-    "Push Notifications": false,
-    "Generation Alerts": true,
-    "Dark Theme": false,
-  });
+
+  const getToggleValue = (label: string) => {
+    if (!settings) return false;
+    switch (label) {
+      case "Email Notifications": return settings.email_notifications;
+      case "Push Notifications": return settings.push_notifications;
+      case "Generation Alerts": return settings.generation_alerts;
+      case "Dark Theme": return settings.theme === "dark";
+      default: return false;
+    }
+  };
 
   const handleToggle = (label: string) => {
-    setToggles(prev => {
-      const newValue = !prev[label];
-      
-      if (label === "Dark Theme") {
-        if (newValue) {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
-      }
-      
-      return { ...prev, [label]: newValue };
-    });
+    if (!settings) return;
+    
+    switch (label) {
+      case "Email Notifications":
+        updateSettings({ email_notifications: !settings.email_notifications });
+        break;
+      case "Push Notifications":
+        updateSettings({ push_notifications: !settings.push_notifications });
+        break;
+      case "Generation Alerts":
+        updateSettings({ generation_alerts: !settings.generation_alerts });
+        break;
+      case "Dark Theme":
+        updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" });
+        break;
+    }
   };
 
   const handleAction = (label: string) => {
     if (label === "Edit Profile") {
       setIsAvatarModalOpen(true);
-    } else if (label === "Language") {
-      console.log(`Action clicked: ${label}`);
     } else {
       setActiveAction(label as SettingsActionType);
       setActionModalOpen(true);
@@ -161,14 +167,16 @@ export default function SettingsPage() {
                               ? `Update ${user.name}'s profile` 
                               : item.label === "Email Address" && user?.email 
                               ? user.email 
+                              : item.label === "Language" && settings?.language
+                              ? settings.language
                               : item.description}
                           </p>
                         </div>
                       </div>
 
                       {'toggle' in item && item.toggle ? (
-                        <div className={`h-7 w-12 rounded-full p-0.5 transition-colors shadow-inner ${toggles[item.label] ? 'bg-[#fe4443]' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                          <div className={`h-6 w-6 rounded-full bg-white shadow-md transition-transform ${toggles[item.label] ? 'translate-x-5' : 'translate-x-0'}`} />
+                        <div className={`h-7 w-12 rounded-full p-0.5 transition-colors shadow-inner ${getToggleValue(item.label) ? 'bg-[#fe4443]' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                          <div className={`h-6 w-6 rounded-full bg-white shadow-md transition-transform ${getToggleValue(item.label) ? 'translate-x-5' : 'translate-x-0'}`} />
                         </div>
                       ) : (
                         <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680] dark:group-hover:text-[#F8FAFC]" />

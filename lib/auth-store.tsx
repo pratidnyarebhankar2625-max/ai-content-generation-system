@@ -22,6 +22,7 @@ export type AuthUser = {
   provider: "credentials" | "google";
   createdAt: string;
   avatar?: string;
+  bio?: string;
 };
 
 type AuthContextType = {
@@ -50,15 +51,22 @@ type AuthResult = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function mapSupabaseUser(user: User): AuthUser {
+async function mapSupabaseUser(supabase: any, user: User): Promise<AuthUser> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
   return {
     id: user.id,
-    name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+    name: profile?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
     email: user.email || "",
     isVerified: !!user.email_confirmed_at,
     provider: user.app_metadata?.provider === "google" ? "google" : "credentials",
-    createdAt: user.created_at,
-    avatar: user.user_metadata?.avatar_url,
+    createdAt: profile?.joined_date || user.created_at,
+    avatar: profile?.avatar || user.user_metadata?.avatar_url,
+    bio: profile?.bio,
   };
 }
 
@@ -69,16 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initial fetch
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUser(mapSupabaseUser(user));
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const mappedUser = await mapSupabaseUser(supabase, user);
+        setUser(mappedUser);
+      }
       setIsLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (session?.user) {
-          setUser(mapSupabaseUser(session.user));
+          const mappedUser = await mapSupabaseUser(supabase, session.user);
+          setUser(mappedUser);
         } else {
           setUser(null);
         }
@@ -234,17 +246,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (data: Partial<AuthUser>): Promise<AuthResult> => {
       if (!user) return { success: false, error: "Not logged in." };
 
-      const { error } = await supabase.auth.updateUser({
-        data: { full_name: data.name },
+      // Update auth metadata
+      const authUpdate: any = {};
+      if (data.name !== undefined) authUpdate.full_name = data.name;
+      
+      const { error: authError } = await supabase.auth.updateUser({
+        data: authUpdate,
       });
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (authError) {
+        return { success: false, error: authError.message };
+      }
+
+      // Update profiles table
+      const profileUpdate: any = {};
+      if (data.name !== undefined) profileUpdate.name = data.name;
+      if (data.bio !== undefined) profileUpdate.bio = data.bio;
+      if (data.avatar !== undefined) profileUpdate.avatar = data.avatar;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", user.id);
+
+        if (profileError) {
+          return { success: false, error: profileError.message };
+        }
+      }
+
+      // Refresh user to get latest profile state
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const mappedUser = await mapSupabaseUser(supabase, userData.user);
+        setUser(mappedUser);
       }
 
       return { success: true, message: "Profile updated successfully!" };
     },
-    [user, supabase.auth]
+    [user, supabase]
   );
 
   const value = useMemo<AuthContextType>(

@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Smartphone } from "lucide-react";
 
+import { useSettings } from "@/lib/settings-store";
+
 export type SettingsActionType = 
   | "Email Address"
   | "Change Password"
   | "Active Sessions"
   | "Data & Privacy"
+  | "Language"
   | null;
 
 interface SettingsActionModalProps {
@@ -26,6 +29,10 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Settings states
+  const { settings, updateSettings } = useSettings();
+  const [language, setLanguage] = useState(settings?.language || "en-US");
+
   useEffect(() => {
     if (isOpen) {
       setIsSaving(false);
@@ -34,20 +41,36 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      if (settings) {
+        setLanguage(settings.language);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, settings]);
 
   if (!isOpen || !action) return null;
 
   async function handleActionSubmit() {
     setIsSaving(true);
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    let result: { success: boolean; error?: string } = { success: true };
+    
+    if (action === "Language") {
+      result = await updateSettings({ language });
+    } else {
+      // Mock for others
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+    
     setIsSaving(false);
-    setSuccess(true);
-    setTimeout(() => {
-      onClose();
-    }, 1200);
+    
+    if (result.success) {
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+    } else {
+      // Handle error visually if needed
+      console.error(result.error);
+    }
   }
 
   const getIcon = () => {
@@ -66,6 +89,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
       case "Change Password": return "Change Password";
       case "Active Sessions": return "Manage Sessions";
       case "Data & Privacy": return "Data & Privacy";
+      case "Language": return "Change Language";
       default: return action;
     }
   };
@@ -206,6 +230,26 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
                 <button className="mt-2 w-full rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700">
                   Delete Account
                 </button>
+              </div>
+            </div>
+          )}
+          
+          {action === "Language" && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600">Select your preferred language.</p>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#113680]">Language</label>
+                <select 
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                >
+                  <option value="en-US">English (US)</option>
+                  <option value="en-GB">English (UK)</option>
+                  <option value="fr-FR">French</option>
+                  <option value="es-ES">Spanish</option>
+                  <option value="de-DE">German</option>
+                </select>
               </div>
             </div>
           )}
