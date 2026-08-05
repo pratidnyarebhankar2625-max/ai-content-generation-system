@@ -93,7 +93,7 @@ const filteredTemplates = templateList.filter((template) => {
   });
 
   return ( 
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
 
       {/* Header */}
       <div className="flex items-start justify-between animate-fade-in-up">
@@ -102,12 +102,12 @@ const filteredTemplates = templateList.filter((template) => {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
               <Sparkles className="h-6 w-6 text-[#2F4156]" />
             </div>
-            <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">
+            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
               Content Templates
             </h1>
           </div>
 
-          <p className="text-muted-foreground text-base">
+          <p className="text-muted-foreground text-base leading-relaxed">
             Choose a template and generate content faster.
           </p>
         </div>
@@ -163,20 +163,42 @@ const filteredTemplates = templateList.filter((template) => {
       </div>
 
       {/* Categories */}
-      <div className="flex flex-wrap gap-3 animate-fade-in-up stagger-2">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300 ${
-              selectedCategory === category
-                ? "bg-[#2F4156] text-primary-foreground border-[#567C8D]/30 shadow-md"
-                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            {category}
-          </button>
-        ))}
+      <div className="flex gap-2.5 overflow-x-auto pb-3 scrollbar-hide animate-fade-in-up stagger-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+        {categories.map((category) => {
+          const count = templateList.filter((template) => {
+            const matchesSearch =
+              template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              template.description.toLowerCase().includes(searchQuery.toLowerCase());
+            if (!matchesSearch) return false;
+            
+            if (category === "All") return true;
+            if (category === "Favorites") return favorites.includes(template.id);
+            return template.category === category;
+          }).length;
+
+          return (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`group flex flex-shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                selectedCategory === category
+                  ? "bg-[#113680] text-white border-[#113680] shadow-md hover:bg-[#113680]/90 hover:-translate-y-0.5"
+                  : "border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5"
+              }`}
+            >
+              {category}
+              <span 
+                className={`flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold transition-colors duration-300 ${
+                  selectedCategory === category
+                    ? "bg-white/20 text-white"
+                    : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/10 group-hover:text-foreground"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Templates */}
@@ -223,7 +245,7 @@ const filteredTemplates = templateList.filter((template) => {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
             <FileText className="h-9 w-9 text-primary-foreground/60" />
           </div>
-          <h2 className="mt-6 font-heading text-2xl font-semibold text-foreground">
+          <h2 className="mt-6 font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">
             No templates found
           </h2>
 

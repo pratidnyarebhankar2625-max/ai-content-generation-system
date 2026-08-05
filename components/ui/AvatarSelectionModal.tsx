@@ -62,7 +62,7 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
               <Sparkles className="h-5 w-5 text-[#fe4443]" />
             </div>
             <div>
-              <h3 className="font-heading text-lg font-bold">Edit Profile</h3>
+              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">Edit Profile</h3>
               <p className="text-xs text-white/70">Customize your avatar and name</p>
             </div>
           </div>

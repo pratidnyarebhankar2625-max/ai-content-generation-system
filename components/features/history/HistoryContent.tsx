@@ -107,7 +107,7 @@ function ViewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-heading text-2xl font-bold text-foreground">
+          <h2 className="font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">
             View Generation
           </h2>
           <button
@@ -212,7 +212,7 @@ function ImportModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[20px] border border-border bg-card p-8 shadow-xl animate-fade-in-up">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-heading text-2xl font-bold text-foreground">
+          <h2 className="font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">
             Import Content
           </h2>
           <button
@@ -417,7 +417,7 @@ export default function HistoryContent() {
   if (!isLoaded) return null;
 
   return (
-    <div className="space-y-10 animate-fade-in">
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between animate-fade-in-up">
         <div className="space-y-3">
@@ -425,11 +425,11 @@ export default function HistoryContent() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
               <Clock className="h-6 w-6 text-[#2F4156]" />
             </div>
-            <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">
+            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
               Generation History
             </h1>
           </div>
-          <p className="max-w-2xl text-muted-foreground text-base">
+          <p className="max-w-2xl text-muted-foreground text-base leading-relaxed">
             Browse and manage all your AI-generated content in one place.
           </p>
         </div>
@@ -447,7 +447,7 @@ export default function HistoryContent() {
 
 
       {/* Search & Filters Bar */}
-      <div ref={listRef} className="space-y-5 animate-fade-in-up stagger-3 scroll-mt-24">
+      <div ref={listRef} className="space-y-4 animate-fade-in-up stagger-3 scroll-mt-24">
         <div className="flex flex-col gap-3 sm:flex-row">
           {/* Search */}
           <div className="relative flex-1">
@@ -577,7 +577,7 @@ export default function HistoryContent() {
 
       {/* History Items */}
       {filtered.length > 0 ? (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {paginatedItems.map((item, index) => {
             const status = statusConfig[item.status];
             const catIcon = categoryIcons[item.category] || (
@@ -587,7 +587,7 @@ export default function HistoryContent() {
             return (
               <div
                 key={item.id}
-                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-0.5 hover:border-[#567C8D]/30 animate-fade-in-up"
+                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 md:p-6 transition-all duration-400 hover:-translate-y-0.5 hover:border-[#567C8D]/30 animate-fade-in-up"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -713,7 +713,7 @@ export default function HistoryContent() {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
             <FolderOpen className="h-9 w-9 text-primary-foreground/60" />
           </div>
-          <h3 className="mt-6 font-heading text-2xl font-semibold text-foreground">No results found</h3>
+          <h3 className="mt-6 font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">No results found</h3>
           <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
             Try adjusting your search or filter criteria to find what you&apos;re looking for.
           </p>

@@ -22,7 +22,7 @@ export default function QuickActions() {
 
   return (
     <section>
-      <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
+      <h2 className="mb-8 font-heading text-[28px] font-semibold leading-tight tracking-tight animate-fade-in-up">
         Quick Actions
       </h2>
 

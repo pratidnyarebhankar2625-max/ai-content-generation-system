@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Settings, ChevronDown, Menu } from "lucide-react";
+import { LogOut, User, Settings, ChevronDown, Menu, Bell, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -14,6 +14,16 @@ export default function Navbar() {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll for dynamic shadow/border
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -42,109 +52,129 @@ export default function Navbar() {
     : "?";
 
   return (
-    <nav className="relative z-50 h-16 border-b border-border bg-white dark:bg-card text-sidebar dark:text-foreground shadow-[0_1px_3px_rgba(28,25,23,0.04)] animate-fade-in-down">
-      <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between px-6">
+    <nav 
+      className={`sticky top-0 z-50 h-16 w-full transition-all duration-300 ${
+        scrolled 
+          ? "border-b border-border/50 bg-white/85 dark:bg-[#0B192C]/85 backdrop-blur-xl shadow-sm" 
+          : "border-b border-border bg-white dark:bg-[#0B192C]"
+      }`}
+    >
+      <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between px-4 sm:px-6">
 
         {/* Left Side: Toggle & Logo */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 sm:gap-6">
           <button
             onClick={toggleSidebar}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card shadow-sm transition-all hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-sidebar/80 dark:text-foreground/80 transition-all duration-300 hover:bg-muted hover:text-sidebar dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
             aria-label="Toggle Sidebar"
           >
-            <Menu className="h-5 w-5 text-sidebar dark:text-foreground" />
+            <Menu className="h-5 w-5" />
           </button>
 
-          <div className="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt="Logo" 
-              className="h-8 w-8 rounded-xl object-cover bg-white shadow-sm" 
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                target.nextElementSibling?.classList.remove('hidden');
-              }}
-            />
-            <div className="hidden h-8 w-8 rounded-lg bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-sm"></div>
-            <h1 className="text-lg font-semibold tracking-tight text-sidebar dark:text-foreground">
+          <Link href="/" className="flex items-center gap-3 transition-transform duration-300 hover:scale-[1.02] focus:outline-none">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-md">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="hidden sm:block font-heading text-[22px] font-bold tracking-tight text-[#113680] dark:text-[#F8FAFC]">
               AI Content Studio
             </h1>
-          </div>
+          </Link>
         </div>
 
-
-
-        {/* Right Side */}
-        <div className="flex items-center gap-4">
+        {/* Right Side: Notifications & User */}
+        <div className="flex items-center gap-2 sm:gap-4">
           {isAuthenticated && user ? (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-all duration-300 hover:bg-muted"
-              >
-                <Avatar className="ring-2 ring-border ring-offset-2 ring-offset-white transition-all duration-300 hover:ring-sidebar/40">
-                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-sidebar dark:text-foreground leading-none">{user.name}</p>
-                  <p className="text-xs text-sidebar/70 dark:text-foreground/70 mt-0.5">{user.email}</p>
-                </div>
-                <ChevronDown className={`hidden md:block h-4 w-4 text-sidebar/70 dark:text-foreground/70 transition-transform duration-300 ${showDropdown ? "rotate-180" : ""}`} />
+            <>
+              {/* Notification Bell */}
+              <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-sidebar/70 dark:text-foreground/70 transition-all duration-300 hover:bg-muted hover:text-sidebar dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-[#113680]/50">
+                <Bell className="h-[22px] w-[22px]" />
+                <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-white dark:ring-[#0B192C]"></span>
               </button>
 
-              {/* Dropdown */}
-              {showDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-card p-1.5 shadow-xl animate-fade-in-down z-50">
-                  <div className="px-3 py-2.5 border-b border-border mb-1.5">
-                    <p className="text-sm font-semibold text-sidebar dark:text-foreground">{user.name}</p>
-                    <p className="text-xs text-sidebar/70 dark:text-foreground/70">{user.email}</p>
+              {/* Separator */}
+              <div className="hidden h-6 w-px bg-border sm:block"></div>
+
+              {/* User Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="group flex items-center gap-3 rounded-xl border border-transparent p-1 pr-2 transition-all duration-300 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
+                  aria-expanded={showDropdown}
+                  aria-haspopup="true"
+                >
+                  <Avatar className="h-9 w-9 shadow-sm ring-2 ring-transparent transition-all duration-300 group-hover:ring-[#113680]/20 dark:group-hover:ring-white/20">
+                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                    <AvatarFallback className="bg-gradient-to-br from-[#113680] to-[#3b82f6] text-white font-semibold text-xs">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden text-left md:block">
+                    <p className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC] leading-none">
+                      {user.name}
+                    </p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">
+                      {user.provider === "google" ? "Pro Plan" : "Admin"}
+                    </p>
                   </div>
+                  <ChevronDown 
+                    className={`hidden h-4 w-4 text-muted-foreground transition-transform duration-300 md:block ${showDropdown ? "rotate-180 text-[#113680] dark:text-white" : "group-hover:text-[#113680] dark:group-hover:text-white"}`} 
+                  />
+                </button>
 
-                  <Link
-                    href="/profile"
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 dark:text-foreground/70 transition-all duration-200 hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
-                  >
-                    <User className="h-4 w-4" />
-                    Profile
-                  </Link>
+                {/* Dropdown Menu */}
+                {showDropdown && (
+                  <div className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-2xl border border-border/80 bg-card p-2 shadow-[var(--shadow-elevated)] animate-fade-in-down z-50">
+                    <div className="mb-2 px-3 py-3">
+                      <p className="font-heading text-lg font-semibold text-foreground tracking-tight">{user.name}</p>
+                      <p className="text-sm font-medium text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    
+                    <div className="mb-2 h-px w-full bg-border/50"></div>
 
-                  <Link
-                    href="/settings"
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-sidebar/70 dark:text-foreground/70 transition-all duration-200 hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
+                    <div className="space-y-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowDropdown(false)}
+                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+                      >
+                        <User className="h-[18px] w-[18px] transition-colors group-hover:text-[#113680] dark:group-hover:text-white" />
+                        My Profile
+                      </Link>
 
-                  <div className="border-t border-border mt-1.5 pt-1.5">
+                      <Link
+                        href="/settings"
+                        onClick={() => setShowDropdown(false)}
+                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+                      >
+                        <Settings className="h-[18px] w-[18px] transition-colors group-hover:text-[#113680] dark:group-hover:text-white" />
+                        Account Settings
+                      </Link>
+                    </div>
+
+                    <div className="my-2 h-px w-full bg-border/50"></div>
+
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-red-600 transition-all duration-200 hover:bg-red-50"
+                      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10"
                     >
-                      <LogOut className="h-4 w-4" />
-                      Sign out
+                      <LogOut className="h-[18px] w-[18px] transition-transform group-hover:-translate-x-0.5" />
+                      Sign Out
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/login"
-                className="rounded-xl px-4 py-2 text-sm font-medium text-sidebar/70 transition-all hover:text-sidebar"
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-sidebar/80 dark:text-foreground/80 transition-all hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
               >
-                Sign in
+                Sign In
               </Link>
               <Link
                 href="/register"
-                className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02]"
+                className="rounded-xl bg-[#fe4443] px-5 py-2 text-sm font-bold text-white shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
               >
                 Get Started
               </Link>

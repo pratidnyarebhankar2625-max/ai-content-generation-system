@@ -54,7 +54,7 @@ export default function AnalyticsChart() {
 
   return (
     <section className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-      <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight">
+      <h2 className="mb-8 font-heading text-[28px] font-semibold leading-tight tracking-tight">
         Analytics
       </h2>
 

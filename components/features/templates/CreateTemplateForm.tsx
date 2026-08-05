@@ -61,7 +61,7 @@ const [category, setCategory] = useState(
         </button>
 
 
-        <h2 className="font-heading text-2xl font-semibold text-foreground">
+        <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">
   {isEditing ? "Edit Template" : "Create New Template"}
 </h2>
 

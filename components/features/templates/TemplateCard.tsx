@@ -62,83 +62,91 @@ export default function TemplateCard({
   onDelete,
   index = 0,
 }: TemplateCardProps) {
-
   const Icon =
     categoryIcons[category as keyof typeof categoryIcons] || Sparkles;
 
   return (
     <div
-      className="card-shimmer primary-glow group rounded-[20px] border border-border bg-card p-6 space-y-5 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#113680]/30 animate-fade-in-up"
+      className="card-shimmer flex flex-col h-full group rounded-2xl border border-border/60 bg-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#113680]/30 hover:shadow-[0_12px_24px_-8px_rgba(17,54,128,0.15)] animate-fade-in-up"
       style={{ animationDelay: `${(index % 6) * 60}ms` }}
     >
       {/* Top Section */}
-      <div className="flex items-center justify-between">
-        <div className="rounded-2xl bg-[var(--muted)] p-3.5 transition-colors duration-300 group-hover:bg-[#113680]/10">
-          <Icon className="h-7 w-7 text-secondary" />
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#113680]/5 to-[#113680]/10 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
+            <Icon className="h-6 w-6 text-[#113680]" />
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide ${
+              badgeColors[category] || "bg-muted text-muted-foreground"
+            }`}
+          >
+            {category}
+          </span>
         </div>
 
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
-            badgeColors[category] || "bg-muted text-muted-foreground"
-          }`}
-        >
-          <Icon className="h-3 w-3" />
-          {category}
-        </span>
         <button
           onClick={() => onFavorite?.(id)}
-          className={`rounded-full p-2 transition-colors duration-300 ${
+          className={`group/fav flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-all duration-300 ${
             isFavorite
-              ? "text-yellow-500 hover:text-yellow-600"
-              : "text-muted-foreground hover:text-yellow-500"
+              ? "bg-amber-50 text-amber-500 hover:bg-amber-100 border-amber-200/50"
+              : "text-muted-foreground hover:bg-muted hover:text-amber-500"
           }`}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Star
-            className="h-5 w-5"
-            fill={isFavorite ? "currentColor" : "none"}
+            className={`h-[18px] w-[18px] transition-transform duration-300 group-hover/fav:scale-110 ${isFavorite ? "fill-current" : ""}`}
           />
         </button>
       </div>
 
       {/* Content */}
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-
-        <p className="text-sm leading-relaxed text-muted-foreground">
+      <div className="flex-1 space-y-3">
+        <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground group-hover:text-[#113680] transition-colors duration-300">
+          {title}
+        </h2>
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
           {description}
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          Used {usageCount} {usageCount === 1 ? "time" : "times"}
         </p>
       </div>
 
-      <div className="flex gap-2.5">
+      {/* Footer / Buttons */}
+      <div className="mt-6 space-y-4">
+        {usageCount > 0 && (
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground/80">
+            <Sparkles className="h-3.5 w-3.5 text-[#113680]/60" />
+            Used {usageCount} {usageCount === 1 ? "time" : "times"}
+          </div>
+        )}
+        
+        <div className="flex gap-2">
+          <button
+            onClick={() => onUse?.(id)}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#113680] py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#113680]/90 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            Use Template
+          </button>
 
-  <button 
-    onClick={() => onUse?.(id)}
-    className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-primary-foreground transition-all duration-300 hover:shadow-md hover:shadow-primary/20"
-  >
-    Use Template
-  </button>
-
-  {isUserTemplate && (
-    <>
-      <button
-        onClick={() => onEdit?.(id)}
-        className="rounded-xl border border-border px-3.5 text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground"
-      >
-        <Edit3 className="h-5 w-5" />
-      </button>
-      <button
-        onClick={() => onDelete?.(id)}
-        className="rounded-xl border border-red-200 px-3.5 text-red-400 transition-all duration-300 hover:bg-red-50 hover:text-red-500 hover:border-red-300"
-      >
-        <Trash2 className="h-5 w-5" />
-      </button>
-    </>
-  )}
-
-</div>
+          {isUserTemplate && (
+            <>
+              <button
+                onClick={() => onEdit?.(id)}
+                className="flex items-center justify-center rounded-xl border border-border/80 bg-white px-3 text-muted-foreground shadow-sm transition-all duration-300 hover:bg-muted hover:text-[#113680] hover:-translate-y-0.5"
+                title="Edit template"
+              >
+                <Edit3 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => onDelete?.(id)}
+                className="flex items-center justify-center rounded-xl border border-red-200/60 bg-white px-3 text-red-500 shadow-sm transition-all duration-300 hover:bg-red-50 hover:border-red-200 hover:-translate-y-0.5"
+                title="Delete template"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

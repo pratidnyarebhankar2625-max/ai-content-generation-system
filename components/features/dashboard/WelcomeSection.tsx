@@ -27,12 +27,12 @@ export default function WelcomeSection() {
 
         <div className="relative flex items-center justify-between">
           <div className="space-y-4">
-            <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-white dark:text-[#F8FAFC]">
+            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-white dark:text-[#F8FAFC]">
               {data.greeting}, {data.userName}!
             </h1>
 
             <div className="flex items-center gap-4">
-              <p className="max-w-2xl text-lg text-white/80 dark:text-[#F8FAFC]/80">
+              <p className="max-w-2xl text-lg leading-relaxed text-white/90 dark:text-[#F8FAFC]/90">
                 Create amazing AI content faster with your personal AI assistant.
               </p>
 

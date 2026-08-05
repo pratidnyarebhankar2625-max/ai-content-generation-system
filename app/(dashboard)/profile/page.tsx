@@ -32,7 +32,7 @@ function ProfileContent() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 p-10 animate-fade-in">
+    <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">
 
             {/* Header */}
             <div className="flex items-center gap-3 animate-fade-in-up">
@@ -40,15 +40,15 @@ function ProfileContent() {
                 <User className="h-6 w-6 text-white" />
               </div>
               <div className="space-y-1">
-                <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">Profile</h1>
-                <p className="text-foreground/70 text-base">Manage your profile and view your activity.</p>
+                <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">Profile</h1>
+                <p className="text-muted-foreground text-base leading-relaxed">Manage your profile and view your activity.</p>
               </div>
             </div>
 
             {/* Profile Card */}
             <div 
               onClick={() => setIsExpanded(!isExpanded)}
-              className="group card-shimmer primary-glow relative overflow-hidden rounded-[20px] border border-border bg-card p-10 animate-fade-in-up stagger-1 cursor-pointer transition-all duration-300 hover:shadow-lg"
+              className="group card-shimmer primary-glow relative overflow-hidden rounded-[20px] border border-border bg-card p-6 md:p-8 animate-fade-in-up stagger-1 cursor-pointer transition-all duration-300 hover:shadow-lg"
             >
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#113680]/5 blur-3xl transition-opacity duration-300 group-hover:bg-[#113680]/10" />
 
@@ -69,7 +69,7 @@ function ProfileContent() {
 
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-heading text-2xl font-bold text-foreground">{displayName}</h2>
+                    <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">{displayName}</h2>
                     <span className="text-xs font-semibold text-[#113680] dark:text-[#F8FAFC] bg-[#113680]/10 dark:bg-[#F8FAFC]/10 px-3 py-1.5 rounded-full transition-colors group-hover:bg-[#113680]/20 dark:group-hover:bg-[#F8FAFC]/20">
                       {isExpanded ? "Hide Details" : "View Details"}
                     </span>

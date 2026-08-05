@@ -6,7 +6,7 @@ import QuickActions from "@/components/features/dashboard/QuickActions";
 
 export default function HomePage() {
   return (
-    <div className="p-10 space-y-12">
+    <div className="p-6 md:p-8 space-y-8">
       <WelcomeSection />
       <StatsCards />
       {/* Two-column layout: Quick Actions + Analytics */}

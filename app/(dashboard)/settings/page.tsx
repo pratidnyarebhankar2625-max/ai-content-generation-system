@@ -110,7 +110,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 p-10 animate-fade-in">
+    <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">
       <AvatarSelectionModal 
         isOpen={isAvatarModalOpen} 
         onClose={() => setIsAvatarModalOpen(false)} 
@@ -127,8 +127,8 @@ export default function SettingsPage() {
                 <Settings className="h-6 w-6 text-white" />
               </div>
               <div className="space-y-1">
-                <h1 className="font-heading text-3xl md:text-[50px] font-bold tracking-tight leading-tight text-foreground">Settings</h1>
-                <p className="text-foreground/70 text-base">Manage your account, notifications, and preferences.</p>
+                <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">Settings</h1>
+                <p className="text-muted-foreground text-base leading-relaxed">Manage your account, notifications, and preferences.</p>
               </div>
             </div>
 
@@ -144,8 +144,8 @@ export default function SettingsPage() {
                     <section.icon className="h-5 w-5 text-[#113680] dark:text-[#F8FAFC]" />
                   </div>
                   <div>
-                    <h2 className="font-heading text-xl font-semibold text-foreground">{section.title}</h2>
-                    <p className="text-sm text-foreground/70">{section.description}</p>
+                    <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">{section.title}</h2>
+                    <p className="text-sm font-medium text-muted-foreground">{section.description}</p>
                   </div>
                 </div>
 

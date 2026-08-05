@@ -111,7 +111,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
               {getIcon()}
             </div>
             <div>
-              <h3 className="font-heading text-lg font-bold">{getTitle()}</h3>
+              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">{getTitle()}</h3>
             </div>
           </div>
           <button 

@@ -103,7 +103,7 @@ export default function AuthLayout({
           <div className="w-full max-w-[440px] space-y-8 animate-fade-in-up">
             {/* Page header */}
             <div className="space-y-2 text-center">
-              <h1 className="font-heading text-4xl font-extrabold tracking-tight text-[#113680]">
+              <h1 className="font-heading text-[40px] md:text-[56px] font-bold leading-[1.1] tracking-tight text-[#113680]">
                 {title}
               </h1>
               {subtitle && <p className="text-sm text-slate-500 font-medium">{subtitle}</p>}

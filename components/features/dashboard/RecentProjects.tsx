@@ -13,7 +13,7 @@ export default function RecentProjects() {
   if (!isLoaded || isLoading) {
     return (
       <section>
-        <h2 className="mb-8 font-heading text-[28px] font-bold tracking-tight animate-fade-in-up">
+        <h2 className="mb-8 font-heading text-[28px] font-semibold leading-tight tracking-tight animate-fade-in-up">
           Recent Projects
         </h2>
         <SkeletonProjectsList />
@@ -40,7 +40,7 @@ export default function RecentProjects() {
     return (
       <section id="recent-projects" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-8 animate-fade-in-up">
-          <h2 className="font-heading text-[28px] font-bold tracking-tight">
+          <h2 className="font-heading text-[28px] font-semibold leading-tight tracking-tight">
             {filterStatus === "all" ? "Recent Projects" : "Filtered Projects"}
           </h2>
           {filterStatus !== "all" && (
@@ -56,7 +56,7 @@ export default function RecentProjects() {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#113680]/10">
             <FolderOpen className="h-8 w-8 text-[#113680]/60" />
           </div>
-          <h3 className="mt-5 font-heading text-xl font-semibold text-foreground">
+          <h3 className="mt-5 font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">
             No projects yet
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -76,7 +76,7 @@ export default function RecentProjects() {
   return (
       <section id="recent-projects" className="scroll-mt-24">
         <div className="flex items-center justify-between mb-8 animate-fade-in-up">
-          <h2 className="font-heading text-[28px] font-bold tracking-tight">
+          <h2 className="font-heading text-[28px] font-semibold leading-tight tracking-tight">
             {filterStatus === "all" ? "Recent Projects" : "Filtered Projects"}
           </h2>
           {filterStatus !== "all" && (
