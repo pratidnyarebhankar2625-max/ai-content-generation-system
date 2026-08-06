@@ -44,7 +44,7 @@ type AuthResult = {
   success: boolean;
   error?: string;
   message?: string;
-  data?: Record<string, string>;
+  data?: Record<string, any>;
 };
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -249,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update auth metadata
       const authUpdate: any = {};
       if (data.name !== undefined) authUpdate.full_name = data.name;
+      if (data.avatar !== undefined) authUpdate.avatar_url = data.avatar;
       
       const { error: authError } = await supabase.auth.updateUser({
         data: authUpdate,

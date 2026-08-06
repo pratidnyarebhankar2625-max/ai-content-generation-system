@@ -4,6 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { templates } from "@/components/features/templates/templateData";
 import { useContent, type Generation, type GenerationStatus } from "@/lib/content-store";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
   FileText,
@@ -92,6 +93,57 @@ function formatTime(dateStr: string) {
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>?/gm, '');
+}
+
+// ─── Loading Skeleton ────────────────────────────────────────────────────────
+
+function HistorySkeleton() {
+  return (
+    <div className="space-y-6 md:space-y-8 animate-fade-in">
+      {/* Header Skeleton */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-muted animate-pulse" />
+            <div className="h-12 w-64 rounded-xl bg-muted animate-pulse" />
+          </div>
+          <div className="h-5 w-96 rounded-lg bg-muted animate-pulse" />
+        </div>
+        <div className="h-12 w-40 rounded-2xl bg-muted animate-pulse hidden md:block" />
+      </div>
+
+      {/* Filter Bar Skeleton */}
+      <div className="flex flex-col gap-3 sm:flex-row pt-4">
+        <div className="h-[52px] flex-1 rounded-2xl bg-muted animate-pulse" />
+        <div className="h-[52px] w-[120px] rounded-2xl bg-muted animate-pulse" />
+        <div className="h-[52px] w-[160px] rounded-2xl bg-muted animate-pulse" />
+      </div>
+
+      {/* Cards Skeleton */}
+      <div className="space-y-6 mt-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-[20px] border border-border bg-card p-5 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-6 w-48 rounded-lg bg-muted animate-pulse" />
+                  <div className="h-6 w-24 rounded-full bg-muted animate-pulse" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-4 w-32 rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-40 rounded-md bg-muted animate-pulse" />
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="h-4 w-full max-w-2xl rounded-md bg-muted animate-pulse" />
+                  <div className="h-4 w-3/4 max-w-xl rounded-md bg-muted animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─── View Modal ──────────────────────────────────────────────────────────────
@@ -414,7 +466,7 @@ export default function HistoryContent() {
     setShowDeleteToast(false);
   }
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return <HistorySkeleton />;
 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -447,7 +499,7 @@ export default function HistoryContent() {
 
 
       {/* Search & Filters Bar */}
-      <div ref={listRef} className="space-y-4 animate-fade-in-up stagger-3 scroll-mt-24">
+      <div ref={listRef} className="sticky top-0 md:top-4 z-30 space-y-4 animate-fade-in-up stagger-3 scroll-mt-24 bg-background/95 backdrop-blur-xl py-4 border-b border-border/40 mb-4 rounded-b-2xl md:rounded-2xl md:border shadow-sm px-4 -mx-4 md:px-6 md:-mx-6 transition-all duration-300 hover:border-[#567C8D]/30 hover:shadow-md">
         <div className="flex flex-col gap-3 sm:flex-row">
           {/* Search */}
           <div className="relative flex-1">
@@ -577,7 +629,8 @@ export default function HistoryContent() {
 
       {/* History Items */}
       {filtered.length > 0 ? (
-        <div className="space-y-4">
+        <motion.div layout className="space-y-6 relative">
+          <AnimatePresence>
           {paginatedItems.map((item, index) => {
             const status = statusConfig[item.status];
             const catIcon = categoryIcons[item.category] || (
@@ -585,10 +638,14 @@ export default function HistoryContent() {
             );
 
             return (
-              <div
+              <motion.div
+                layout
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.3 }}
                 key={item.id}
-                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 md:p-6 transition-all duration-400 hover:-translate-y-0.5 hover:border-[#567C8D]/30 animate-fade-in-up"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 md:p-6 transition-all duration-400 hover:-translate-y-1 hover:border-[#567C8D]/40 hover:shadow-lg hover:shadow-[#567C8D]/5"
               >
                 <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   {/* Left: Content */}
@@ -629,7 +686,7 @@ export default function HistoryContent() {
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex shrink-0 items-center gap-2 md:ml-6">
+                  <div className="flex shrink-0 items-center gap-2 md:ml-6 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                     <button
                       onClick={() => setViewingGen(item)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
@@ -679,9 +736,10 @@ export default function HistoryContent() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
@@ -707,7 +765,7 @@ export default function HistoryContent() {
               </button>
             </div>
           )}
-        </div>
+        </motion.div>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-24 animate-fade-in">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
