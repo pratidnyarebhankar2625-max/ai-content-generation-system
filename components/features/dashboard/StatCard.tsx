@@ -1,7 +1,8 @@
 "use client";
 
 import { TrendingUp, Minus } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useSpring, useTransform, motion } from "framer-motion";
 import {
   AreaChart,
   Area,
@@ -22,42 +23,23 @@ type StatCardProps = {
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
 
-function useAnimatedNumber(target: number, duration = 800): number {
+function useAnimatedNumber(target: number): number {
   const [current, setCurrent] = useState(0);
-  const frameRef = useRef<number | null>(null);
-  const startRef = useRef<number | null>(null);
-  const prevTarget = useRef(0);
+  const springValue = useSpring(0, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   useEffect(() => {
-    const from = prevTarget.current;
-    prevTarget.current = target;
+    springValue.set(target);
+  }, [target, springValue]);
 
-    if (from === target) {
-      setCurrent(target);
-      return;
-    }
-
-    startRef.current = null;
-
-    function step(timestamp: number) {
-      if (!startRef.current) startRef.current = timestamp;
-      const elapsed = timestamp - startRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCurrent(Math.round(from + (target - from) * eased));
-
-      if (progress < 1) {
-        frameRef.current = requestAnimationFrame(step);
-      }
-    }
-
-    frameRef.current = requestAnimationFrame(step);
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [target, duration]);
+  useEffect(() => {
+    return springValue.on("change", (latest) => {
+      setCurrent(Math.round(latest));
+    });
+  }, [springValue]);
 
   return current;
 }
@@ -108,10 +90,11 @@ export default function StatCard({
   const animatedValue = useAnimatedNumber(value);
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      className={`card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 transition-all duration-400 hover:-translate-y-1.5 hover:border-[#113680]/30 animate-fade-in-up ${onClick ? "cursor-pointer" : ""}`}
-      style={{ animationDelay: `${(index + 1) * 80}ms` }}
+      whileHover={{ y: -6, boxShadow: "0px 10px 30px rgba(17,54,128,0.08)" }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={`card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 ${onClick ? "cursor-pointer" : ""}`}
     >
       {/* Icon */}
       <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-3 text-[#113680]">
@@ -147,6 +130,6 @@ export default function StatCard({
       {sparklineData && sparklineData.length > 0 && (
         <Sparkline data={sparklineData} />
       )}
-    </div>
+    </motion.div>
   );
 }

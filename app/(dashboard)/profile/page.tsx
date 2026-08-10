@@ -60,8 +60,8 @@ function ProfileContent() {
     <div className="mx-auto w-full max-w-6xl space-y-8 p-6 md:p-8 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 animate-fade-in-up">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#113680] to-[#113680] shadow-lg shadow-[#113680]/20">
-          <User className="h-6 w-6 text-white" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
+          <User className="h-6 w-6 text-primary-foreground" />
         </div>
         <div className="space-y-1">
           <h1 className="font-heading text-[32px] md:text-[40px] font-bold tracking-tight leading-[1.1] text-foreground">
@@ -80,7 +80,7 @@ function ProfileContent() {
         <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
           <div className="relative">
             {user?.avatar ? (
-              <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-gradient-to-br from-[#113680] to-[#3b82f6] shadow-xl overflow-hidden p-[3px]">
+              <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary shadow-xl overflow-hidden p-[3px]">
                 <img 
                   src={user.avatar} 
                   alt="Avatar" 
@@ -88,7 +88,7 @@ function ProfileContent() {
                 />
               </div>
             ) : (
-              <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-gradient-to-br from-[#113680] to-[#3b82f6] text-4xl font-bold text-white shadow-xl">
+              <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary text-4xl font-bold text-primary-foreground shadow-xl">
                 {displayInitials}
               </div>
             )}
@@ -109,7 +109,7 @@ function ProfileContent() {
             </div>
             
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#113680]/10 dark:bg-[#F8FAFC]/10 px-4 py-2 text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
                 <Award className="h-4 w-4" />
                 Pro Member
               </span>
@@ -144,8 +144,8 @@ function ProfileContent() {
         {/* Account Details */}
         <div className="group rounded-[20px] border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#113680]/5 dark:bg-[#F8FAFC]/5">
-              <Briefcase className="h-5 w-5 text-[#113680] dark:text-[#F8FAFC]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10">
+              <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 className="font-heading text-lg font-semibold text-foreground">Account Details</h3>
           </div>
@@ -169,7 +169,7 @@ function ProfileContent() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Current Plan</span>
               </div>
-              <span className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Pro</span>
+              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Pro</span>
             </div>
           </div>
         </div>

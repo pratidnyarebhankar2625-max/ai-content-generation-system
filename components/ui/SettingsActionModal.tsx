@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Smartphone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useSettings } from "@/lib/settings-store";
 
@@ -47,8 +48,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
     }
   }, [isOpen, settings]);
 
-  if (!isOpen || !action) return null;
-
+  // removed early return to allow AnimatePresence to work
   async function handleActionSubmit() {
     setIsSaving(true);
     let result: { success: boolean; error?: string } = { success: true };
@@ -95,17 +95,29 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in-up border border-border">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border bg-[#113680] p-5 text-white">
+    <AnimatePresence>
+      {isOpen && action && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          
+          {/* Modal */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-border"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border bg-[#113680] p-5 text-white">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-inner">
               {getIcon()}
@@ -283,7 +295,9 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
             </button>
           </div>
         )}
+      </motion.div>
       </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

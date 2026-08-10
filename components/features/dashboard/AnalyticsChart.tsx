@@ -53,7 +53,7 @@ export default function AnalyticsChart() {
   const hasData = weeklyData.some((d) => d.count > 0);
 
   return (
-    <section className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+    <section>
       <h2 className="mb-8 font-heading text-[28px] font-semibold leading-tight tracking-tight">
         Analytics
       </h2>

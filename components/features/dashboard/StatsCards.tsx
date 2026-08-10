@@ -5,6 +5,22 @@ import StatCard from "./StatCard";
 import { SkeletonStatsGrid } from "./SkeletonCard";
 import { FolderKanban, CheckCircle2, FileText, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion, Variants } from "framer-motion";
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
 
 export default function StatsCards() {
   const { data, isLoading, setFilterStatus } = useDashboard();
@@ -68,24 +84,30 @@ export default function StatsCards() {
 
   return (
     <section>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+      >
         {cards.map((stat, index) => (
-          <StatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            change={stat.change}
-            trend={stat.trend}
-            icon={stat.icon}
-            index={index}
-            sparklineData={stat.sparklineData}
-            onClick={() => {
-              stat.filterAction();
-              router.push('/templates');
-            }}
-          />
+          <motion.div key={stat.title} variants={itemVariants}>
+            <StatCard
+              title={stat.title}
+              value={stat.value}
+              change={stat.change}
+              trend={stat.trend}
+              icon={stat.icon}
+              index={index}
+              sparklineData={stat.sparklineData}
+              onClick={() => {
+                stat.filterAction();
+                router.push('/templates');
+              }}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 }

@@ -1,24 +1,33 @@
+"use client";
+
 import * as React from "react"
+import { motion, HTMLMotionProps } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
-function Card({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
-  return (
-    <div
-      data-slot="card"
-      data-size={size}
-      className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 transition-all duration-300 hover:shadow-lg hover:ring-primary/20 hover:-translate-y-0.5 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
-        className
-      )}
-      {...props}
-    />
-  )
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  size?: "default" | "sm"
 }
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, size = "default", ...props }, ref) => {
+    return (
+      <motion.div
+        ref={ref}
+        whileHover={{ y: -4, boxShadow: "0px 10px 30px rgba(0,0,0,0.06)" }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        data-slot="card"
+        data-size={size}
+        className={cn(
+          "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 transition-colors duration-200 hover:ring-primary/20 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+          className
+        )}
+        {...(props as any)}
+      />
+    )
+  }
+)
+Card.displayName = "Card"
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (

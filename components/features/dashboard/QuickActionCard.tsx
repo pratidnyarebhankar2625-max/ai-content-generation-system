@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 type QuickActionCardProps = {
   title: string;
   description: string;
@@ -14,7 +18,10 @@ export default function QuickActionCard({
   onClick,
 }: QuickActionCardProps) {
   return (
-    <button
+    <motion.button
+      whileHover={{ y: -6, boxShadow: "0px 10px 30px rgba(17,54,128,0.08)" }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       onClick={onClick}
       className="
         card-shimmer
@@ -31,16 +38,10 @@ export default function QuickActionCard({
         bg-card
         p-7
         text-left
-        transition-all
-        duration-400
-        hover:-translate-y-1.5
-        hover:border-[#113680]/30
-        animate-fade-in-up
       "
-      style={{ animationDelay: `${(index + 1) * 80}ms` }}
     >
       {/* Accent strip on hover */}
-      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#fe4443] opacity-0 transition-all duration-400 group-hover:opacity-100" />
+      <div className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-[#fe4443] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-3.5 text-[#113680] transition-colors duration-300 group-hover:bg-[#113680]/15 group-hover:text-[#113680]">
         {icon}
@@ -55,6 +56,6 @@ export default function QuickActionCard({
           {description}
         </p>
       </div>
-    </button>
+    </motion.button>
   );
 }

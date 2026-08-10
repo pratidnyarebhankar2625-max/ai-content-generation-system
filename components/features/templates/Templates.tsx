@@ -99,8 +99,8 @@ const filteredTemplates = templateList.filter((template) => {
       <div className="flex items-start justify-between animate-fade-in-up">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
-              <Sparkles className="h-6 w-6 text-[#2F4156]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
+              <Sparkles className="h-6 w-6 text-primary-foreground" />
             </div>
             <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
               Content Templates
@@ -241,15 +241,15 @@ const filteredTemplates = templateList.filter((template) => {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-24 animate-fade-in">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
-            <FileText className="h-9 w-9 text-primary-foreground/60" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center animate-fade-in sm:p-16">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 shadow-inner">
+            <FileText className="h-10 w-10 text-primary" />
           </div>
-          <h2 className="mt-6 font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">
+          <h2 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             No templates found
           </h2>
 
-          <p className="mt-2 max-w-sm text-center text-muted-foreground">
+          <p className="mx-auto max-w-md text-base text-muted-foreground">
             Try changing your search or selecting another category.
           </p>
 

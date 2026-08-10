@@ -123,8 +123,8 @@ export default function SettingsPage() {
 
             {/* Header */}
             <div className="flex items-center gap-3 animate-fade-in-up">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#113680] to-[#113680] shadow-lg shadow-[#113680]/20">
-                <Settings className="h-6 w-6 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
+                <Settings className="h-6 w-6 text-primary-foreground" />
               </div>
               <div className="space-y-1">
                 <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">Settings</h1>

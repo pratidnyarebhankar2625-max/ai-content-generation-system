@@ -5,6 +5,7 @@ import { Sparkles, RefreshCw } from "lucide-react";
 import { useDashboard } from "@/lib/dashboard-store";
 import SkeletonCard from "./SkeletonCard";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function WelcomeSection() {
   const { data, isLoading, isRefreshing, refresh } = useDashboard();
@@ -19,7 +20,11 @@ export default function WelcomeSection() {
   }
 
   return (
-    <section className="animate-fade-in-up">
+    <motion.section 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#113680] to-[#fe4443] dark:from-[#112A46] dark:to-[#0B192C] p-10 shadow-[var(--shadow-elevated)] border border-transparent dark:border-[rgba(248,250,252,0.1)]">
         {/* Decorative accent */}
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#fe4443]/20 blur-3xl" />
@@ -39,7 +44,7 @@ export default function WelcomeSection() {
               {/* Refresh indicator */}
               <button
                 onClick={refresh}
-                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-white/70 dark:text-[#F8FAFC]/70 transition-all duration-300 hover:bg-white/10 hover:text-white dark:hover:text-[#F8FAFC]"
+                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-white/70 dark:text-[#F8FAFC]/70 transition-colors duration-300 hover:bg-white/10 hover:text-white dark:hover:text-[#F8FAFC]"
                 title="Refresh dashboard"
               >
                 <RefreshCw
@@ -68,13 +73,13 @@ export default function WelcomeSection() {
           <Button
             size="lg"
             onClick={() => router.push("/templates")}
-            className="rounded-2xl bg-white dark:bg-[#FE4443] px-8 py-3 text-[#113680] dark:text-white font-semibold shadow-lg shadow-black/5 transition-all duration-400 hover:shadow-xl hover:scale-[1.03]"
+            className="rounded-2xl bg-white dark:bg-[#FE4443] px-8 py-3 text-[#113680] dark:text-white font-semibold shadow-lg shadow-black/5"
           >
             <Sparkles className="mr-2 h-5 w-5" />
             Create Content
           </Button>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

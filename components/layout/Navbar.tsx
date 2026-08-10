@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Settings, ChevronDown, Menu, Bell, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -65,17 +66,17 @@ export default function Navbar() {
         <div className="flex items-center gap-4 sm:gap-6">
           <button
             onClick={toggleSidebar}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-sidebar/80 dark:text-foreground/80 transition-all duration-300 hover:bg-muted hover:text-sidebar dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-[#113680]/50"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             aria-label="Toggle Sidebar"
           >
             <Menu className="h-5 w-5" />
           </button>
 
           <Link href="/" className="flex items-center gap-3 transition-transform duration-300 hover:scale-[1.02] focus:outline-none">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#113680] to-[#fe4443] shadow-md">
-              <Sparkles className="h-5 w-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[#fe4443] shadow-md">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="hidden sm:block font-heading text-[22px] font-bold tracking-tight text-[#113680] dark:text-[#F8FAFC]">
+            <h1 className="hidden sm:block font-heading text-[22px] font-bold tracking-tight text-primary">
               AI Content Studio
             </h1>
           </Link>
@@ -86,9 +87,9 @@ export default function Navbar() {
           {isAuthenticated && user ? (
             <>
               {/* Notification Bell */}
-              <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-sidebar/70 dark:text-foreground/70 transition-all duration-300 hover:bg-muted hover:text-sidebar dark:hover:text-foreground focus:outline-none focus:ring-2 focus:ring-[#113680]/50">
+              <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <Bell className="h-[22px] w-[22px]" />
-                <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-white dark:ring-[#0B192C]"></span>
+                <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-background"></span>
               </button>
 
               {/* Separator */}
@@ -117,51 +118,37 @@ export default function Navbar() {
                     </p>
                   </div>
                   <ChevronDown 
-                    className={`hidden h-4 w-4 text-muted-foreground transition-transform duration-300 md:block ${showDropdown ? "rotate-180 text-[#113680] dark:text-white" : "group-hover:text-[#113680] dark:group-hover:text-white"}`} 
+                    className={`hidden h-4 w-4 text-muted-foreground transition-transform duration-300 md:block ${showDropdown ? "rotate-180 text-primary" : "group-hover:text-primary"}`} 
                   />
                 </button>
 
                 {/* Dropdown Menu */}
-                {showDropdown && (
-                  <div className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-2xl border border-border/80 bg-card p-2 shadow-[var(--shadow-elevated)] animate-fade-in-down z-50">
-                    <div className="mb-2 px-3 py-3">
-                      <p className="font-heading text-lg font-semibold text-foreground tracking-tight">{user.name}</p>
-                      <p className="text-sm font-medium text-muted-foreground truncate">{user.email}</p>
-                    </div>
-                    
-                    <div className="mb-2 h-px w-full bg-border/50"></div>
-
-                    <div className="space-y-1">
-                      <Link
-                        href="/profile"
-                        onClick={() => setShowDropdown(false)}
-                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-                      >
-                        <User className="h-[18px] w-[18px] transition-colors group-hover:text-[#113680] dark:group-hover:text-white" />
-                        My Profile
-                      </Link>
-
-                      <Link
-                        href="/settings"
-                        onClick={() => setShowDropdown(false)}
-                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-                      >
-                        <Settings className="h-[18px] w-[18px] transition-colors group-hover:text-[#113680] dark:group-hover:text-white" />
-                        Account Settings
-                      </Link>
-                    </div>
-
-                    <div className="my-2 h-px w-full bg-border/50"></div>
-
-                    <button
-                      onClick={handleLogout}
-                      className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10"
+                <AnimatePresence>
+                  {showDropdown && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-2xl border border-border/80 bg-card p-2 shadow-[var(--shadow-elevated)] z-50"
                     >
-                      <LogOut className="h-[18px] w-[18px] transition-transform group-hover:-translate-x-0.5" />
-                      Sign Out
-                    </button>
-                  </div>
-                )}
+                      <div className="mb-2 px-3 py-3">
+                        <p className="font-heading text-lg font-semibold text-foreground tracking-tight">{user.name}</p>
+                        <p className="text-sm font-medium text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      
+
+
+                      <button
+                        onClick={handleLogout}
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10"
+                      >
+                        <LogOut className="h-[18px] w-[18px] transition-transform group-hover:-translate-x-0.5" />
+                        Sign Out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           ) : (

@@ -1,112 +1,132 @@
 // ─── Skeleton Loading Components ─────────────────────────────────────────────
 // Reusable skeleton variants matching dashboard card dimensions
 
+import { motion } from "framer-motion";
+
 type SkeletonCardProps = {
   variant?: "stat" | "chart" | "activity" | "project" | "welcome";
   index?: number;
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
 };
 
 export default function SkeletonCard({
   variant = "stat",
   index = 0,
 }: SkeletonCardProps) {
-  const delay = `${(index + 1) * 80}ms`;
-
   if (variant === "welcome") {
     return (
-      <div
-        className="animate-fade-in-up rounded-[20px] bg-gradient-to-r from-primary to-secondary p-10"
-        style={{ animationDelay: delay }}
+      <motion.div
+        variants={itemVariants}
+        className="rounded-[20px] bg-gradient-to-r from-primary/80 to-secondary/80 p-10 relative overflow-hidden"
       >
-        <div className="flex items-center justify-between">
+        <motion.div 
+          className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent"
+          animate={{ x: ["100%", "-100%"] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        />
+        <div className="flex items-center justify-between relative z-10">
           <div className="space-y-4 flex-1">
-            <div className="skeleton skeleton-heading w-[340px] h-[48px]" />
-            <div className="skeleton skeleton-text w-[400px] opacity-40" />
+            <div className="h-[48px] w-[340px] rounded-lg bg-white/20" />
+            <div className="h-[24px] w-[400px] rounded-lg bg-white/10" />
           </div>
-          <div className="skeleton h-[48px] w-[180px] rounded-2xl" />
+          <div className="h-[48px] w-[180px] rounded-2xl bg-white/20" />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (variant === "stat") {
     return (
-      <div
-        className="rounded-[20px] border border-border bg-card p-7 animate-fade-in-up"
-        style={{ animationDelay: delay }}
+      <motion.div
+        variants={itemVariants}
+        className="rounded-[20px] border border-border bg-card p-7 relative overflow-hidden"
       >
+        <motion.div 
+          className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/5 to-transparent"
+          animate={{ x: ["-100%", "200%"] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "linear", delay: index * 0.1 }}
+        />
         {/* Icon placeholder */}
-        <div className="skeleton h-[52px] w-[52px] rounded-2xl" />
+        <div className="h-[52px] w-[52px] rounded-2xl bg-muted" />
 
         {/* Title */}
-        <div className="skeleton skeleton-text mt-5 w-24" />
+        <div className="mt-5 h-4 w-24 rounded bg-muted" />
 
         {/* Value */}
-        <div className="skeleton skeleton-heading mt-3 w-20" />
+        <div className="mt-3 h-10 w-20 rounded bg-muted" />
 
         {/* Trend */}
-        <div className="skeleton skeleton-text mt-4 w-28" />
+        <div className="mt-4 h-4 w-28 rounded bg-muted" />
 
         {/* Sparkline placeholder */}
-        <div className="skeleton mt-4 h-[40px] w-full rounded-lg" />
-      </div>
+        <div className="mt-4 h-[40px] w-full rounded-lg bg-muted" />
+      </motion.div>
     );
   }
 
   if (variant === "chart") {
     return (
-      <div
-        className="rounded-[20px] border border-border bg-card p-7 animate-fade-in-up"
-        style={{ animationDelay: delay }}
+      <motion.div
+        variants={itemVariants}
+        className="rounded-[20px] border border-border bg-card p-7 relative overflow-hidden"
       >
+        <motion.div 
+          className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/5 to-transparent"
+          animate={{ x: ["-100%", "200%"] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        />
         {/* Chart header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="skeleton skeleton-heading w-40" />
-          <div className="skeleton skeleton-text w-20" />
+          <div className="h-6 w-40 rounded bg-muted" />
+          <div className="h-4 w-20 rounded bg-muted" />
         </div>
 
         {/* Chart area placeholder */}
-        <div className="skeleton h-[260px] w-full rounded-xl" />
-      </div>
+        <div className="h-[260px] w-full rounded-xl bg-muted" />
+      </motion.div>
     );
   }
 
   if (variant === "activity") {
     return (
-      <div
-        className="flex items-start gap-4 py-4 animate-fade-in-up"
-        style={{ animationDelay: delay }}
+      <motion.div
+        variants={itemVariants}
+        className="flex items-start gap-4 py-4 relative overflow-hidden"
       >
         {/* Timeline dot */}
-        <div className="skeleton h-10 w-10 rounded-full flex-shrink-0" />
+        <div className="h-10 w-10 rounded-full bg-muted flex-shrink-0" />
 
         {/* Content */}
         <div className="flex-1 space-y-2">
-          <div className="skeleton skeleton-text w-3/4" />
-          <div className="skeleton skeleton-text w-1/2 opacity-60" />
+          <div className="h-4 w-3/4 rounded bg-muted" />
+          <div className="h-4 w-1/2 rounded bg-muted opacity-60" />
         </div>
 
         {/* Timestamp */}
-        <div className="skeleton skeleton-text w-16 flex-shrink-0" />
-      </div>
+        <div className="h-4 w-16 rounded bg-muted flex-shrink-0" />
+      </motion.div>
     );
   }
 
   if (variant === "project") {
     return (
-      <div
-        className="flex items-center justify-between rounded-[20px] border border-border bg-card p-6 animate-fade-in-up"
-        style={{ animationDelay: delay }}
+      <motion.div
+        variants={itemVariants}
+        className="flex items-center justify-between rounded-[20px] border border-border bg-card p-6 relative overflow-hidden"
       >
         <div className="space-y-2 flex-1">
-          <div className="skeleton skeleton-text w-48" />
-          <div className="skeleton skeleton-text w-32 opacity-60" />
+          <div className="h-5 w-48 rounded bg-muted" />
+          <div className="h-4 w-32 rounded bg-muted opacity-60" />
         </div>
         <div className="flex items-center gap-4">
-          <div className="skeleton h-7 w-24 rounded-full" />
-          <div className="skeleton h-5 w-5 rounded" />
+          <div className="h-7 w-24 rounded-full bg-muted" />
+          <div className="h-5 w-5 rounded bg-muted" />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -115,48 +135,78 @@ export default function SkeletonCard({
 
 // ─── Skeleton Groups ─────────────────────────────────────────────────────────
 
+import { Variants } from "framer-motion";
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
 export function SkeletonStatsGrid() {
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+    >
       {[0, 1, 2, 3].map((i) => (
         <SkeletonCard key={i} variant="stat" index={i} />
       ))}
-    </div>
+    </motion.div>
   );
 }
 
 export function SkeletonChartsRow() {
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid gap-6 lg:grid-cols-5"
+    >
       <div className="lg:col-span-3">
         <SkeletonCard variant="chart" index={0} />
       </div>
       <div className="lg:col-span-2">
         <SkeletonCard variant="chart" index={1} />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function SkeletonActivityFeed() {
   return (
-    <div className="rounded-[20px] border border-border bg-card p-7 animate-fade-in-up">
-      <div className="skeleton skeleton-heading w-36 mb-6" />
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="rounded-[20px] border border-border bg-card p-7"
+    >
+      <div className="h-6 w-36 rounded bg-muted mb-6" />
       <div className="divide-y divide-border">
         {[0, 1, 2, 3, 4].map((i) => (
           <SkeletonCard key={i} variant="activity" index={i} />
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function SkeletonProjectsList() {
   return (
-    <div className="space-y-4">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-4"
+    >
       {[0, 1, 2, 3].map((i) => (
         <SkeletonCard key={i} variant="project" index={i} />
       ))}
-    </div>
+    </motion.div>
   );
 }

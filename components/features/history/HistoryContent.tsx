@@ -474,8 +474,8 @@ export default function HistoryContent() {
       <div className="flex items-start justify-between animate-fade-in-up">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#567C8D] to-[#567C8D] shadow-lg shadow-[#567C8D]/20">
-              <Clock className="h-6 w-6 text-[#2F4156]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
+              <Clock className="h-6 w-6 text-primary-foreground" />
             </div>
             <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
               Generation History
@@ -499,7 +499,7 @@ export default function HistoryContent() {
 
 
       {/* Search & Filters Bar */}
-      <div ref={listRef} className="sticky top-0 md:top-4 z-30 space-y-4 animate-fade-in-up stagger-3 scroll-mt-24 bg-background/95 backdrop-blur-xl py-4 border-b border-border/40 mb-4 rounded-b-2xl md:rounded-2xl md:border shadow-sm px-4 -mx-4 md:px-6 md:-mx-6 transition-all duration-300 hover:border-[#567C8D]/30 hover:shadow-md">
+      <div ref={listRef} className="sticky top-0 md:top-4 z-30 space-y-4 animate-fade-in-up stagger-3 scroll-mt-24 bg-background/95 backdrop-blur-xl py-4 border-b border-border/40 mb-4 rounded-b-2xl md:rounded-2xl md:border shadow-sm px-4 -mx-4 md:px-6 md:-mx-6 transition-all duration-300 hover:border-primary/30 hover:shadow-md">
         <div className="flex flex-col gap-3 sm:flex-row">
           {/* Search */}
           <div className="relative flex-1">
@@ -512,7 +512,7 @@ export default function HistoryContent() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full rounded-2xl border border-border bg-[var(--surface-input)] py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+              className="w-full rounded-2xl border border-border bg-[var(--surface-input)] py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all duration-300 placeholder:text-muted-foreground/70 focus:outline-none focus:bg-[var(--surface-card)] focus:border-primary/50 focus:shadow-[0_0_0_3px_rgba(15,23,42,0.12)]"
             />
           </div>
 
@@ -521,7 +521,7 @@ export default function HistoryContent() {
             onClick={() => setShowFilters(!showFilters)}
             className={`inline-flex items-center gap-2 rounded-2xl border px-6 py-3.5 text-sm font-medium shadow-sm transition-all duration-300 ${
               showFilters
-                ? "border-[#567C8D]/40 bg-[#567C8D]/10 text-primary-foreground"
+                ? "border-primary/40 bg-primary/10 text-primary"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
@@ -645,7 +645,7 @@ export default function HistoryContent() {
                 exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.3 }}
                 key={item.id}
-                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 md:p-6 transition-all duration-400 hover:-translate-y-1 hover:border-[#567C8D]/40 hover:shadow-lg hover:shadow-[#567C8D]/5"
+                className="card-shimmer primary-glow group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 md:p-6 transition-all duration-400 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
               >
                 <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   {/* Left: Content */}
@@ -689,7 +689,7 @@ export default function HistoryContent() {
                   <div className="flex shrink-0 items-center gap-2 md:ml-6 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                     <button
                       onClick={() => setViewingGen(item)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                       title="View content"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -698,7 +698,7 @@ export default function HistoryContent() {
 
                     <button
                       onClick={() => handleEdit(item)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                       title="Edit content"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -710,7 +710,7 @@ export default function HistoryContent() {
                       className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-medium shadow-[var(--shadow-button)] transition-all duration-300 ${
                         copiedId === item.id
                           ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                          : "border-border bg-card text-muted-foreground hover:border-[#567C8D]/30 hover:bg-[#567C8D]/10 hover:text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                       }`}
                       title="Copy content"
                     >
@@ -767,13 +767,13 @@ export default function HistoryContent() {
           )}
         </motion.div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border bg-[var(--surface-card)] py-24 animate-fade-in">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#567C8D]/8">
-            <FolderOpen className="h-9 w-9 text-primary-foreground/60" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center animate-fade-in sm:p-16">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 shadow-inner">
+            <FolderOpen className="h-10 w-10 text-primary" />
           </div>
-          <h3 className="mt-6 font-heading text-[28px] font-semibold tracking-tight leading-tight text-foreground">No results found</h3>
-          <p className="mt-2 max-w-sm text-center text-sm text-muted-foreground">
-            Try adjusting your search or filter criteria to find what you&apos;re looking for.
+          <h3 className="mb-2 font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl">No results found</h3>
+          <p className="mx-auto max-w-md text-base text-muted-foreground">
+            Try adjusting your search or filter criteria to find what you're looking for.
           </p>
           <button
             onClick={() => {
@@ -797,7 +797,7 @@ export default function HistoryContent() {
           </p>
           <button
             onClick={handleRestore}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#567C8D]/15 px-3 py-1.5 text-xs font-medium text-primary-foreground transition-all hover:bg-[#567C8D]/25"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/25"
           >
             <Undo2 className="h-3.5 w-3.5" />
             Undo
