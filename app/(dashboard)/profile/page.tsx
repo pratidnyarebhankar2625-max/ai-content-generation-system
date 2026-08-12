@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/settings-store";
 import { AvatarSelectionModal } from "@/components/ui/AvatarSelectionModal";
 import { SettingsActionModal, type SettingsActionType } from "@/components/ui/SettingsActionModal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   User,
@@ -29,7 +30,7 @@ import {
 } from "lucide-react";
 
 function ProfileContent() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
 
@@ -55,6 +56,25 @@ function ProfileContent() {
   const joinedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "July 2025";
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-6xl space-y-8 p-6 md:p-8 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64 rounded-md" />
+            <Skeleton className="h-4 w-48 rounded-md" />
+          </div>
+        </div>
+        <Skeleton className="h-64 w-full rounded-[24px]" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-48 w-full rounded-[24px]" />
+          <Skeleton className="h-48 w-full rounded-[24px]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 p-6 md:p-8 animate-fade-in">

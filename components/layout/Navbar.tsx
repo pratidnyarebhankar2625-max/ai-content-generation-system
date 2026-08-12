@@ -6,16 +6,25 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Settings, ChevronDown, Menu, Bell, Sparkles } from "lucide-react";
+import { LogOut, User, Settings, ChevronDown, Menu, Bell, Sparkles, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
+import { useSettings } from "@/lib/settings-store";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { toggleSidebar } = useSidebar();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const { updateSettings } = useSettings();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle scroll for dynamic shadow/border
   useEffect(() => {
@@ -77,7 +86,7 @@ export default function Navbar() {
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="hidden sm:block font-heading text-[22px] font-bold tracking-tight text-primary">
-              AI Content Studio
+              Writeora
             </h1>
           </Link>
         </div>
@@ -86,8 +95,32 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           {isAuthenticated && user ? (
             <>
+              {/* Theme Toggle */}
+              {mounted && (
+                <button
+                  onClick={() => {
+                    const newTheme = theme === "dark" ? "light" : "dark";
+                    setTheme(newTheme);
+                    if (isAuthenticated && user) {
+                      updateSettings({ theme: newTheme });
+                    }
+                  }}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-[22px] w-[22px]" />
+                  ) : (
+                    <Moon className="h-[22px] w-[22px]" />
+                  )}
+                </button>
+              )}
+
               {/* Notification Bell */}
-              <button className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+              <button 
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                aria-label="Notifications"
+              >
                 <Bell className="h-[22px] w-[22px]" />
                 <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-background"></span>
               </button>

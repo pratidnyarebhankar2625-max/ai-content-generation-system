@@ -38,7 +38,7 @@ export default function WelcomeSection() {
 
             <div className="flex items-center gap-4">
               <p className="max-w-2xl text-lg leading-relaxed text-white/90 dark:text-[#F8FAFC]/90">
-                Create amazing AI content faster with your personal AI assistant.
+                Create amazing content faster with Writeora.
               </p>
 
               {/* Refresh indicator */}

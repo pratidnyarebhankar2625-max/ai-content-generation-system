@@ -27,12 +27,12 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 w-full">
           {/* Logo */}
           <div className="flex items-center gap-3 animate-fade-in-down">
-            <div className="rounded-2xl bg-white p-3 shadow-[0_0_25px_rgba(254,68,67,0.25)] border border-white/20 transition-transform duration-300 hover:scale-105">
-              <Sparkles className="h-6 w-6 text-[#113680]" />
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-8 w-8" />
+              <span className="font-heading text-2xl font-bold tracking-tight">
+                Writeora
+              </span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white font-heading">
-              AI Content Studio
-            </span>
           </div>
 
           {/* Hero text & Bullets */}
@@ -78,7 +78,7 @@ export default function AuthLayout({
 
           {/* Footer */}
           <div className="flex items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-4 animate-fade-in">
-            <span>© {new Date().getFullYear()} AI Content Studio</span>
+            <span>© {new Date().getFullYear()} Writeora</span>
             <div className="flex gap-4">
               <span className="hover:text-white cursor-pointer transition-colors">Privacy</span>
               <span className="hover:text-white cursor-pointer transition-colors">Terms</span>
@@ -91,12 +91,12 @@ export default function AuthLayout({
       <div className="flex flex-1 flex-col bg-[#f8fafc] bg-dot-texture relative overflow-y-auto">
         {/* Mobile logo */}
         <div className="flex items-center gap-3 p-6 lg:hidden border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-          <div className="rounded-xl bg-[#113680] p-2.5 shadow-md">
-            <Sparkles className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-[#113680]">
-            AI Content Studio
-          </span>
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="h-6 w-6 text-[#113680]" />
+              <span className="font-heading text-xl font-bold tracking-tight text-[#113680]">
+                Writeora
+              </span>
+            </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center px-6 py-10 sm:px-12 relative z-10">

@@ -279,8 +279,13 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
             </button>
             <button
               onClick={handleActionSubmit}
-              disabled={isSaving || success}
-              className="flex min-w-[120px] items-center justify-center gap-2 rounded-xl bg-[#113680] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#113680]/20 transition-all hover:bg-[#0a2050] disabled:opacity-80"
+              disabled={
+                isSaving || 
+                success ||
+                (action === "Email Address" && (!email.includes("@") || email.length < 5)) ||
+                (action === "Change Password" && (currentPassword.length < 6 || newPassword.length < 6 || newPassword !== confirmPassword))
+              }
+              className="flex min-w-[120px] items-center justify-center gap-2 rounded-xl bg-[#113680] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#113680]/20 transition-all hover:bg-[#0a2050] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

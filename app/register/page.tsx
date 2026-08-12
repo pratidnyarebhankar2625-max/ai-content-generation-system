@@ -94,7 +94,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Start generating amazing AI content today.">
+    <AuthLayout title="Create your account" subtitle="Start generating amazing content with Writeora today.">
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Error / Success Messages */}
         {error && (

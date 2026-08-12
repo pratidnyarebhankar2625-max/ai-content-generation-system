@@ -16,8 +16,14 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { Skeleton } from "@/components/ui/skeleton";
 import { marked } from "marked";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(
+  () => import("@/components/ui/RichTextEditor").then((mod) => mod.RichTextEditor),
+  { ssr: false, loading: () => <Skeleton className="h-[400px] w-full rounded-2xl" /> }
+);
 
 interface GenerateWorkspaceProps {
   templateId: number;
@@ -106,33 +112,54 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
       });
 
       if (!res.ok) {
-         const errData = await res.json();
-         throw new Error(errData.error || "Generation failed");
+         let errMsg = "Generation failed";
+         try {
+           const errData = await res.json();
+           errMsg = errData.error || errMsg;
+         } catch(e) {}
+         throw new Error(errMsg);
       }
 
-      const data = await res.json();
-      let rawText = data.text;
-      
-      let finalRawContent = rawText;
-      
-      if (isContinue) {
-         // Get previous assistant message and append new text
-         const prevMsg = currentMessages[currentMessages.length - 1]?.content || "";
-         // Remove the truncation warning from previous text if it exists
-         const strippedPrev = prevMsg.replace(/\n\n\[Response truncated — click Continue to generate the remaining content\.\]$/, "");
-         finalRawContent = strippedPrev + rawText;
-         // Replace the last message
-         currentMessages[currentMessages.length - 1] = { role: "assistant", content: finalRawContent };
-         setMessages([...currentMessages]);
-      } else {
-         setMessages([...currentMessages, { role: "assistant", content: finalRawContent }]);
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let rawText = "";
+      let htmlContent = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          rawText += chunk;
+
+          let isStreamTruncated = false;
+          let processText = rawText;
+          if (processText.includes("[__TRUNCATED__]")) {
+             isStreamTruncated = true;
+             processText = processText.replace("[__TRUNCATED__]", "");
+             setIsTruncated(true);
+          } else {
+             setIsTruncated(false);
+          }
+          
+          let finalRawContent = processText;
+          
+          if (isContinue) {
+             const prevMsg = currentMessages[currentMessages.length - 1]?.content || "";
+             const strippedPrev = prevMsg.replace(/\n\n\[Response truncated — click Continue to generate the remaining content\.\]$/, "");
+             finalRawContent = strippedPrev + processText;
+             const newMessages = [...currentMessages];
+             newMessages[newMessages.length - 1] = { role: "assistant", content: finalRawContent };
+             setMessages(newMessages);
+          } else {
+             setMessages([...currentMessages, { role: "assistant", content: finalRawContent }]);
+          }
+
+          htmlContent = await marked.parse(finalRawContent);
+          setEditorContent(htmlContent);
+        }
       }
 
-      // Convert Markdown to HTML for the RichTextEditor
-      let htmlContent = await marked.parse(finalRawContent);
-      
-      setEditorContent(htmlContent);
-      setIsTruncated(data.isTruncated);
       
       if (currentGenerationId) {
         updateGeneration(currentGenerationId, {
@@ -203,8 +230,22 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
 
   if (!template) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-foreground" />
+      <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-20">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64 rounded-lg" />
+            <Skeleton className="h-4 w-96 rounded-md" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4 space-y-6">
+            <Skeleton className="h-[400px] w-full rounded-[24px]" />
+          </div>
+          <div className="lg:col-span-8">
+            <Skeleton className="h-[600px] w-full rounded-[24px]" />
+          </div>
+        </div>
       </div>
     );
   }

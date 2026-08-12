@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-store";
+import { useTheme } from "next-themes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,11 +53,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
   const supabase = createClient();
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     async function fetchSettings() {
       if (!isAuthenticated || !user) {
-        setSettings(null);
+        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
+        if (saved) {
+          try { setSettings(JSON.parse(saved)); } catch (e) {}
+        } else {
+          setSettings(null);
+        }
         setIsLoading(false);
         return;
       }
@@ -69,18 +76,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        // Fallback to default if not found or table doesn't exist yet
-        if (error.code === 'PGRST116' || error.code === '42P01') {
-           setSettings(DEFAULT_SETTINGS);
-           if (error.code === '42P01') {
-             console.warn("user_settings table does not exist. Please run the SQL migration script.");
-           }
+        // Fallback to localStorage if not found or table doesn't exist yet
+        if (error.code === '42P01') {
+          console.warn("user_settings table does not exist. Using localStorage fallback.");
+        }
+        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
+        if (saved) {
+          try {
+            setSettings(JSON.parse(saved));
+          } catch (e) {
+            setSettings({ ...DEFAULT_SETTINGS, theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') || 'light') : 'light' });
+          }
         } else {
-           console.warn("Warning fetching settings:", error);
-           setSettings(DEFAULT_SETTINGS);
+          setSettings({ ...DEFAULT_SETTINGS, theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') || 'light') : 'light' });
         }
       } else if (data) {
-        setSettings({
+        const mappedSettings = {
           theme: data.theme,
           language: data.language,
           writing_tone: data.writing_tone,
@@ -89,7 +100,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           email_notifications: data.email_notifications,
           push_notifications: data.push_notifications,
           generation_alerts: data.generation_alerts,
-        });
+        };
+        setSettings(mappedSettings);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("user_settings_fallback", JSON.stringify(mappedSettings));
+        }
       }
       setIsLoading(false);
     }
@@ -100,20 +115,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Apply theme when settings load/change
   useEffect(() => {
     if (settings?.theme) {
-      if (settings.theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      setTheme(settings.theme);
     }
-  }, [settings?.theme]);
+  }, [settings?.theme, setTheme]);
 
   const updateSettings = useCallback(
     async (newSettings: Partial<UserSettings>) => {
       if (!user) return { success: false, error: "Not authenticated" };
 
       // Optimistic update
-      setSettings((prev) => (prev ? { ...prev, ...newSettings } : ({ ...DEFAULT_SETTINGS, ...newSettings } as UserSettings)));
+      setSettings((prev) => {
+        const next = prev ? { ...prev, ...newSettings } : ({ ...DEFAULT_SETTINGS, ...newSettings } as UserSettings);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("user_settings_fallback", JSON.stringify(next));
+        }
+        return next;
+      });
 
       const { error } = await supabase
         .from("user_settings")

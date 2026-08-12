@@ -22,9 +22,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Content Studio — Smart Content Generation",
+  title: "Writeora — Create. Optimize. Grow.",
   description:
-    "Create amazing AI-powered content faster with your personal AI assistant. Generate blog posts, emails, social media content, and more.",
+    "Writeora — Create. Optimize. Grow. Generate blog posts, emails, social media content, and more.",
 };
 
 export default function RootLayout({
@@ -36,6 +36,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${playfairDisplay.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col"><Providers>{children}</Providers></body>
     </html>

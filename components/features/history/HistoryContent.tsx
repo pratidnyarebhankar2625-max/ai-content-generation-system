@@ -32,7 +32,10 @@ import {
   Undo2,
   Upload,
   X,
+  Download,
 } from "lucide-react";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Shared Constants ────────────────────────────────────────────────────────
 
@@ -104,19 +107,19 @@ function HistorySkeleton() {
       <div className="flex items-start justify-between">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-muted animate-pulse" />
-            <div className="h-12 w-64 rounded-xl bg-muted animate-pulse" />
+            <Skeleton className="h-12 w-12 rounded-2xl" />
+            <Skeleton className="h-12 w-64 rounded-xl" />
           </div>
-          <div className="h-5 w-96 rounded-lg bg-muted animate-pulse" />
+          <Skeleton className="h-5 w-96 rounded-lg" />
         </div>
-        <div className="h-12 w-40 rounded-2xl bg-muted animate-pulse hidden md:block" />
+        <Skeleton className="h-12 w-40 rounded-2xl hidden md:block" />
       </div>
 
       {/* Filter Bar Skeleton */}
       <div className="flex flex-col gap-3 sm:flex-row pt-4">
-        <div className="h-[52px] flex-1 rounded-2xl bg-muted animate-pulse" />
-        <div className="h-[52px] w-[120px] rounded-2xl bg-muted animate-pulse" />
-        <div className="h-[52px] w-[160px] rounded-2xl bg-muted animate-pulse" />
+        <Skeleton className="h-[52px] flex-1 rounded-2xl" />
+        <Skeleton className="h-[52px] w-[120px] rounded-2xl" />
+        <Skeleton className="h-[52px] w-[160px] rounded-2xl" />
       </div>
 
       {/* Cards Skeleton */}
@@ -126,16 +129,16 @@ function HistorySkeleton() {
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-6 w-48 rounded-lg bg-muted animate-pulse" />
-                  <div className="h-6 w-24 rounded-full bg-muted animate-pulse" />
+                  <Skeleton className="h-6 w-48 rounded-lg" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="h-4 w-32 rounded-md bg-muted animate-pulse" />
-                  <div className="h-4 w-40 rounded-md bg-muted animate-pulse" />
+                  <Skeleton className="h-4 w-32 rounded-md" />
+                  <Skeleton className="h-4 w-40 rounded-md" />
                 </div>
                 <div className="space-y-2 pt-2">
-                  <div className="h-4 w-full max-w-2xl rounded-md bg-muted animate-pulse" />
-                  <div className="h-4 w-3/4 max-w-xl rounded-md bg-muted animate-pulse" />
+                  <Skeleton className="h-4 w-full max-w-2xl rounded-md" />
+                  <Skeleton className="h-4 w-3/4 max-w-xl rounded-md" />
                 </div>
               </div>
             </div>
@@ -387,6 +390,7 @@ export default function HistoryContent() {
     stats,
     deleteGeneration,
     updateGeneration,
+    addGeneration,
     importGeneration,
     restoreLastDeleted,
     lastDeleted,
@@ -401,7 +405,6 @@ export default function HistoryContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewingGen, setViewingGen] = useState<Generation | null>(null);
   const [showImport, setShowImport] = useState(false);
-  const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const listRef = useRef<HTMLDivElement>(null);
@@ -455,15 +458,34 @@ export default function HistoryContent() {
     setTimeout(() => setCopiedId(null), 2000);
   }
 
-  function handleDelete(id: string) {
-    deleteGeneration(id);
-    setShowDeleteToast(true);
-    setTimeout(() => setShowDeleteToast(false), 5000);
+  function handleDownload(item: Generation) {
+    const textContent = stripHtml(item.preview);
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'content'}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
-  function handleRestore() {
-    restoreLastDeleted();
-    setShowDeleteToast(false);
+  function handleDelete(id: string) {
+    const itemToDelete = generations.find((i) => i.id === id);
+    deleteGeneration(id);
+    
+    toast("Item deleted", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          if (itemToDelete) {
+            addGeneration(itemToDelete);
+            toast.success("Item restored");
+          }
+        },
+      },
+    });
   }
 
   if (!isLoaded) return <HistorySkeleton />;
@@ -728,6 +750,15 @@ export default function HistoryContent() {
                     </button>
 
                     <button
+                      onClick={() => handleDownload(item)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                      title="Download content"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download
+                    </button>
+
+                    <button
                       onClick={() => handleDelete(item.id)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                       title="Delete"
@@ -789,27 +820,6 @@ export default function HistoryContent() {
         </div>
       )}
 
-      {/* Delete Undo Toast */}
-      {showDeleteToast && lastDeleted && (
-        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-2xl border border-border bg-card px-6 py-4 shadow-xl animate-fade-in-up">
-          <p className="text-sm text-foreground">
-            Deleted <span className="font-semibold">{lastDeleted.title}</span>
-          </p>
-          <button
-            onClick={handleRestore}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/25"
-          >
-            <Undo2 className="h-3.5 w-3.5" />
-            Undo
-          </button>
-          <button
-            onClick={() => setShowDeleteToast(false)}
-            className="rounded-lg p-1 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       {/* View Modal */}
       {viewingGen && (

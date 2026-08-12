@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/settings-store";
 import { AvatarSelectionModal } from "@/components/ui/AvatarSelectionModal";
 import { SettingsActionModal, type SettingsActionType } from "@/components/ui/SettingsActionModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTheme } from "next-themes";
 
 import {
   Settings,
@@ -65,7 +67,8 @@ const settingSections = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, isLoading } = useSettings();
+  const { theme, setTheme } = useTheme();
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<SettingsActionType>(null);
@@ -94,20 +97,46 @@ export default function SettingsPage() {
       case "Generation Alerts":
         updateSettings({ generation_alerts: !settings.generation_alerts });
         break;
-      case "Dark Theme":
-        updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" });
+      case "Dark Theme": {
+        const newTheme = settings.theme === "dark" ? "light" : "dark";
+        setTheme(newTheme);
+        updateSettings({ theme: newTheme });
         break;
+      }
     }
+  };
+
+  const openModal = (action: SettingsActionType) => {
+    setActiveAction(action);
+    setActionModalOpen(true);
   };
 
   const handleAction = (label: string) => {
     if (label === "Edit Profile") {
       setIsAvatarModalOpen(true);
     } else {
-      setActiveAction(label as SettingsActionType);
-      setActionModalOpen(true);
+      openModal(label as SettingsActionType);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64 rounded-md" />
+            <Skeleton className="h-4 w-48 rounded-md" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-48 w-full rounded-[24px]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">

@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 
@@ -97,8 +97,14 @@ CRITICAL INSTRUCTIONS:
           mockText = `## Generated Output: ${template}\n\n**Topic:** ${prompt}\n\n### Comprehensive Analysis:\n\n${wikiText}\n\n_Note: To unlock real AI generation for FREE, go to openrouter.ai, get an API key, and add OPENROUTER_API_KEY=your_key to your .env.local file!_`;
         }
 
-        return new Response(JSON.stringify({ text: mockText, isTruncated: false }), {
-          headers: { "Content-Type": "application/json" }
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(mockText));
+            controller.close();
+          }
+        });
+        return new Response(stream, {
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
         });
       } catch (err) {
         return new Response(JSON.stringify({ text: "Error connecting to the free Wikipedia fallback. Please provide an API key for reliable generation." }), {
@@ -119,7 +125,7 @@ CRITICAL INSTRUCTIONS:
       coreMessages = [{ role: "user", content: userPrompt }];
     }
 
-    const result = await generateText({
+    const result = await streamText({
       model,
       system: systemPrompt,
       messages: coreMessages,
@@ -135,14 +141,28 @@ CRITICAL INSTRUCTIONS:
       presencePenalty: 0,
     });
 
-    let finalResponse = result.text;
-    const isTruncated = result.finishReason === 'length';
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.textStream) {
+            controller.enqueue(new TextEncoder().encode(chunk));
+          }
+          
+          const finishReason = await result.finishReason;
+          if (finishReason === 'length') {
+            controller.enqueue(new TextEncoder().encode("[__TRUNCATED__]\n\n[Response truncated — click Continue to generate the remaining content.]"));
+          }
+        } catch (e) {
+          console.error("Stream error", e);
+        } finally {
+          controller.close();
+        }
+      }
+    });
 
-    if (isTruncated) {
-      finalResponse += "\n\n[Response truncated — click Continue to generate the remaining content.]";
-    }
-
-    return Response.json({ text: finalResponse, isTruncated });
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    });
   } catch (error: any) {
     console.error("AI Generation Error:", error);
     return new Response(JSON.stringify({ error: error.message || "Failed to generate content" }), {
