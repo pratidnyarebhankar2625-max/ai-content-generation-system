@@ -40,9 +40,9 @@ CREATE TABLE public.user_settings (
 );
 
 -- --------------------------------------------
--- projects
+-- generations
 -- --------------------------------------------
-CREATE TABLE public.projects (
+CREATE TABLE public.generations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
@@ -54,11 +54,23 @@ CREATE TABLE public.projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- --------------------------------------------
+-- user_templates
+-- --------------------------------------------
+CREATE TABLE public.user_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- ============================================
 -- INDEXES
 -- ============================================
 
-CREATE INDEX projects_user_id_idx ON public.projects(user_id);
+CREATE INDEX generations_user_id_idx ON public.generations(user_id);
 
 -- ============================================
 -- FUNCTIONS
@@ -103,7 +115,8 @@ CREATE TRIGGER on_auth_user_created
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.generations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_templates ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- POLICIES
@@ -140,20 +153,39 @@ CREATE POLICY "Users can insert their own settings."
   WITH CHECK ( auth.uid() = id );
 
 -- --------------------------------------------
--- Projects RLS policies
+-- Generations RLS policies
 -- --------------------------------------------
-CREATE POLICY "Users can view their own projects."
-  ON public.projects FOR SELECT
+CREATE POLICY "Users can view their own generations."
+  ON public.generations FOR SELECT
   USING ( auth.uid() = user_id );
 
-CREATE POLICY "Users can update their own projects."
-  ON public.projects FOR UPDATE
+CREATE POLICY "Users can update their own generations."
+  ON public.generations FOR UPDATE
   USING ( auth.uid() = user_id );
 
-CREATE POLICY "Users can insert their own projects."
-  ON public.projects FOR INSERT
+CREATE POLICY "Users can insert their own generations."
+  ON public.generations FOR INSERT
   WITH CHECK ( auth.uid() = user_id );
 
-CREATE POLICY "Users can delete their own projects."
-  ON public.projects FOR DELETE
+CREATE POLICY "Users can delete their own generations."
+  ON public.generations FOR DELETE
+  USING ( auth.uid() = user_id );
+
+-- --------------------------------------------
+-- User Templates RLS policies
+-- --------------------------------------------
+CREATE POLICY "Users can view their own templates."
+  ON public.user_templates FOR SELECT
+  USING ( auth.uid() = user_id );
+
+CREATE POLICY "Users can update their own templates."
+  ON public.user_templates FOR UPDATE
+  USING ( auth.uid() = user_id );
+
+CREATE POLICY "Users can insert their own templates."
+  ON public.user_templates FOR INSERT
+  WITH CHECK ( auth.uid() = user_id );
+
+CREATE POLICY "Users can delete their own templates."
+  ON public.user_templates FOR DELETE
   USING ( auth.uid() = user_id );

@@ -163,12 +163,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
     async function loadData() {
       const { data, error } = await supabase
-        .from('projects')
+        .from('generations')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error loading projects:", error);
+        console.error("Error loading generations:", error);
       } else if (data) {
         setGenerations(data.map(mapRowToGeneration));
       }
@@ -193,7 +193,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       };
 
       const { data, error } = await supabase
-        .from('projects')
+        .from('generations')
         .insert(insertData)
         .select()
         .single();
@@ -223,7 +223,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       if (updates.createdAt !== undefined) updateData.created_at = updates.createdAt;
 
       const { data, error } = await supabase
-        .from('projects')
+        .from('generations')
         .update(updateData)
         .eq('id', id)
         .select()
@@ -251,7 +251,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
       setGenerations((prev) => prev.filter((g) => g.id !== id));
       
-      const { error } = await supabase.from('projects').delete().eq('id', id);
+      const { error } = await supabase.from('generations').delete().eq('id', id);
       if (error) {
         console.error("Failed to delete generation:", error);
         // Rollback on failure
@@ -280,7 +280,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       }
 
       const { data, error } = await supabase
-        .from('projects')
+        .from('generations')
         .insert(insertData)
         .select()
         .single();
@@ -311,7 +311,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     };
 
     const { data, error } = await supabase
-      .from('projects')
+      .from('generations')
       .insert(insertData)
       .select()
       .single();
