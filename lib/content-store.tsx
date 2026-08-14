@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/auth-store";
 export type GenerationStatus = "completed" | "draft" | "failed";
 
 export type Generation = {
-  id: string; // Changed to string (UUID) for Supabase
+  id: string; // UUID or client ID
   title: string;
   template: string;
   category: string;
@@ -99,12 +99,12 @@ function computeStats(generations: Generation[]): ContentStats {
     drafts: draftsCount,
     pendingDrafts: draftsCount,
     failed: generations.filter((g) => g.status === "failed").length,
-    totalWords: generations.reduce((sum, g) => sum + g.wordCount, 0),
+    totalWords: generations.reduce((sum, g) => sum + (g.wordCount || 0), 0),
     templatesUsed: new Set(generations.map((g) => g.template)).size,
     thisWeek: generations.filter((g) => new Date(g.createdAt) >= weekAgo).length,
     thisWeekWords: generations
       .filter((g) => new Date(g.createdAt) >= weekAgo)
-      .reduce((sum, g) => sum + g.wordCount, 0),
+      .reduce((sum, g) => sum + (g.wordCount || 0), 0),
   };
 }
 
@@ -116,7 +116,7 @@ function computeRecentActivity(generations: Generation[]): RecentActivityItem[] 
       let action = "Generated content";
       if (gen.status === "draft") action = "Saved draft";
       else if (gen.status === "failed") action = "Generation failed";
-      else action = `Generated ${gen.category.toLowerCase()} content`;
+      else action = `Generated ${gen.category ? gen.category.toLowerCase() : "ai"} content`;
 
       return {
         id: gen.id,
@@ -131,13 +131,13 @@ function computeRecentActivity(generations: Generation[]): RecentActivityItem[] 
 function mapRowToGeneration(row: any): Generation {
   return {
     id: row.id,
-    title: row.title,
-    template: row.template,
-    category: row.category,
-    status: row.status as GenerationStatus,
-    wordCount: row.word_count,
-    preview: row.preview,
-    createdAt: row.created_at,
+    title: row.title || "Untitled",
+    template: row.template || "Custom Template",
+    category: row.category || "General",
+    status: (row.status || "completed") as GenerationStatus,
+    wordCount: Number(row.word_count) || 0,
+    preview: row.preview || "",
+    createdAt: row.created_at || new Date().toISOString(),
   };
 }
 
@@ -155,34 +155,50 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   // Load from Supabase on mount or auth change
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setGenerations([]);
-      setIsLoaded(true);
-      return;
-    }
-
     async function loadData() {
-      const { data, error } = await supabase
-        .from('generations')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error loading generations:", error);
-      } else if (data) {
-        setGenerations(data.map(mapRowToGeneration));
+      if (!isAuthenticated || !user) {
+        setGenerations([]);
+        setIsLoaded(true);
+        return;
       }
-      setIsLoaded(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('generations')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.warn("Could not load generations from Supabase:", error.message || error);
+        } else if (data) {
+          setGenerations(data.map(mapRowToGeneration));
+        }
+      } catch (err: any) {
+        console.warn("Network or server error fetching generations:", err?.message || err);
+      } finally {
+        setIsLoaded(true);
+      }
     }
     
     loadData();
-  }, [supabase, isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
 
   const addGeneration = useCallback(
     async (gen: Omit<Generation, "id" | "createdAt">): Promise<string | undefined> => {
-      if (!user) return;
+      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `gen-${Date.now()}`;
+      const newGeneration: Generation = {
+        ...gen,
+        id: tempId,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Optimistic local update for responsive UI
+      setGenerations((prev) => [newGeneration, ...prev]);
+
+      if (!user) return tempId;
       
       const insertData = {
+        id: tempId,
         user_id: user.id,
         title: gen.title,
         template: gen.template,
@@ -199,18 +215,28 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Failed to add generation:", error);
-        return;
+        console.error("Failed to persist generation to Supabase:", error.message);
+        throw new Error(`Failed to persist generation to database: ${error.message}`);
       }
 
-      setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
-      return data.id;
+      if (data) {
+        const mapped = mapRowToGeneration(data);
+        setGenerations((prev) => prev.map((g) => (g.id === tempId ? mapped : g)));
+        return data.id;
+      }
+
+      return tempId;
     },
     [supabase, user]
   );
 
   const updateGeneration = useCallback(
     async (id: string, updates: Partial<Omit<Generation, "id">>) => {
+      // Optimistic local update
+      setGenerations((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+      );
+
       if (!user) return;
 
       const updateData: any = {};
@@ -230,32 +256,38 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Failed to update generation:", error);
-        return;
+        console.error("Failed to update generation in Supabase:", error.message);
+        throw new Error(`Failed to update generation in database: ${error.message}`);
       }
 
-      setGenerations((prev) =>
-        prev.map((g) => (g.id === id ? mapRowToGeneration(data) : g))
-      );
+      if (data) {
+        const mapped = mapRowToGeneration(data);
+        setGenerations((prev) => prev.map((g) => (g.id === id ? mapped : g)));
+      }
     },
     [supabase, user]
   );
 
   const deleteGeneration = useCallback(
     async (id: string) => {
-      if (!user) return;
       const target = generations.find((g) => g.id === id);
       if (target) {
         setLastDeleted(target);
       }
 
+      // Optimistic local removal
       setGenerations((prev) => prev.filter((g) => g.id !== id));
       
+      if (!user) return;
+
       const { error } = await supabase.from('generations').delete().eq('id', id);
       if (error) {
-        console.error("Failed to delete generation:", error);
-        // Rollback on failure
-        if (target) setGenerations((prev) => [target, ...prev]);
+        console.error("Failed to delete generation from Supabase:", error.message);
+        // Rollback optimistic removal
+        if (target) {
+          setGenerations((prev) => [target, ...prev]);
+        }
+        throw new Error(`Failed to delete generation: ${error.message}`);
       }
     },
     [generations, supabase, user]
@@ -263,9 +295,19 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   const importGeneration = useCallback(
     async (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => {
+      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `gen-${Date.now()}`;
+      const newGeneration: Generation = {
+        ...gen,
+        id: tempId,
+        createdAt: gen.createdAt || new Date().toISOString(),
+      };
+
+      setGenerations((prev) => [newGeneration, ...prev]);
+
       if (!user) return;
       
       const insertData: any = {
+        id: tempId,
         user_id: user.id,
         title: gen.title,
         template: gen.template,
@@ -286,43 +328,50 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Failed to import generation:", error);
-        return;
+        console.error("Failed to import generation to Supabase:", error.message);
+        throw new Error(`Failed to import generation: ${error.message}`);
       }
 
-      setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
+      if (data) {
+        const mapped = mapRowToGeneration(data);
+        setGenerations((prev) => prev.map((g) => (g.id === tempId ? mapped : g)));
+      }
     },
     [supabase, user]
   );
 
   const restoreLastDeleted = useCallback(async () => {
-    if (!lastDeleted || !user) return false;
+    if (!lastDeleted) return false;
     
+    const restored = lastDeleted;
+    setGenerations((prev) => [restored, ...prev]);
+    setLastDeleted(null);
+
+    if (!user) return true;
+
     const insertData = {
-      id: lastDeleted.id, // Supabase lets us insert with a specific UUID if it doesn't exist
+      id: restored.id,
       user_id: user.id,
-      title: lastDeleted.title,
-      template: lastDeleted.template,
-      category: lastDeleted.category,
-      status: lastDeleted.status,
-      preview: lastDeleted.preview,
-      word_count: lastDeleted.wordCount,
-      created_at: lastDeleted.createdAt,
+      title: restored.title,
+      template: restored.template,
+      category: restored.category,
+      status: restored.status,
+      preview: restored.preview,
+      word_count: restored.wordCount,
+      created_at: restored.createdAt,
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('generations')
       .insert(insertData)
       .select()
       .single();
 
     if (error) {
-       console.error("Failed to restore:", error);
-       return false;
+      console.error("Failed to restore generation to Supabase:", error.message);
+      return false;
     }
 
-    setGenerations((prev) => [mapRowToGeneration(data), ...prev]);
-    setLastDeleted(null);
     return true;
   }, [lastDeleted, supabase, user]);
 

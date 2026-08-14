@@ -8,17 +8,15 @@ import { useContent } from "@/lib/content-store";
 import {
   Sparkles,
   ArrowLeft,
-  Copy,
-  Download,
   RotateCcw,
-  Save,
-  CheckCircle2,
   Loader2,
   AlertCircle,
+  Square,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { marked } from "marked";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 
 const RichTextEditor = dynamic(
   () => import("@/components/ui/RichTextEditor").then((mod) => mod.RichTextEditor),
@@ -34,8 +32,6 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   const searchParams = useSearchParams();
   const { addGeneration, updateGeneration, getGeneration, isLoaded } = useContent();
 
-
-
   const [template, setTemplate] = useState<any>(null);
   const [topic, setTopic] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -44,6 +40,10 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   const [editorContent, setEditorContent] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [isTruncated, setIsTruncated] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const editGenerationId = searchParams.get("generationId");
@@ -57,13 +57,31 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
     }
   }, [searchParams, generationId, isLoaded, getGeneration]);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+    toast.info("Generation stopped. Your draft remains in the editor.");
+  };
 
-  const onFormSubmit = async (e?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>, isContinue = false) => {
+  const onFormSubmit = async (
+    e?: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>,
+    isContinue = false
+  ) => {
     if (e) e.preventDefault();
-    if (!topic.trim()) return;
-    
+    if (!topic.trim()) {
+      toast.error("Please enter a topic or prompt.");
+      return;
+    }
+
+    // Cancel any previous ongoing stream
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setIsLoading(true);
     setError(null);
     if (!isContinue) {
@@ -71,20 +89,24 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
       setMessages([]);
       setIsTruncated(false);
     }
-    
+
     let currentGenerationId = generationId;
     if (!currentGenerationId && template) {
-      const newId = await addGeneration({
-        title: topic || `New ${template.title}`,
-        template: template.title,
-        category: template.category,
-        status: "draft",
-        wordCount: 0,
-        preview: "Generating...",
-      });
-      if (newId) {
-        setGenerationId(newId);
-        currentGenerationId = newId;
+      try {
+        const newId = await addGeneration({
+          title: topic || `New ${template.title}`,
+          template: template.title,
+          category: template.category,
+          status: "draft",
+          wordCount: 0,
+          preview: "Generating...",
+        });
+        if (newId) {
+          setGenerationId(newId);
+          currentGenerationId = newId;
+        }
+      } catch (err: any) {
+        console.warn("Notice: Local draft initialized.", err?.message || err);
       }
     }
 
@@ -92,32 +114,60 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
     if (isContinue) {
       currentMessages = [...messages];
     } else {
-      currentMessages = [{ role: "user", content: `Topic: ${topic}\nKeywords: ${keywords}\nTone: ${tone}` }];
+      currentMessages = [
+        {
+          role: "user",
+          content: `Topic: ${topic}\nKeywords: ${keywords}\nTone: ${tone}`,
+        },
+      ];
     }
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           prompt: topic,
           template: template?.title || "Custom Template",
+          category: template?.category || "General",
+          tone,
+          keywords,
           context: {
             keywords,
             tone,
           },
           messages: currentMessages,
-          isContinue
-        })
+          isContinue,
+          previousContent: isContinue ? editorContent : undefined,
+        }),
       });
 
       if (!res.ok) {
-         let errMsg = "Generation failed";
-         try {
-           const errData = await res.json();
-           errMsg = errData.error || errMsg;
-         } catch(e) {}
-         throw new Error(errMsg);
+        let errMsg = "Generation failed. Please try again.";
+        try {
+          const errData = await res.json();
+          errMsg = errData.error?.message || errData.error || errMsg;
+        } catch {
+          // ignore json parse error
+        }
+
+        if (res.status === 401) {
+          toast.error("Session expired. Please sign in to generate content.");
+          router.push("/login");
+          throw new Error("Authentication required.");
+        }
+        if (res.status === 429) {
+          toast.error("Rate limit reached. Please wait a moment before trying again.");
+          throw new Error("Rate limit exceeded.");
+        }
+        if (res.status === 504) {
+          toast.error("Request timed out. Please try again with shorter content.");
+          throw new Error("Generation timed out.");
+        }
+
+        toast.error(errMsg);
+        throw new Error(errMsg);
       }
 
       const reader = res.body?.getReader();
@@ -132,27 +182,34 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
           const chunk = decoder.decode(value, { stream: true });
           rawText += chunk;
 
-          let isStreamTruncated = false;
           let processText = rawText;
           if (processText.includes("[__TRUNCATED__]")) {
-             isStreamTruncated = true;
-             processText = processText.replace("[__TRUNCATED__]", "");
-             setIsTruncated(true);
+            processText = processText.replace("[__TRUNCATED__]", "");
+            setIsTruncated(true);
           } else {
-             setIsTruncated(false);
+            setIsTruncated(false);
           }
-          
+
           let finalRawContent = processText;
-          
+
           if (isContinue) {
-             const prevMsg = currentMessages[currentMessages.length - 1]?.content || "";
-             const strippedPrev = prevMsg.replace(/\n\n\[Response truncated — click Continue to generate the remaining content\.\]$/, "");
-             finalRawContent = strippedPrev + processText;
-             const newMessages = [...currentMessages];
-             newMessages[newMessages.length - 1] = { role: "assistant", content: finalRawContent };
-             setMessages(newMessages);
+            const prevMsg = currentMessages[currentMessages.length - 1]?.content || "";
+            const strippedPrev = prevMsg.replace(
+              /\n\n\[Response reached length limit — click Continue to finish\.\]$/,
+              ""
+            );
+            finalRawContent = strippedPrev + processText;
+            const newMessages = [...currentMessages];
+            newMessages[newMessages.length - 1] = {
+              role: "assistant",
+              content: finalRawContent,
+            };
+            setMessages(newMessages);
           } else {
-             setMessages([...currentMessages, { role: "assistant", content: finalRawContent }]);
+            setMessages([
+              ...currentMessages,
+              { role: "assistant", content: finalRawContent },
+            ]);
           }
 
           htmlContent = await marked.parse(finalRawContent);
@@ -160,73 +217,96 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         }
       }
 
-      
+      // Persist only upon successful stream completion
       if (currentGenerationId) {
-        updateGeneration(currentGenerationId, {
-          status: "completed",
-          preview: htmlContent,
-          wordCount: htmlContent.replace(/<[^>]*>?/gm, '').trim().split(/\s+/).filter((w: string) => w.length > 0).length,
-        });
+        const plainText = htmlContent.replace(/<[^>]*>?/gm, "").trim();
+        const wordCount = plainText.split(/\s+/).filter((w: string) => w.length > 0).length;
+
+        try {
+          await updateGeneration(currentGenerationId, {
+            status: "completed",
+            preview: htmlContent,
+            wordCount,
+          });
+          toast.success("Content generated and saved successfully!");
+        } catch (dbErr: any) {
+          toast.error("Generation complete, but failed to save to database. Content is kept in the editor.");
+        }
       }
-    } catch(err: any) {
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        return; // User clicked Stop Generation cleanly
+      }
       setError(err);
       if (currentGenerationId) {
-        updateGeneration(currentGenerationId, {
-          status: "failed",
-          preview: "Generation failed.",
-        });
+        try {
+          await updateGeneration(currentGenerationId, {
+            status: "failed",
+            preview: editorContent || "Generation failed.",
+          });
+        } catch {
+          // ignore
+        }
       }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
   useEffect(() => {
     // Load template
-    const savedTemplates = localStorage.getItem("userTemplates");
+    const savedTemplates = typeof window !== "undefined" ? localStorage.getItem("userTemplates") : null;
     let allTemplates = [...templates];
     if (savedTemplates) {
       try {
         const parsed = JSON.parse(savedTemplates);
         allTemplates = [...allTemplates, ...parsed];
-      } catch (e) {}
+      } catch {}
     }
     const foundTemplate = allTemplates.find((t) => t.id === templateId);
     if (foundTemplate) {
       setTemplate(foundTemplate);
     } else {
-      router.push("/templates"); // Redirect if not found
+      router.push("/templates");
     }
   }, [templateId, router]);
 
-
-
-
   const handleEditorSave = async (content: string) => {
-    const plainText = content.replace(/<[^>]*>?/gm, '');
-    const words = plainText.trim().split(/\s+/).filter(w => w.length > 0).length;
-    
+    const plainText = content.replace(/<[^>]*>?/gm, "");
+    const words = plainText.trim().split(/\s+/).filter((w) => w.length > 0).length;
+
     if (!generationId && template && (topic || content)) {
-      const newId = await addGeneration({
-        title: topic || `New ${template.title}`,
-        template: template.title,
-        category: template.category,
-        status: "draft",
-        wordCount: words,
-        preview: content || "Empty draft",
-      });
-      if (newId) setGenerationId(newId);
+      try {
+        const newId = await addGeneration({
+          title: topic || `New ${template.title}`,
+          template: template.title,
+          category: template.category,
+          status: "draft",
+          wordCount: words,
+          preview: content || "Empty draft",
+        });
+        if (newId) {
+          setGenerationId(newId);
+          toast.success("Draft saved successfully!");
+        }
+      } catch {
+        toast.error("Failed to save draft.");
+      }
     } else if (generationId) {
-      updateGeneration(generationId, {
-        title: topic || `New ${template.title}`,
-        status: "draft",
-        preview: content,
-        wordCount: words,
-      });
+      try {
+        await updateGeneration(generationId, {
+          title: topic || `New ${template.title}`,
+          status: "draft",
+          preview: content,
+          wordCount: words,
+        });
+        toast.success("Draft updated successfully!");
+      } catch {
+        toast.error("Failed to update draft.");
+      }
     }
   };
-
-
 
   if (!template) {
     return (
@@ -275,39 +355,47 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         {/* Left Form Panel */}
         <div className="lg:col-span-4 space-y-6 animate-fade-in-up stagger-1">
           <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Generation Settings</h2>
-            
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Generation Settings
+            </h2>
+
             <form onSubmit={onFormSubmit} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Main Topic / Prompt *</label>
+                <label className="text-sm font-medium text-foreground">
+                  Main Topic / Prompt *
+                </label>
                 <textarea
                   value={topic}
                   onChange={(e) => {
                     setTopic(e.target.value);
                   }}
                   placeholder="e.g. 10 tips for better productivity..."
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none h-28 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all resize-none h-28 focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86,124,141,0.12)]"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Keywords (Optional)</label>
+                <label className="text-sm font-medium text-foreground">
+                  Keywords (Optional)
+                </label>
                 <input
                   type="text"
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   placeholder="e.g. focus, time management, tools"
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86,124,141,0.12)]"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Tone of Voice</label>
+                <label className="text-sm font-medium text-foreground">
+                  Tone of Voice
+                </label>
                 <select
                   value={tone}
                   onChange={(e) => setTone(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86, 124, 141,0.12)]"
+                  className="w-full rounded-xl border border-border bg-[var(--surface-input)] px-4 py-3 text-sm transition-all focus:outline-none focus:border-[#567C8D]/50 focus:shadow-[0_0_0_3px_rgba(86,124,141,0.12)]"
                 >
                   <option>Professional</option>
                   <option>Casual</option>
@@ -317,23 +405,29 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                 </select>
               </div>
 
-              <button
-                type="submit"
-                disabled={isLoading || !topic.trim()}
-                className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-md hover:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Generate Content
-                  </>
-                )}
-              </button>
+              {isLoading ? (
+                <div className="flex gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleStopGeneration}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-red-600 py-3.5 text-sm font-medium text-white shadow-sm transition-all duration-300 hover:bg-red-700"
+                  >
+                    <Square className="h-4 w-4 fill-current" />
+                    Stop Generation
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!topic.trim()}
+                  className="w-full mt-4 flex items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-md hover:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {editorContent && editorContent !== "Generating..."
+                    ? "Regenerate Content"
+                    : "Generate Content"}
+                </button>
+              )}
             </form>
           </div>
         </div>
@@ -343,18 +437,20 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
           {error && (
             <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error.message || "An error occurred during generation."}</p>
+              <p className="text-sm text-red-700">
+                {error.message || "An error occurred during generation."}
+              </p>
             </div>
           )}
-          
+
           <div className="flex-1 flex flex-col h-full">
-            <RichTextEditor 
-              initialContent={editorContent || ""} 
+            <RichTextEditor
+              initialContent={editorContent || ""}
               isStreaming={isLoading}
               onSave={handleEditorSave}
               onChange={(content) => setEditorContent(content)}
             />
-            
+
             {isTruncated && (
               <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
                 <div className="flex items-center gap-3">
@@ -368,7 +464,11 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
                   disabled={isLoading}
                   className="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" />
+                  )}
                   Continue Generation
                 </button>
               </div>

@@ -69,7 +69,9 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
       }, 1200);
     } else {
       // Handle error visually if needed
-      console.error(result.error);
+      if (result.error) {
+        console.warn("Settings update notice:", result.error);
+      }
     }
   }
 

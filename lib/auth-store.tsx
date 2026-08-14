@@ -77,9 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initial fetch
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const mappedUser = await mapSupabaseUser(supabase, user);
+    supabase.auth.getUser().then(async (res: { data: { user: User | null } }) => {
+      if (res.data.user) {
+        const mappedUser = await mapSupabaseUser(supabase, res.data.user);
         setUser(mappedUser);
       }
       setIsLoading(false);
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         if (session?.user) {
           const mappedUser = await mapSupabaseUser(supabase, session.user);
           setUser(mappedUser);

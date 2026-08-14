@@ -12,8 +12,7 @@ export async function GET(request: Request) {
       {
         cookies: {
           getAll() {
-            // @ts-ignore
-            return request.cookies?.getAll?.() || [];
+            return (request as any).cookies?.getAll?.() || [];
           },
           setAll(cookiesToSet) {
             // This is just to satisfy the TS type for createServerClient in a Route Handler.
