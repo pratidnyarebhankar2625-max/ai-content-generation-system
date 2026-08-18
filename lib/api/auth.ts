@@ -40,14 +40,17 @@ export async function getAuthenticatedUser() {
 import type { User, SupabaseClient } from '@supabase/supabase-js';
 
 // Higher-order function to wrap API routes with auth
-export function withAuth(handler: (req: Request, user: User, supabase: SupabaseClient) => Promise<Response>) {
-  return async (req: Request) => {
+export function withAuth<T = any>(
+  handler: (req: Request, user: User, supabase: SupabaseClient, context?: T) => Promise<Response>
+) {
+  return async (req: Request, context?: T) => {
     try {
       const { user, supabase } = await getAuthenticatedUser();
-      return await handler(req, user, supabase);
+      return await handler(req, user, supabase, context);
     } catch (error) {
       const { handleApiError } = await import('./errors');
       return handleApiError(error);
     }
   };
 }
+

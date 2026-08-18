@@ -25,11 +25,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  TrendingUp,
-  Minus,
   FolderOpen,
   Pencil,
-  Undo2,
   Upload,
   X,
   Download,
@@ -387,13 +384,10 @@ function ImportModal({
 export default function HistoryContent() {
   const {
     generations,
-    stats,
     deleteGeneration,
-    updateGeneration,
     addGeneration,
     importGeneration,
     restoreLastDeleted,
-    lastDeleted,
     isLoaded,
   } = useContent();
 
@@ -478,9 +472,12 @@ export default function HistoryContent() {
     toast("Item deleted", {
       action: {
         label: "Undo",
-        onClick: () => {
-          if (itemToDelete) {
-            addGeneration(itemToDelete);
+        onClick: async () => {
+          const restored = await restoreLastDeleted();
+          if (restored) {
+            toast.success("Item restored");
+          } else if (itemToDelete) {
+            await addGeneration(itemToDelete);
             toast.success("Item restored");
           }
         },
@@ -653,7 +650,7 @@ export default function HistoryContent() {
       {filtered.length > 0 ? (
         <motion.div layout className="space-y-6 relative">
           <AnimatePresence>
-          {paginatedItems.map((item, index) => {
+          {paginatedItems.map((item) => {
             const status = statusConfig[item.status];
             const catIcon = categoryIcons[item.category] || (
               <FileText className="h-4 w-4" />

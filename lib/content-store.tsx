@@ -9,7 +9,6 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -58,6 +57,7 @@ type ContentContextType = {
   restoreLastDeleted: () => Promise<boolean>;
   lastDeleted: Generation | null;
   isLoaded: boolean;
+  refreshGenerations: () => Promise<void>;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ function computeRecentActivity(generations: Generation[]): RecentActivityItem[] 
     });
 }
 
-// Map from Supabase row to Generation
+// Map from API record to Generation
 function mapRowToGeneration(row: any): Generation {
   return {
     id: row.id,
@@ -135,9 +135,9 @@ function mapRowToGeneration(row: any): Generation {
     template: row.template || "Custom Template",
     category: row.category || "General",
     status: (row.status || "completed") as GenerationStatus,
-    wordCount: Number(row.word_count) || 0,
+    wordCount: Number(row.word_count ?? row.wordCount) || 0,
     preview: row.preview || "",
-    createdAt: row.created_at || new Date().toISOString(),
+    createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
   };
 }
 
@@ -150,56 +150,57 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [lastDeleted, setLastDeleted] = useState<Generation | null>(null);
   
-  const supabase = createClient();
   const { user, isAuthenticated } = useAuth();
 
-  // Load from Supabase on mount or auth change
-  useEffect(() => {
-    async function loadData() {
-      if (!isAuthenticated || !user) {
-        setGenerations([]);
-        setIsLoaded(true);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('generations')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.warn("Could not load generations from Supabase:", error.message || error);
-        } else if (data) {
-          setGenerations(data.map(mapRowToGeneration));
-        }
-      } catch (err: any) {
-        console.warn("Network or server error fetching generations:", err?.message || err);
-      } finally {
-        setIsLoaded(true);
-      }
+  const fetchGenerations = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setGenerations([]);
+      setIsLoaded(true);
+      return;
     }
-    
-    loadData();
-  }, [isAuthenticated, user?.id]);
+
+    try {
+      const res = await fetch("/api/history?limit=100", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        console.warn("Could not load generations from API:", res.statusText);
+      } else {
+        const json = await res.json();
+        if (json.success && json.data?.items) {
+          setGenerations(json.data.items.map(mapRowToGeneration));
+        }
+      }
+    } catch (err: any) {
+      console.warn("Network or server error fetching generations:", err?.message || err);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [isAuthenticated, user]);
+
+  // Load from API on mount or auth change
+  useEffect(() => {
+    fetchGenerations();
+  }, [fetchGenerations]);
 
   const addGeneration = useCallback(
     async (gen: Omit<Generation, "id" | "createdAt">): Promise<string | undefined> => {
-      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `gen-${Date.now()}`;
-      const newGeneration: Generation = {
+      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : undefined;
+      const optimisticGen: Generation = {
         ...gen,
-        id: tempId,
+        id: tempId || `gen-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
 
       // Optimistic local update for responsive UI
-      setGenerations((prev) => [newGeneration, ...prev]);
+      setGenerations((prev) => [optimisticGen, ...prev]);
 
-      if (!user) return tempId;
-      
-      const insertData = {
+      if (!user) return optimisticGen.id;
+
+      const payload = {
         id: tempId,
-        user_id: user.id,
         title: gen.title,
         template: gen.template,
         category: gen.category,
@@ -208,26 +209,34 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         word_count: gen.wordCount,
       };
 
-      const { data, error } = await supabase
-        .from('generations')
-        .insert(insertData)
-        .select()
-        .single();
+      try {
+        const res = await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (error) {
-        console.error("Failed to persist generation to Supabase:", error.message);
-        throw new Error(`Failed to persist generation to database: ${error.message}`);
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg = errJson.error?.message || "Failed to persist generation";
+          console.error("Failed to persist generation via API:", msg);
+          throw new Error(msg);
+        }
+
+        const json = await res.json();
+        if (json.success && json.data) {
+          const mapped = mapRowToGeneration(json.data);
+          setGenerations((prev) => prev.map((g) => (g.id === optimisticGen.id ? mapped : g)));
+          return mapped.id;
+        }
+      } catch (err: any) {
+        console.error("Error adding generation:", err.message);
+        throw err;
       }
 
-      if (data) {
-        const mapped = mapRowToGeneration(data);
-        setGenerations((prev) => prev.map((g) => (g.id === tempId ? mapped : g)));
-        return data.id;
-      }
-
-      return tempId;
+      return optimisticGen.id;
     },
-    [supabase, user]
+    [user]
   );
 
   const updateGeneration = useCallback(
@@ -239,33 +248,40 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
       if (!user) return;
 
-      const updateData: any = {};
-      if (updates.title !== undefined) updateData.title = updates.title;
-      if (updates.template !== undefined) updateData.template = updates.template;
-      if (updates.category !== undefined) updateData.category = updates.category;
-      if (updates.status !== undefined) updateData.status = updates.status;
-      if (updates.preview !== undefined) updateData.preview = updates.preview;
-      if (updates.wordCount !== undefined) updateData.word_count = updates.wordCount;
-      if (updates.createdAt !== undefined) updateData.created_at = updates.createdAt;
+      const payload: any = {};
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.template !== undefined) payload.template = updates.template;
+      if (updates.category !== undefined) payload.category = updates.category;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.preview !== undefined) payload.preview = updates.preview;
+      if (updates.wordCount !== undefined) payload.word_count = updates.wordCount;
+      if (updates.createdAt !== undefined) payload.created_at = updates.createdAt;
 
-      const { data, error } = await supabase
-        .from('generations')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+      try {
+        const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (error) {
-        console.error("Failed to update generation in Supabase:", error.message);
-        throw new Error(`Failed to update generation in database: ${error.message}`);
-      }
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg = errJson.error?.message || "Failed to update generation";
+          console.error("Failed to update generation via API:", msg);
+          throw new Error(msg);
+        }
 
-      if (data) {
-        const mapped = mapRowToGeneration(data);
-        setGenerations((prev) => prev.map((g) => (g.id === id ? mapped : g)));
+        const json = await res.json();
+        if (json.success && json.data) {
+          const mapped = mapRowToGeneration(json.data);
+          setGenerations((prev) => prev.map((g) => (g.id === id ? mapped : g)));
+        }
+      } catch (err: any) {
+        console.error("Error updating generation:", err.message);
+        throw err;
       }
     },
-    [supabase, user]
+    [user]
   );
 
   const deleteGeneration = useCallback(
@@ -280,35 +296,46 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       
       if (!user) return;
 
-      const { error } = await supabase.from('generations').delete().eq('id', id);
-      if (error) {
-        console.error("Failed to delete generation from Supabase:", error.message);
-        // Rollback optimistic removal
+      try {
+        const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg = errJson.error?.message || "Failed to delete generation";
+          console.error("Failed to delete generation via API:", msg);
+          // Rollback optimistic removal
+          if (target) {
+            setGenerations((prev) => [target, ...prev]);
+          }
+          throw new Error(msg);
+        }
+      } catch (err: any) {
         if (target) {
           setGenerations((prev) => [target, ...prev]);
         }
-        throw new Error(`Failed to delete generation: ${error.message}`);
+        throw err;
       }
     },
-    [generations, supabase, user]
+    [generations, user]
   );
 
   const importGeneration = useCallback(
     async (gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) => {
-      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `gen-${Date.now()}`;
-      const newGeneration: Generation = {
+      const tempId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : undefined;
+      const optimisticGen: Generation = {
         ...gen,
-        id: tempId,
+        id: tempId || `gen-${Date.now()}`,
         createdAt: gen.createdAt || new Date().toISOString(),
       };
 
-      setGenerations((prev) => [newGeneration, ...prev]);
+      setGenerations((prev) => [optimisticGen, ...prev]);
 
       if (!user) return;
       
-      const insertData: any = {
+      const payload: any = {
         id: tempId,
-        user_id: user.id,
         title: gen.title,
         template: gen.template,
         category: gen.category,
@@ -318,26 +345,35 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       };
       
       if (gen.createdAt) {
-        insertData.created_at = gen.createdAt;
+        payload.created_at = gen.createdAt;
       }
 
-      const { data, error } = await supabase
-        .from('generations')
-        .insert(insertData)
-        .select()
-        .single();
+      try {
+        const res = await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (error) {
-        console.error("Failed to import generation to Supabase:", error.message);
-        throw new Error(`Failed to import generation: ${error.message}`);
-      }
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg = errJson.error?.message || "Failed to import generation";
+          console.error("Failed to import generation via API:", msg);
+          setGenerations((prev) => prev.filter((g) => g.id !== optimisticGen.id));
+          throw new Error(msg);
+        }
 
-      if (data) {
-        const mapped = mapRowToGeneration(data);
-        setGenerations((prev) => prev.map((g) => (g.id === tempId ? mapped : g)));
+        const json = await res.json();
+        if (json.success && json.data) {
+          const mapped = mapRowToGeneration(json.data);
+          setGenerations((prev) => prev.map((g) => (g.id === optimisticGen.id ? mapped : g)));
+        }
+      } catch (err: any) {
+        setGenerations((prev) => prev.filter((g) => g.id !== optimisticGen.id));
+        throw err;
       }
     },
-    [supabase, user]
+    [user]
   );
 
   const restoreLastDeleted = useCallback(async () => {
@@ -349,9 +385,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
     if (!user) return true;
 
-    const insertData = {
+    const payload = {
       id: restored.id,
-      user_id: user.id,
       title: restored.title,
       template: restored.template,
       category: restored.category,
@@ -361,19 +396,30 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       created_at: restored.createdAt,
     };
 
-    const { error } = await supabase
-      .from('generations')
-      .insert(insertData)
-      .select()
-      .single();
+    try {
+      const res = await fetch("/api/history/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (error) {
-      console.error("Failed to restore generation to Supabase:", error.message);
+      if (!res.ok) {
+        console.error("Failed to restore generation via API");
+        return false;
+      }
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        const mapped = mapRowToGeneration(json.data);
+        setGenerations((prev) => prev.map((g) => (g.id === restored.id ? mapped : g)));
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Error restoring generation:", err);
       return false;
     }
-
-    return true;
-  }, [lastDeleted, supabase, user]);
+  }, [lastDeleted, user]);
 
   const getGeneration = useCallback(
     (id: string) => {
@@ -398,6 +444,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       restoreLastDeleted,
       lastDeleted,
       isLoaded,
+      refreshGenerations: fetchGenerations,
     }),
     [
       generations,
@@ -411,6 +458,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       restoreLastDeleted,
       lastDeleted,
       isLoaded,
+      fetchGenerations,
     ]
   );
 
@@ -424,3 +472,4 @@ export function useContent(): ContentContextType {
   }
   return context;
 }
+
