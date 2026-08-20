@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Sparkles, Loader2, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth-store";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,25 +23,32 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedAvatar(user?.avatar || "");
+      setDisplayName(user?.name || "");
+      setIsSaving(false);
+      setSuccess(false);
+    }
+  }, [isOpen, user]);
+
   async function handleSave() {
     setIsSaving(true);
     setSuccess(false);
     
-    // Simulate network delay for premium feel
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    await updateUser({
-      name: displayName,
+    const result = await updateUser({
+      name: displayName.trim(),
       avatar: selectedAvatar,
     });
     
     setIsSaving(false);
-    setSuccess(true);
-    
-    setTimeout(() => {
-      setSuccess(false);
-      onClose();
-    }, 1000);
+    if (result.success) {
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 800);
+    }
   }
 
   return (

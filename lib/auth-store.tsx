@@ -246,44 +246,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (data: Partial<AuthUser>): Promise<AuthResult> => {
       if (!user) return { success: false, error: "Not logged in." };
 
-      // Update auth metadata
-      const authUpdate: any = {};
-      if (data.name !== undefined) authUpdate.full_name = data.name;
-      if (data.avatar !== undefined) authUpdate.avatar_url = data.avatar;
-      
-      const { error: authError } = await supabase.auth.updateUser({
-        data: authUpdate,
-      });
+      const profilePayload: Record<string, any> = {};
+      if (data.name !== undefined) profilePayload.name = data.name;
+      if (data.bio !== undefined) profilePayload.bio = data.bio;
+      if (data.avatar !== undefined) profilePayload.avatar = data.avatar;
 
-      if (authError) {
-        return { success: false, error: authError.message };
-      }
+      if (Object.keys(profilePayload).length > 0) {
+        try {
+          const res = await fetch("/api/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(profilePayload),
+          });
 
-      // Update profiles table
-      const profileUpdate: any = {};
-      if (data.name !== undefined) profileUpdate.name = data.name;
-      if (data.bio !== undefined) profileUpdate.bio = data.bio;
-      if (data.avatar !== undefined) profileUpdate.avatar = data.avatar;
+          const json = await res.json();
+          if (!res.ok || !json.success) {
+            return {
+              success: false,
+              error: json.error?.message || "Failed to update profile",
+            };
+          }
 
-      if (Object.keys(profileUpdate).length > 0) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("id", user.id);
+          // Update auth metadata if applicable
+          const authUpdate: any = {};
+          if (data.name !== undefined) authUpdate.full_name = data.name;
+          if (data.avatar !== undefined) authUpdate.avatar_url = data.avatar;
 
-        if (profileError) {
-          return { success: false, error: profileError.message };
+          if (Object.keys(authUpdate).length > 0) {
+            await supabase.auth.updateUser({
+              data: authUpdate,
+            });
+          }
+
+          // Update local user state immediately with returned server data
+          const updatedRecord = json.data;
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  name: updatedRecord.name || prev.name,
+                  avatar: updatedRecord.avatar !== undefined ? updatedRecord.avatar : prev.avatar,
+                  bio: updatedRecord.bio !== undefined ? updatedRecord.bio : prev.bio,
+                }
+              : prev
+          );
+
+          return { success: true, message: "Profile updated successfully!" };
+        } catch (err: any) {
+          return { success: false, error: err?.message || "Network error updating profile" };
         }
       }
 
-      // Refresh user to get latest profile state
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        const mappedUser = await mapSupabaseUser(supabase, userData.user);
-        setUser(mappedUser);
-      }
-
-      return { success: true, message: "Profile updated successfully!" };
+      return { success: true, message: "No changes to update." };
     },
     [user, supabase]
   );

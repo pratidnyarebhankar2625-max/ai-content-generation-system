@@ -4,10 +4,12 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 type Template = {
-  id?: number;
+  id?: number | string;
   title: string;
   description: string;
   category: string;
+  content?: string;
+  is_favorite?: boolean;
 };
 
 type CreateTemplateFormProps = {

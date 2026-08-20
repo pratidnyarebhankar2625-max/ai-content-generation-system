@@ -9,7 +9,6 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { useTheme } from "next-themes";
 
@@ -20,7 +19,6 @@ export type UserSettings = {
   language: string;
   writing_tone: string;
   default_ai_model: string;
-  byok_api_key: string | null;
   email_notifications: boolean;
   push_notifications: boolean;
   generation_alerts: boolean;
@@ -38,7 +36,6 @@ const DEFAULT_SETTINGS: UserSettings = {
   language: "en-US",
   writing_tone: "professional",
   default_ai_model: "gemini-2.5-pro",
-  byok_api_key: null,
   email_notifications: true,
   push_notifications: false,
   generation_alerts: true,
@@ -52,65 +49,71 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
-  const supabase = createClient();
   const { setTheme } = useTheme();
 
-  useEffect(() => {
-    async function fetchSettings() {
-      if (!isAuthenticated || !user) {
-        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
-        if (saved) {
-          try { setSettings(JSON.parse(saved)); } catch (e) {}
-        } else {
-          setSettings(null);
-        }
-        setIsLoading(false);
-        return;
+  const fetchSettings = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
+      if (saved) {
+        try { setSettings(JSON.parse(saved)); } catch {}
+      } else {
+        setSettings(null);
       }
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from("user_settings")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/settings', { cache: 'no-store' });
+      const json = await res.json();
 
-      if (error) {
-        // Fallback to localStorage if not found or table doesn't exist yet
-        if (error.code === '42P01') {
-          console.warn("user_settings table does not exist. Using localStorage fallback.");
-        }
-        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
-        if (saved) {
-          try {
-            setSettings(JSON.parse(saved));
-          } catch (e) {
-            setSettings({ ...DEFAULT_SETTINGS, theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') || 'light') : 'light' });
-          }
-        } else {
-          setSettings({ ...DEFAULT_SETTINGS, theme: typeof window !== 'undefined' ? (localStorage.getItem('theme') || 'light') : 'light' });
-        }
-      } else if (data) {
-        const mappedSettings = {
-          theme: data.theme,
-          language: data.language,
-          writing_tone: data.writing_tone,
-          default_ai_model: data.default_ai_model,
-          byok_api_key: data.byok_api_key,
-          email_notifications: data.email_notifications,
-          push_notifications: data.push_notifications,
-          generation_alerts: data.generation_alerts,
+      if (res.ok && json.success && json.data) {
+        const mappedSettings: UserSettings = {
+          theme: json.data.theme || DEFAULT_SETTINGS.theme,
+          language: json.data.language || DEFAULT_SETTINGS.language,
+          writing_tone: json.data.writing_tone || DEFAULT_SETTINGS.writing_tone,
+          default_ai_model: json.data.default_ai_model || DEFAULT_SETTINGS.default_ai_model,
+          email_notifications: json.data.email_notifications ?? DEFAULT_SETTINGS.email_notifications,
+          push_notifications: json.data.push_notifications ?? DEFAULT_SETTINGS.push_notifications,
+          generation_alerts: json.data.generation_alerts ?? DEFAULT_SETTINGS.generation_alerts,
         };
         setSettings(mappedSettings);
         if (typeof window !== 'undefined') {
           localStorage.setItem("user_settings_fallback", JSON.stringify(mappedSettings));
         }
+      } else {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
+        if (saved) {
+          try {
+            setSettings(JSON.parse(saved));
+          } catch {
+            setSettings(DEFAULT_SETTINGS);
+          }
+        } else {
+          setSettings(DEFAULT_SETTINGS);
+        }
       }
+    } catch (err) {
+      console.warn("Failed to fetch settings from API:", err);
+      const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
+      if (saved) {
+        try {
+          setSettings(JSON.parse(saved));
+        } catch {
+          setSettings(DEFAULT_SETTINGS);
+        }
+      } else {
+        setSettings(DEFAULT_SETTINGS);
+      }
+    } finally {
       setIsLoading(false);
     }
+  }, [user, isAuthenticated]);
 
+  useEffect(() => {
     fetchSettings();
-  }, [user, isAuthenticated, supabase]);
+  }, [fetchSettings]);
 
   // Apply theme when settings load/change
   useEffect(() => {
@@ -123,36 +126,67 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     async (newSettings: Partial<UserSettings>) => {
       if (!user) return { success: false, error: "Not authenticated" };
 
+      const prevSettings = settings;
+
       // Optimistic update
-      setSettings((prev) => {
-        const next = prev ? { ...prev, ...newSettings } : ({ ...DEFAULT_SETTINGS, ...newSettings } as UserSettings);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem("user_settings_fallback", JSON.stringify(next));
-        }
-        return next;
-      });
+      const nextSettings = prevSettings
+        ? { ...prevSettings, ...newSettings }
+        : ({ ...DEFAULT_SETTINGS, ...newSettings } as UserSettings);
 
-      const { error } = await supabase
-        .from("user_settings")
-        .update(newSettings)
-        .eq("id", user.id);
-
-      if (error) {
-        console.warn("Error updating settings:", error);
-        // Re-fetch on error to revert optimistic update
-        const { data } = await supabase
-          .from("user_settings")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        if (data) setSettings(data as UserSettings);
-        
-        return { success: false, error: error.message };
+      setSettings(nextSettings);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("user_settings_fallback", JSON.stringify(nextSettings));
       }
 
-      return { success: true };
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSettings),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          const errorMessage = json.error?.message || "Failed to update settings";
+          // Revert optimistic update
+          if (prevSettings) {
+            setSettings(prevSettings);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
+            }
+          }
+          return { success: false, error: errorMessage };
+        }
+
+        const serverSettings: UserSettings = {
+          theme: json.data.theme || nextSettings.theme,
+          language: json.data.language || nextSettings.language,
+          writing_tone: json.data.writing_tone || nextSettings.writing_tone,
+          default_ai_model: json.data.default_ai_model || nextSettings.default_ai_model,
+          email_notifications: json.data.email_notifications ?? nextSettings.email_notifications,
+          push_notifications: json.data.push_notifications ?? nextSettings.push_notifications,
+          generation_alerts: json.data.generation_alerts ?? nextSettings.generation_alerts,
+        };
+
+        setSettings(serverSettings);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem("user_settings_fallback", JSON.stringify(serverSettings));
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        // Revert on network error
+        if (prevSettings) {
+          setSettings(prevSettings);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
+          }
+        }
+        return { success: false, error: err?.message || "Network error" };
+      }
     },
-    [user, supabase]
+    [user, settings]
   );
 
   const value = useMemo<SettingsContextType>(

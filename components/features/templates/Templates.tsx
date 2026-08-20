@@ -1,100 +1,250 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import TemplateCard from "./TemplateCard";
 import CreateTemplateForm from "./CreateTemplateForm";
-import { templates } from "./templateData";
-import { Search, Sparkles, FileText, Plus } from "lucide-react";
+import { templates as builtInTemplates, type Template as BuiltInTemplate } from "./templateData";
+import { Search, Sparkles, FileText, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+export interface UserTemplate {
+  id: string;
+  user_id?: string;
+  title: string;
+  description: string;
+  category: string;
+  content?: string;
+  is_favorite: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type DisplayTemplate = {
+  id: string | number;
+  title: string;
+  description: string;
+  category: string;
+  content?: string;
+  is_favorite?: boolean;
+  isUserTemplate?: boolean;
+};
 
 export default function Templates() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [templateList, setTemplateList] = useState(templates);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [usageStats, setUsageStats] = useState<Record<number, number>>({});
-  const [editingTemplate, setEditingTemplate] = useState<any>(null);
-
-useEffect(() => {
-  const savedTemplates = localStorage.getItem("userTemplates");
-  const savedFavorites = localStorage.getItem("userFavorites");
-  const savedUsage = localStorage.getItem("userUsageStats");
-
-  if (savedTemplates) {
-    const parsed = JSON.parse(savedTemplates);
-    const validTemplates = parsed.filter((t: any) => t.id != null);
-    setTemplateList([...templates, ...validTemplates]);
-  }
-  
-  if (savedFavorites) {
-    setFavorites(JSON.parse(savedFavorites));
-  }
-  
-  if (savedUsage) {
-    setUsageStats(JSON.parse(savedUsage));
-  }
-}, []);
-
-useEffect(() => {
-  const userTemplates = templateList.filter(
-    (template) => template.id != null && template.id > 1000
-  );
-  localStorage.setItem("userTemplates", JSON.stringify(userTemplates));
-}, [templateList]);
-
-useEffect(() => {
-  localStorage.setItem("userFavorites", JSON.stringify(favorites));
-}, [favorites]);
-
-useEffect(() => {
-  localStorage.setItem("userUsageStats", JSON.stringify(usageStats));
-}, [usageStats]);
+  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingTemplate, setEditingTemplate] = useState<DisplayTemplate | null>(null);
 
   const categories = [
-  "All",
-  "Favorites",
-  "Writing",
-  "Email",
-  "Social Media",
-  "Marketing",
-  "Business",
-  "Education",
-  "Developer",
-  "AI Utility",
-];
+    "All",
+    "Favorites",
+    "Writing",
+    "Email",
+    "Social Media",
+    "Marketing",
+    "Business",
+    "Education",
+    "Developer",
+    "AI Utility",
+  ];
 
-  const deleteTemplate = (id: number) => {
-  setTemplateList((prev) =>
-    prev.filter((template) => template.id !== id)
-  );
-};
+  // Fetch custom user templates from the backend API
+  const fetchUserTemplates = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("/api/templates?limit=100");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data?.items) {
+          setUserTemplates(json.data.items);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load user templates:", err);
+      toast.error("Failed to load your custom templates");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-const filteredTemplates = templateList.filter((template) => {
-    let matchesCategory = false;
-    if (selectedCategory === "All") {
-      matchesCategory = true;
-    } else if (selectedCategory === "Favorites") {
-      matchesCategory = favorites.includes(template.id);
-    } else {
-      matchesCategory = template.category === selectedCategory;
+  useEffect(() => {
+    fetchUserTemplates();
+  }, [fetchUserTemplates]);
+
+  // Combine user templates (with UUIDs) and built-in system presets (with numbers)
+  const templateList: DisplayTemplate[] = useMemo(() => {
+    const formattedUserTemplates: DisplayTemplate[] = userTemplates.map((t) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      category: t.category,
+      content: t.content,
+      is_favorite: t.is_favorite,
+      isUserTemplate: true,
+    }));
+
+    const formattedBuiltIn: DisplayTemplate[] = builtInTemplates.map((t) => ({
+      ...t,
+      is_favorite: false,
+      isUserTemplate: false,
+    }));
+
+    return [...formattedUserTemplates, ...formattedBuiltIn];
+  }, [userTemplates]);
+
+  // Handle template creation via API
+  const handleCreateTemplate = async (templateData: {
+    title: string;
+    description: string;
+    category: string;
+    content?: string;
+  }) => {
+    try {
+      const res = await fetch("/api/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(templateData),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || "Failed to create template");
+      }
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setUserTemplates((prev) => [json.data, ...prev]);
+        toast.success("Template created successfully");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create template");
+    }
+  };
+
+  // Handle template editing via API
+  const handleUpdateTemplate = async (
+    id: string,
+    updates: {
+      title: string;
+      description: string;
+      category: string;
+      content?: string;
+    }
+  ) => {
+    try {
+      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || "Failed to update template");
+      }
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setUserTemplates((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, ...json.data } : t))
+        );
+        toast.success("Template updated successfully");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update template");
+    }
+  };
+
+  // Handle template deletion via API
+  const handleDeleteTemplate = async (id: string | number) => {
+    if (typeof id !== "string") {
+      // Built-in templates cannot be deleted
+      return;
     }
 
-    const matchesSearch =
-      template.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      template.description
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+    const previousTemplates = [...userTemplates];
+    setUserTemplates((prev) => prev.filter((t) => t.id !== id));
 
-    return matchesCategory && matchesSearch;
-  });
+    try {
+      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
 
-  return ( 
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || "Failed to delete template");
+      }
+
+      toast.success("Template deleted successfully");
+    } catch (err: any) {
+      // Rollback on error
+      setUserTemplates(previousTemplates);
+      toast.error(err.message || "Failed to delete template");
+    }
+  };
+
+  // Handle favorite toggling via API
+  const handleToggleFavorite = async (id: string | number) => {
+    if (typeof id !== "string") {
+      // Built-in templates are read-only and not stored in user_templates
+      return;
+    }
+
+    const target = userTemplates.find((t) => t.id === id);
+    if (!target) return;
+
+    const newFavoriteState = !target.is_favorite;
+
+    // Optimistic update
+    setUserTemplates((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, is_favorite: newFavoriteState } : t))
+    );
+
+    try {
+      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_favorite: newFavoriteState }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update favorite status");
+      }
+    } catch (err) {
+      // Rollback on error
+      setUserTemplates((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, is_favorite: target.is_favorite } : t))
+      );
+      toast.error("Failed to update favorite");
+    }
+  };
+
+  // Filter templates by category and search
+  const filteredTemplates = useMemo(() => {
+    return templateList.filter((template) => {
+      let matchesCategory = false;
+      if (selectedCategory === "All") {
+        matchesCategory = true;
+      } else if (selectedCategory === "Favorites") {
+        matchesCategory = Boolean(template.is_favorite);
+      } else {
+        matchesCategory = template.category === selectedCategory;
+      }
+
+      const matchesSearch =
+        template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [templateList, selectedCategory, searchQuery]);
+
+  return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
-
       {/* Header */}
       <div className="flex items-start justify-between animate-fade-in-up">
         <div className="space-y-3">
@@ -124,33 +274,27 @@ const filteredTemplates = templateList.filter((template) => {
         </button>
       </div>
 
-      {/* Popup */}
+      {/* Popup Form */}
       {showCreateForm && (
         <CreateTemplateForm
-          initialData={editingTemplate}
+          initialData={editingTemplate || undefined}
           isEditing={!!editingTemplate}
           onClose={() => {
             setShowCreateForm(false);
             setEditingTemplate(null);
           }}
-          onCreate={(newTemplate) => {
-            if (editingTemplate) {
-              setTemplateList((prev) =>
-                prev.map((t) =>
-                  t.id === editingTemplate.id ? { ...t, ...newTemplate } : t
-                )
-              );
+          onCreate={async (newTemplate) => {
+            if (editingTemplate && typeof editingTemplate.id === "string") {
+              await handleUpdateTemplate(editingTemplate.id, newTemplate);
             } else {
-              setTemplateList((prev) => [
-                ...prev,
-                { ...newTemplate, id: Date.now() },
-              ]);
+              await handleCreateTemplate(newTemplate);
             }
             setShowCreateForm(false);
             setEditingTemplate(null);
           }}
         />
       )}
+
       {/* Search */}
       <div className="relative animate-fade-in-up stagger-1">
         <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
@@ -170,9 +314,9 @@ const filteredTemplates = templateList.filter((template) => {
               template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               template.description.toLowerCase().includes(searchQuery.toLowerCase());
             if (!matchesSearch) return false;
-            
+
             if (category === "All") return true;
-            if (category === "Favorites") return favorites.includes(template.id);
+            if (category === "Favorites") return Boolean(template.is_favorite);
             return template.category === category;
           }).length;
 
@@ -187,7 +331,7 @@ const filteredTemplates = templateList.filter((template) => {
               }`}
             >
               {category}
-              <span 
+              <span
                 className={`flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold transition-colors duration-300 ${
                   selectedCategory === category
                     ? "bg-white/20 text-white"
@@ -201,7 +345,7 @@ const filteredTemplates = templateList.filter((template) => {
         })}
       </div>
 
-      {/* Templates */}
+      {/* Templates Grid */}
       {filteredTemplates.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template, index) => (
@@ -211,21 +355,10 @@ const filteredTemplates = templateList.filter((template) => {
               title={template.title}
               description={template.description}
               category={template.category}
-              isUserTemplate={template.id != null && template.id > 1000}
-              isFavorite={favorites.includes(template.id)}
-              usageCount={usageStats[template.id] || 0}
-              onFavorite={(id) => {
-                setFavorites((prev) =>
-                  prev.includes(id)
-                    ? prev.filter((favId) => favId !== id)
-                    : [...prev, id]
-                );
-              }}
+              isUserTemplate={template.isUserTemplate}
+              isFavorite={Boolean(template.is_favorite)}
+              onFavorite={(id) => handleToggleFavorite(id)}
               onUse={(id) => {
-                setUsageStats((prev) => ({
-                  ...prev,
-                  [id]: (prev[id] || 0) + 1,
-                }));
                 router.push(`/generate/${id}`);
               }}
               onEdit={(id) => {
@@ -235,7 +368,7 @@ const filteredTemplates = templateList.filter((template) => {
                   setShowCreateForm(true);
                 }
               }}
-              onDelete={deleteTemplate}
+              onDelete={(id) => handleDeleteTemplate(id)}
               index={index}
             />
           ))}

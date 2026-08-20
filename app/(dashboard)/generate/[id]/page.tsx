@@ -8,11 +8,10 @@ export default async function GeneratePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const templateId = parseInt(id, 10);
 
   return (
     <div className="p-10 h-full overflow-y-auto">
-      <GenerateWorkspace templateId={templateId} />
+      <GenerateWorkspace templateId={id} />
     </div>
   );
 }

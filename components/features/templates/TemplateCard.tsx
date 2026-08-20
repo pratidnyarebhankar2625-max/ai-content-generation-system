@@ -12,17 +12,17 @@ import {
 } from "lucide-react";
 
 type TemplateCardProps = {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   category: string;
   isUserTemplate?: boolean;
   isFavorite?: boolean;
   usageCount?: number;
-  onFavorite?: (id: number) => void;
-  onUse?: (id: number) => void;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onFavorite?: (id: number | string) => void;
+  onUse?: (id: number | string) => void;
+  onEdit?: (id: number | string) => void;
+  onDelete?: (id: number | string) => void;
   index?: number;
 };
 

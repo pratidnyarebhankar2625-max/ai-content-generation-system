@@ -24,7 +24,7 @@ const RichTextEditor = dynamic(
 );
 
 interface GenerateWorkspaceProps {
-  templateId: number;
+  templateId: number | string;
 }
 
 export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps) {
@@ -255,21 +255,45 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
   };
 
   useEffect(() => {
-    // Load template
-    const savedTemplates = typeof window !== "undefined" ? localStorage.getItem("userTemplates") : null;
-    let allTemplates = [...templates];
-    if (savedTemplates) {
+    // Check if numeric ID (built-in template)
+    const numId = typeof templateId === "string" ? parseInt(templateId, 10) : templateId;
+    if (!isNaN(numId) && numId > 0 && numId <= 100) {
+      const foundBuiltIn = templates.find((t) => t.id === numId);
+      if (foundBuiltIn) {
+        setTemplate(foundBuiltIn);
+        return;
+      }
+    }
+
+    // Otherwise, fetch user template from API
+    let isMounted = true;
+    async function loadUserTemplate() {
       try {
-        const parsed = JSON.parse(savedTemplates);
-        allTemplates = [...allTemplates, ...parsed];
-      } catch {}
+        const res = await fetch(`/api/templates/${templateId}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && isMounted) {
+            setTemplate(json.data);
+            return;
+          }
+        }
+        if (isMounted) {
+          router.push("/templates");
+        }
+      } catch {
+        if (isMounted) {
+          router.push("/templates");
+        }
+      }
     }
-    const foundTemplate = allTemplates.find((t) => t.id === templateId);
-    if (foundTemplate) {
-      setTemplate(foundTemplate);
-    } else {
-      router.push("/templates");
+
+    if (templateId) {
+      loadUserTemplate();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [templateId, router]);
 
   const handleEditorSave = async (content: string) => {
