@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 import { useAuth } from "@/lib/auth-store";
@@ -151,9 +152,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [lastDeleted, setLastDeleted] = useState<Generation | null>(null);
   
   const { user, isAuthenticated } = useAuth();
+  const userId = user?.id;
+  const mutationCountRef = useRef(0);
 
   const fetchGenerations = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !userId) {
       setGenerations([]);
       setIsLoaded(true);
       return;
@@ -164,6 +167,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+
+      // If mutations are in flight, do not overwrite optimistic state with potentially stale GET response
+      if (mutationCountRef.current > 0) {
+        setIsLoaded(true);
+        return;
+      }
 
       if (!res.ok) {
         console.warn("Could not load generations from API:", res.statusText);
@@ -178,7 +187,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoaded(true);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, userId]);
 
   // Load from API on mount or auth change
   useEffect(() => {
@@ -197,7 +206,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       // Optimistic local update for responsive UI
       setGenerations((prev) => [optimisticGen, ...prev]);
 
-      if (!user) return optimisticGen.id;
+      if (!userId) return optimisticGen.id;
+
+      mutationCountRef.current += 1;
 
       const payload = {
         id: tempId,
@@ -232,11 +243,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       } catch (err: any) {
         console.error("Error adding generation:", err.message);
         throw err;
+      } finally {
+        mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
       }
 
       return optimisticGen.id;
     },
-    [user]
+    [userId]
   );
 
   const updateGeneration = useCallback(
@@ -246,7 +259,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
       );
 
-      if (!user) return;
+      if (!userId) return;
+
+      mutationCountRef.current += 1;
 
       const payload: any = {};
       if (updates.title !== undefined) payload.title = updates.title;
@@ -279,22 +294,28 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       } catch (err: any) {
         console.error("Error updating generation:", err.message);
         throw err;
+      } finally {
+        mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
       }
     },
-    [user]
+    [userId]
   );
 
   const deleteGeneration = useCallback(
     async (id: string) => {
-      const target = generations.find((g) => g.id === id);
+      let target: Generation | undefined;
+      setGenerations((prev) => {
+        target = prev.find((g) => g.id === id);
+        return prev.filter((g) => g.id !== id);
+      });
+
       if (target) {
         setLastDeleted(target);
       }
-
-      // Optimistic local removal
-      setGenerations((prev) => prev.filter((g) => g.id !== id));
       
-      if (!user) return;
+      if (!userId) return;
+
+      mutationCountRef.current += 1;
 
       try {
         const res = await fetch(`/api/history/${encodeURIComponent(id)}`, {
@@ -307,18 +328,20 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           console.error("Failed to delete generation via API:", msg);
           // Rollback optimistic removal
           if (target) {
-            setGenerations((prev) => [target, ...prev]);
+            setGenerations((prev) => [target!, ...prev]);
           }
           throw new Error(msg);
         }
       } catch (err: any) {
         if (target) {
-          setGenerations((prev) => [target, ...prev]);
+          setGenerations((prev) => [target!, ...prev]);
         }
         throw err;
+      } finally {
+        mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
       }
     },
-    [generations, user]
+    [userId]
   );
 
   const importGeneration = useCallback(
@@ -332,8 +355,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
       setGenerations((prev) => [optimisticGen, ...prev]);
 
-      if (!user) return;
+      if (!userId) return;
       
+      mutationCountRef.current += 1;
+
       const payload: any = {
         id: tempId,
         title: gen.title,
@@ -371,9 +396,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       } catch (err: any) {
         setGenerations((prev) => prev.filter((g) => g.id !== optimisticGen.id));
         throw err;
+      } finally {
+        mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
       }
     },
-    [user]
+    [userId]
   );
 
   const restoreLastDeleted = useCallback(async () => {
@@ -383,7 +410,9 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     setGenerations((prev) => [restored, ...prev]);
     setLastDeleted(null);
 
-    if (!user) return true;
+    if (!userId) return true;
+
+    mutationCountRef.current += 1;
 
     const payload = {
       id: restored.id,
@@ -418,8 +447,10 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Error restoring generation:", err);
       return false;
+    } finally {
+      mutationCountRef.current = Math.max(0, mutationCountRef.current - 1);
     }
-  }, [lastDeleted, user]);
+  }, [lastDeleted, userId]);
 
   const getGeneration = useCallback(
     (id: string) => {

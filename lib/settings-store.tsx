@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 import { useAuth } from "@/lib/auth-store";
@@ -51,22 +52,44 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const { setTheme } = useTheme();
 
+  const userId = user?.id;
+  const isMutationInFlight = useRef(0);
+  const mutationVersionRef = useRef(0);
+  const requestVersionRef = useRef(0);
+  const settingsRef = useRef<UserSettings | null>(null);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   const fetchSettings = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !userId) {
       const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
       if (saved) {
-        try { setSettings(JSON.parse(saved)); } catch {}
+        try {
+          const parsed = JSON.parse(saved);
+          settingsRef.current = parsed;
+          setSettings(parsed);
+        } catch {}
       } else {
+        settingsRef.current = null;
         setSettings(null);
       }
       setIsLoading(false);
       return;
     }
 
+    const currentRequestVersion = ++requestVersionRef.current;
     setIsLoading(true);
+
     try {
       const res = await fetch('/api/settings', { cache: 'no-store' });
       const json = await res.json();
+
+      // If a newer GET was started or a mutation is currently in flight, ignore this GET response
+      if (currentRequestVersion !== requestVersionRef.current || isMutationInFlight.current > 0) {
+        return;
+      }
 
       if (res.ok && json.success && json.data) {
         const mappedSettings: UserSettings = {
@@ -74,10 +97,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           language: json.data.language || DEFAULT_SETTINGS.language,
           writing_tone: json.data.writing_tone || DEFAULT_SETTINGS.writing_tone,
           default_ai_model: json.data.default_ai_model || DEFAULT_SETTINGS.default_ai_model,
-          email_notifications: json.data.email_notifications ?? DEFAULT_SETTINGS.email_notifications,
-          push_notifications: json.data.push_notifications ?? DEFAULT_SETTINGS.push_notifications,
-          generation_alerts: json.data.generation_alerts ?? DEFAULT_SETTINGS.generation_alerts,
+          email_notifications: typeof json.data.email_notifications === "boolean" ? json.data.email_notifications : DEFAULT_SETTINGS.email_notifications,
+          push_notifications: typeof json.data.push_notifications === "boolean" ? json.data.push_notifications : DEFAULT_SETTINGS.push_notifications,
+          generation_alerts: typeof json.data.generation_alerts === "boolean" ? json.data.generation_alerts : DEFAULT_SETTINGS.generation_alerts,
         };
+        settingsRef.current = mappedSettings;
         setSettings(mappedSettings);
         if (typeof window !== 'undefined') {
           localStorage.setItem("user_settings_fallback", JSON.stringify(mappedSettings));
@@ -86,30 +110,43 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
         if (saved) {
           try {
-            setSettings(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            settingsRef.current = parsed;
+            setSettings(parsed);
           } catch {
+            settingsRef.current = DEFAULT_SETTINGS;
             setSettings(DEFAULT_SETTINGS);
           }
         } else {
+          settingsRef.current = DEFAULT_SETTINGS;
           setSettings(DEFAULT_SETTINGS);
         }
       }
     } catch (err) {
       console.warn("Failed to fetch settings from API:", err);
+      if (currentRequestVersion !== requestVersionRef.current || isMutationInFlight.current > 0) {
+        return;
+      }
       const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
       if (saved) {
         try {
-          setSettings(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          settingsRef.current = parsed;
+          setSettings(parsed);
         } catch {
+          settingsRef.current = DEFAULT_SETTINGS;
           setSettings(DEFAULT_SETTINGS);
         }
       } else {
+        settingsRef.current = DEFAULT_SETTINGS;
         setSettings(DEFAULT_SETTINGS);
       }
     } finally {
-      setIsLoading(false);
+      if (currentRequestVersion === requestVersionRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [user, isAuthenticated]);
+  }, [userId, isAuthenticated]);
 
   useEffect(() => {
     fetchSettings();
@@ -124,19 +161,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateSettings = useCallback(
     async (newSettings: Partial<UserSettings>) => {
-      if (!user) return { success: false, error: "Not authenticated" };
+      if (!userId) return { success: false, error: "Not authenticated" };
 
-      const prevSettings = settings;
+      const currentMutationVersion = ++mutationVersionRef.current;
+      const prevSettings = settingsRef.current ?? DEFAULT_SETTINGS;
 
-      // Optimistic update
-      const nextSettings = prevSettings
-        ? { ...prevSettings, ...newSettings }
-        : ({ ...DEFAULT_SETTINGS, ...newSettings } as UserSettings);
+      // Optimistic functional update
+      const nextSettings: UserSettings = {
+        ...prevSettings,
+        ...newSettings,
+      };
 
+      settingsRef.current = nextSettings;
       setSettings(nextSettings);
       if (typeof window !== 'undefined') {
         localStorage.setItem("user_settings_fallback", JSON.stringify(nextSettings));
       }
+
+      isMutationInFlight.current += 1;
 
       try {
         const res = await fetch('/api/settings', {
@@ -149,8 +191,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
         if (!res.ok || !json.success) {
           const errorMessage = json.error?.message || "Failed to update settings";
-          // Revert optimistic update
-          if (prevSettings) {
+          // Only revert if no newer mutation has taken over
+          if (currentMutationVersion === mutationVersionRef.current) {
+            settingsRef.current = prevSettings;
             setSettings(prevSettings);
             if (typeof window !== 'undefined') {
               localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
@@ -159,34 +202,41 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           return { success: false, error: errorMessage };
         }
 
-        const serverSettings: UserSettings = {
-          theme: json.data.theme || nextSettings.theme,
-          language: json.data.language || nextSettings.language,
-          writing_tone: json.data.writing_tone || nextSettings.writing_tone,
-          default_ai_model: json.data.default_ai_model || nextSettings.default_ai_model,
-          email_notifications: json.data.email_notifications ?? nextSettings.email_notifications,
-          push_notifications: json.data.push_notifications ?? nextSettings.push_notifications,
-          generation_alerts: json.data.generation_alerts ?? nextSettings.generation_alerts,
-        };
+        // Only update with server response if this is still the latest mutation
+        if (currentMutationVersion === mutationVersionRef.current) {
+          const serverSettings: UserSettings = {
+            theme: json.data.theme || nextSettings.theme,
+            language: json.data.language || nextSettings.language,
+            writing_tone: json.data.writing_tone || nextSettings.writing_tone,
+            default_ai_model: json.data.default_ai_model || nextSettings.default_ai_model,
+            email_notifications: typeof json.data.email_notifications === "boolean" ? json.data.email_notifications : nextSettings.email_notifications,
+            push_notifications: typeof json.data.push_notifications === "boolean" ? json.data.push_notifications : nextSettings.push_notifications,
+            generation_alerts: typeof json.data.generation_alerts === "boolean" ? json.data.generation_alerts : nextSettings.generation_alerts,
+          };
 
-        setSettings(serverSettings);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem("user_settings_fallback", JSON.stringify(serverSettings));
+          settingsRef.current = serverSettings;
+          setSettings(serverSettings);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem("user_settings_fallback", JSON.stringify(serverSettings));
+          }
         }
 
         return { success: true };
       } catch (err: any) {
-        // Revert on network error
-        if (prevSettings) {
+        // Only revert if no newer mutation has taken over
+        if (currentMutationVersion === mutationVersionRef.current) {
+          settingsRef.current = prevSettings;
           setSettings(prevSettings);
           if (typeof window !== 'undefined') {
             localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
           }
         }
         return { success: false, error: err?.message || "Network error" };
+      } finally {
+        isMutationInFlight.current = Math.max(0, isMutationInFlight.current - 1);
       }
     },
-    [user, settings]
+    [userId]
   );
 
   const value = useMemo<SettingsContextType>(

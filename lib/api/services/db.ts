@@ -212,11 +212,11 @@ export class DbService {
       query = query.eq('category', params.category);
     }
 
-    // Filter by search query (across title and preview)
+    // Filter by search query (across title, template, and preview)
     if (params.search && params.search.trim()) {
       const sanitized = params.search.trim().replace(/[%_,()]/g, '');
       if (sanitized) {
-        query = query.or(`title.ilike.%${sanitized}%,preview.ilike.%${sanitized}%`);
+        query = query.or(`title.ilike.%${sanitized}%,template.ilike.%${sanitized}%,preview.ilike.%${sanitized}%`);
       }
     }
 

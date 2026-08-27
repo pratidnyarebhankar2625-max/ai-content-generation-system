@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { templates } from "@/components/features/templates/templateData";
 import { useContent, type Generation, type GenerationStatus } from "@/lib/content-store";
@@ -381,17 +381,29 @@ function ImportModal({
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
+const ALL_CATEGORIES = [
+  "all",
+  "Blog Writing",
+  "Email",
+  "Social Media",
+  "Marketing",
+  "Business",
+  "Education",
+  "Developer",
+  "AI Utility",
+];
+
 export default function HistoryContent() {
   const {
-    generations,
     deleteGeneration,
     addGeneration,
     importGeneration,
     restoreLastDeleted,
-    isLoaded,
+    isLoaded: isContentStoreLoaded,
   } = useContent();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "words">("newest");
@@ -404,6 +416,81 @@ export default function HistoryContent() {
   const listRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const [serverItems, setServerItems] = useState<Generation[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Debounce search query changes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch server-side history whenever filters, search, sort, pagination, or refresh changes
+  useEffect(() => {
+    let isMounted = true;
+    async function loadServerHistory() {
+      setIsLoadingHistory(true);
+      try {
+        const params = new URLSearchParams();
+        if (debouncedSearch.trim()) {
+          params.set("search", debouncedSearch.trim());
+        }
+        if (filterStatus && filterStatus !== "all") {
+          params.set("status", filterStatus);
+        }
+        if (filterCategory && filterCategory !== "all") {
+          params.set("category", filterCategory);
+        }
+        if (sortBy === "oldest") {
+          params.set("sortBy", "oldest");
+        } else if (sortBy === "words") {
+          params.set("sortBy", "words");
+        } else {
+          params.set("sortBy", "newest");
+        }
+        params.set("page", String(currentPage));
+        params.set("limit", String(itemsPerPage));
+
+        const res = await fetch(`/api/history?${params.toString()}`, { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && isMounted) {
+            const mapped = (json.data.items || []).map((row: any): Generation => ({
+              id: row.id,
+              title: row.title || "Untitled",
+              template: row.template || "Custom Template",
+              category: row.category || "General",
+              status: (row.status || "completed") as GenerationStatus,
+              wordCount: Number(row.word_count ?? row.wordCount) || 0,
+              preview: row.preview || "",
+              createdAt: row.created_at ?? row.createdAt ?? new Date().toISOString(),
+            }));
+            setServerItems(mapped);
+            setTotalCount(json.data.total ?? mapped.length);
+            setTotalPages(json.data.totalPages ?? 1);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch server history:", err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingHistory(false);
+        }
+      }
+    }
+
+    loadServerHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedSearch, filterStatus, filterCategory, sortBy, currentPage, itemsPerPage, refreshTrigger]);
+
   function handleEdit(item: Generation) {
     const foundTemplate = templates.find((t) => t.title === item.template);
     if (foundTemplate) {
@@ -412,39 +499,6 @@ export default function HistoryContent() {
       router.push(`/generate/1?generationId=${item.id}`);
     }
   }
-
-  const categories = useMemo(
-    () => ["all", ...Array.from(new Set(generations.map((i) => i.category)))],
-    [generations]
-  );
-
-  const filtered = useMemo(() => {
-    return generations
-      .filter((item) => {
-        const matchesSearch =
-          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.template.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.preview.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus =
-          filterStatus === "all" || item.status === filterStatus;
-        const matchesCategory =
-          filterCategory === "all" || item.category === filterCategory;
-        return matchesSearch && matchesStatus && matchesCategory;
-      })
-      .sort((a, b) => {
-        if (sortBy === "newest")
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        if (sortBy === "oldest")
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        return b.wordCount - a.wordCount;
-      });
-  }, [generations, searchQuery, filterStatus, filterCategory, sortBy]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedItems = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   function handleCopy(item: Generation) {
     navigator.clipboard.writeText(item.preview);
@@ -465,9 +519,18 @@ export default function HistoryContent() {
     URL.revokeObjectURL(url);
   }
 
-  function handleDelete(id: string) {
-    const itemToDelete = generations.find((i) => i.id === id);
-    deleteGeneration(id);
+  async function handleDelete(id: string) {
+    const itemToDelete = serverItems.find((i) => i.id === id);
+    // Optimistically filter from local serverItems
+    setServerItems((prev) => prev.filter((i) => i.id !== id));
+    setTotalCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      await deleteGeneration(id);
+      setRefreshTrigger((t) => t + 1);
+    } catch {
+      setRefreshTrigger((t) => t + 1);
+    }
     
     toast("Item deleted", {
       action: {
@@ -476,16 +539,27 @@ export default function HistoryContent() {
           const restored = await restoreLastDeleted();
           if (restored) {
             toast.success("Item restored");
+            setRefreshTrigger((t) => t + 1);
           } else if (itemToDelete) {
             await addGeneration(itemToDelete);
             toast.success("Item restored");
+            setRefreshTrigger((t) => t + 1);
           }
         },
       },
     });
   }
 
-  if (!isLoaded) return <HistorySkeleton />;
+  async function handleImportSubmit(gen: Omit<Generation, "id" | "createdAt"> & { createdAt?: string }) {
+    try {
+      await importGeneration(gen);
+      setRefreshTrigger((t) => t + 1);
+    } catch {
+      // Handled in content-store
+    }
+  }
+
+  if (!isContentStoreLoaded && isLoadingHistory) return <HistorySkeleton />;
 
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
@@ -514,8 +588,6 @@ export default function HistoryContent() {
           Import Content
         </button>
       </div>
-
-
 
       {/* Search & Filters Bar */}
       <div ref={listRef} className="sticky top-0 md:top-4 z-30 space-y-4 animate-fade-in-up stagger-3 scroll-mt-24 bg-background/95 backdrop-blur-xl py-4 border-b border-border/40 mb-4 rounded-b-2xl md:rounded-2xl md:border shadow-sm px-4 -mx-4 md:px-6 md:-mx-6 transition-all duration-300 hover:border-primary/30 hover:shadow-md">
@@ -612,7 +684,7 @@ export default function HistoryContent() {
                 Category
               </label>
               <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
+                {ALL_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => {
@@ -639,19 +711,31 @@ export default function HistoryContent() {
         <p className="text-sm text-muted-foreground">
           Showing{" "}
           <span className="font-semibold text-foreground">
-            {filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-
-            {Math.min(currentPage * itemsPerPage, filtered.length)}
+            {totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-
+            {Math.min(currentPage * itemsPerPage, totalCount)}
           </span>{" "}
-          of {filtered.length} results
+          of {totalCount} results
         </p>
       </div>
 
       {/* History Items */}
-      {filtered.length > 0 ? (
+      {isLoadingHistory ? (
+        <div className="space-y-4 py-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-[20px] border border-border bg-card p-5 md:p-6 animate-pulse">
+              <div className="space-y-3">
+                <div className="h-6 w-48 bg-muted rounded-md" />
+                <div className="h-4 w-72 bg-muted/60 rounded-md" />
+                <div className="h-4 w-full bg-muted/40 rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : serverItems.length > 0 ? (
         <motion.div layout className="space-y-6 relative">
           <AnimatePresence>
-          {paginatedItems.map((item) => {
-            const status = statusConfig[item.status];
+          {serverItems.map((item) => {
+            const status = statusConfig[item.status] || statusConfig.completed;
             const catIcon = categoryIcons[item.category] || (
               <FileText className="h-4 w-4" />
             );
@@ -817,7 +901,6 @@ export default function HistoryContent() {
         </div>
       )}
 
-
       {/* View Modal */}
       {viewingGen && (
         <ViewModal
@@ -829,7 +912,7 @@ export default function HistoryContent() {
       {/* Import Modal */}
       {showImport && (
         <ImportModal
-          onImport={importGeneration}
+          onImport={handleImportSubmit}
           onClose={() => setShowImport(false)}
         />
       )}

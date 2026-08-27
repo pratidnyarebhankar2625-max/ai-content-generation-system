@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,20 +33,24 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
   // Settings states
   const { settings, updateSettings } = useSettings();
   const [language, setLanguage] = useState(settings?.language || "en-US");
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      wasOpenRef.current = true;
       setIsSaving(false);
       setSuccess(false);
       setEmail("");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      if (settings) {
+      if (settings?.language) {
         setLanguage(settings.language);
       }
+    } else if (!isOpen) {
+      wasOpenRef.current = false;
     }
-  }, [isOpen, settings]);
+  }, [isOpen, settings?.language]);
 
   // removed early return to allow AnimatePresence to work
   async function handleActionSubmit() {
