@@ -13,44 +13,51 @@ import {
   RefreshCw,
   Sparkles,
   Wand2,
+  FileText,
 } from "lucide-react";
 
-// Mock Data
-const MOCK_KEYWORDS = {
-  primary: [
-    { word: "AI Content Generation", searchVolume: "12K", difficulty: "Hard" },
-    { word: "AI Writer", searchVolume: "45K", difficulty: "Very Hard" },
-  ],
-  secondary: [
-    { word: "Best AI writing tools", searchVolume: "5K", difficulty: "Medium" },
-    { word: "Content automation", searchVolume: "3.2K", difficulty: "Medium" },
-  ],
-  longTail: [
-    { word: "How to generate SEO content with AI", searchVolume: "800", difficulty: "Easy" },
-    { word: "AI tools for small business marketing", searchVolume: "1.2K", difficulty: "Medium" },
-  ],
-  related: [
-    { word: "Copywriting software", searchVolume: "8K", difficulty: "Hard" },
-    { word: "ChatGPT alternatives", searchVolume: "100K", difficulty: "Very Hard" },
-  ],
+type RecommendationItem = {
+  type: "success" | "warning" | "error";
+  category?: string;
+  message?: string;
+  text?: string;
+  priority?: "low" | "medium" | "high";
 };
 
-const MOCK_RECOMMENDATIONS = [
-  { type: "success", text: "Focus keyword found in the meta title." },
-  { type: "error", text: "Focus keyword not found in the meta description." },
-  { type: "warning", text: "Meta description is too short (under 120 characters)." },
-  { type: "success", text: "Readability score is excellent (Flesch-Kincaid: 65)." },
-  { type: "warning", text: "Missing internal links to other pages." },
-];
+type KeywordItem = {
+  word: string;
+  searchVolume: string;
+  difficulty: "Easy" | "Medium" | "Hard" | "Very Hard";
+};
+
+type CategorizedKeywords = {
+  primary: KeywordItem[];
+  secondary: KeywordItem[];
+  longTail: KeywordItem[];
+  related: KeywordItem[];
+};
+
+type SeoAnalysisData = {
+  id?: string;
+  score: number;
+  breakdown?: Record<string, { score: number; max: number }>;
+  analysis?: any;
+  recommendations: RecommendationItem[];
+  keywords: CategorizedKeywords;
+};
 
 export default function SeoContent() {
   const [isClient, setIsClient] = useState(false);
   const [focusKeyword, setFocusKeyword] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [content, setContent] = useState("");
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [analysisData, setAnalysisData] = useState<SeoAnalysisData | null>(null);
+
   const [activeTab, setActiveTab] = useState<"analysis" | "keywords">("analysis");
   const [keywordTab, setKeywordTab] = useState<"primary" | "secondary" | "longTail" | "related">("primary");
 
@@ -58,7 +65,7 @@ export default function SeoContent() {
     setIsClient(true);
   }, []);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!focusKeyword.trim()) {
       toast.error("Please enter a focus keyword to analyze.");
       return;
@@ -66,12 +73,76 @@ export default function SeoContent() {
     
     setIsAnalyzing(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsAnalyzing(false);
+    try {
+      const response = await fetch("/api/seo/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          focus_keyword: focusKeyword.trim(),
+          meta_title: metaTitle,
+          meta_description: metaDescription,
+          content: content,
+        }),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error?.message || json.error || "SEO Analysis failed");
+      }
+
+      setAnalysisData(json.data);
       setHasAnalyzed(true);
       toast.success("SEO Analysis complete!");
-    }, 1500);
+    } catch (err: any) {
+      console.error("SEO Analysis error:", err);
+      toast.error(err.message || "Failed to analyze content");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleAutoOptimize = async () => {
+    if (!focusKeyword.trim()) {
+      toast.error("Please enter a focus keyword first.");
+      return;
+    }
+
+    setIsOptimizing(true);
+    toast.info("AI is optimizing your meta tags...");
+
+    try {
+      const response = await fetch("/api/seo/optimize-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          focus_keyword: focusKeyword.trim(),
+          existing_title: metaTitle,
+          existing_description: metaDescription,
+          content: content,
+        }),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error?.message || json.error || "Failed to optimize meta tags");
+      }
+
+      if (json.data?.metaTitle) {
+        setMetaTitle(json.data.metaTitle);
+      }
+      if (json.data?.metaDescription) {
+        setMetaDescription(json.data.metaDescription);
+      }
+
+      toast.success("Meta tags optimized by AI!");
+    } catch (err: any) {
+      console.error("Auto-optimize error:", err);
+      toast.error(err.message || "Failed to auto-optimize meta tags");
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   const handleCopy = (text: string, label: string) => {
@@ -79,9 +150,12 @@ export default function SeoContent() {
     toast.success(`${label} copied to clipboard!`);
   };
 
-  const score = hasAnalyzed ? (metaTitle.length > 0 && metaDescription.length > 100 ? 85 : 62) : 0;
+  const score = hasAnalyzed && analysisData ? analysisData.score : 0;
   const scoreColor = score >= 80 ? "text-emerald-500" : score >= 50 ? "text-amber-500" : "text-rose-500";
   const ringColor = score >= 80 ? "stroke-emerald-500" : score >= 50 ? "stroke-amber-500" : "stroke-rose-500";
+
+  const recommendations = analysisData?.recommendations || [];
+  const keywords = analysisData?.keywords || { primary: [], secondary: [], longTail: [], related: [] };
 
   if (!isClient) {
     return (
@@ -182,20 +256,22 @@ export default function SeoContent() {
                   <textarea
                     value={metaDescription}
                     onChange={(e) => setMetaDescription(e.target.value)}
-                    rows={4}
+                    rows={3}
                     placeholder="Write a compelling meta description that encourages clicks..."
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                   />
                   <div className="absolute bottom-3 right-3 flex gap-2">
                     <button 
-                      onClick={() => {
-                        toast.success("AI is optimizing your description...");
-                        setMetaDescription(metaDescription + " (Optimized)");
-                      }}
-                      className="rounded-md bg-muted p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                      title="Auto-Optimize"
+                      onClick={handleAutoOptimize}
+                      disabled={isOptimizing || !focusKeyword.trim()}
+                      className="rounded-md bg-muted p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors disabled:opacity-50"
+                      title="Auto-Optimize with AI"
                     >
-                      <Wand2 className="h-4 w-4" />
+                      {isOptimizing ? (
+                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
                     </button>
                     <button 
                       onClick={() => handleCopy(metaDescription, "Description")}
@@ -207,6 +283,27 @@ export default function SeoContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Article Content / Body (Optional) */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Article Content / Body <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+                  </label>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {content.split(/\s+/).filter(Boolean).length} words
+                  </span>
+                </div>
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={4}
+                  placeholder="Paste your article body here for full content, heading, and readability analysis..."
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                />
+              </div>
+
             </div>
           </div>
         </div>
@@ -229,7 +326,7 @@ export default function SeoContent() {
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                 <RefreshCw className="h-10 w-10 text-primary animate-spin mb-4" />
                 <h3 className="text-lg font-bold text-foreground">Analyzing Content...</h3>
-                <p className="text-sm text-muted-foreground mt-2">Checking keywords, readability, and meta tags.</p>
+                <p className="text-sm text-muted-foreground mt-2">Running deterministic rules and AI semantic analysis.</p>
               </div>
             ) : (
               <div className="flex flex-col h-full">
@@ -237,7 +334,7 @@ export default function SeoContent() {
                 <div className="p-6 border-b border-border flex items-center justify-between bg-muted/20">
                   <div>
                     <h3 className="text-lg font-bold text-foreground">SEO Score</h3>
-                    <p className="text-sm text-muted-foreground">Based on current inputs</p>
+                    <p className="text-sm text-muted-foreground">Deterministic rule evaluation</p>
                   </div>
                   <div className="relative h-16 w-16">
                     <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
@@ -297,14 +394,21 @@ export default function SeoContent() {
                       >
                         <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Recommendations</h4>
                         <div className="space-y-3">
-                          {MOCK_RECOMMENDATIONS.map((rec, i) => (
-                            <div key={i} className="flex gap-3 text-sm">
-                              {rec.type === "success" && <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />}
-                              {rec.type === "error" && <XCircle className="h-5 w-5 text-rose-500 shrink-0" />}
-                              {rec.type === "warning" && <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />}
-                              <span className="text-foreground">{rec.text}</span>
-                            </div>
-                          ))}
+                          {recommendations.length > 0 ? (
+                            recommendations.map((rec, i) => {
+                              const messageText = rec.message || rec.text || "";
+                              return (
+                                <div key={i} className="flex gap-3 text-sm">
+                                  {rec.type === "success" && <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />}
+                                  {rec.type === "error" && <XCircle className="h-5 w-5 text-rose-500 shrink-0" />}
+                                  {rec.type === "warning" && <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />}
+                                  <span className="text-foreground">{messageText}</span>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No recommendations generated.</p>
+                          )}
                         </div>
                       </motion.div>
                     ) : (
@@ -330,24 +434,28 @@ export default function SeoContent() {
                         </div>
                         
                         <div className="space-y-2 mt-4">
-                          {MOCK_KEYWORDS[keywordTab].map((kw, i) => (
-                            <div key={i} className="flex items-center justify-between rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
-                              <div>
-                                <p className="font-semibold text-sm text-foreground">{kw.word}</p>
-                                <p className="text-xs text-muted-foreground flex gap-2">
-                                  <span>Vol: {kw.searchVolume}</span>
-                                  <span>•</span>
-                                  <span className={kw.difficulty === 'Easy' ? 'text-emerald-500' : kw.difficulty === 'Medium' ? 'text-amber-500' : 'text-rose-500'}>Diff: {kw.difficulty}</span>
-                                </p>
+                          {(keywords[keywordTab] || []).length > 0 ? (
+                            (keywords[keywordTab] || []).map((kw, i) => (
+                              <div key={i} className="flex items-center justify-between rounded-xl border border-border p-3 hover:bg-muted/50 transition-colors">
+                                <div>
+                                  <p className="font-semibold text-sm text-foreground">{kw.word}</p>
+                                  <p className="text-xs text-muted-foreground flex gap-2">
+                                    <span>Vol: {kw.searchVolume}</span>
+                                    <span>•</span>
+                                    <span className={kw.difficulty === 'Easy' ? 'text-emerald-500' : kw.difficulty === 'Medium' ? 'text-amber-500' : 'text-rose-500'}>Diff: {kw.difficulty}</span>
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => handleCopy(kw.word, "Keyword")}
+                                  className="rounded-lg p-2 text-muted-foreground hover:bg-background shadow-sm hover:text-foreground transition-all border border-transparent hover:border-border"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
                               </div>
-                              <button 
-                                onClick={() => handleCopy(kw.word, "Keyword")}
-                                className="rounded-lg p-2 text-muted-foreground hover:bg-background shadow-sm hover:text-foreground transition-all border border-transparent hover:border-border"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground p-4 text-center">No keywords found for this category.</p>
+                          )}
                         </div>
                       </motion.div>
                     )}

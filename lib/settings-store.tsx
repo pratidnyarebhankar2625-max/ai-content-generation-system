@@ -10,6 +10,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+
 import { useAuth } from "@/lib/auth-store";
 import { useTheme } from "next-themes";
 
@@ -28,10 +29,13 @@ export type UserSettings = {
 type SettingsContextType = {
   settings: UserSettings | null;
   isLoading: boolean;
-  updateSettings: (newSettings: Partial<UserSettings>) => Promise<{ success: boolean; error?: string }>;
+  updateSettings: (
+    newSettings: Partial<UserSettings>
+  ) => Promise<{ success: boolean; error?: string }>;
 };
 
-// Default settings as fallback
+// ─── Defaults ────────────────────────────────────────────────────────────────
+
 const DEFAULT_SETTINGS: UserSettings = {
   theme: "light",
   language: "en-US",
@@ -42,202 +46,423 @@ const DEFAULT_SETTINGS: UserSettings = {
   generation_alerts: true,
 };
 
+const STORAGE_KEY = "user_settings_fallback";
+
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+export function SettingsProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const { user, isAuthenticated } = useAuth();
   const { setTheme } = useTheme();
 
   const userId = user?.id;
-  const isMutationInFlight = useRef(0);
-  const mutationVersionRef = useRef(0);
-  const requestVersionRef = useRef(0);
+
+  // Always keep the latest settings available to async functions.
   const settingsRef = useRef<UserSettings | null>(null);
+
+  // Number of active PATCH requests.
+  const mutationCountRef = useRef(0);
+
+  // Used to invalidate stale GET requests.
+  const requestVersionRef = useRef(0);
+
+  // Used to ensure an older PATCH cannot overwrite a newer PATCH.
+  const latestMutationRef = useRef(0);
+
+  // ─── Keep ref synchronized ───────────────────────────────────────────────
 
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
 
+  // ─── Local Storage ────────────────────────────────────────────────────────
+
+  const readLocalSettings = useCallback((): UserSettings | null => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+
+      if (!stored) {
+        return null;
+      }
+
+      return JSON.parse(stored) as UserSettings;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const writeLocalSettings = useCallback(
+    (value: UserSettings) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+      } catch {
+        // Ignore localStorage errors.
+      }
+    },
+    []
+  );
+
+  // ─── Fetch Settings ───────────────────────────────────────────────────────
+
   const fetchSettings = useCallback(async () => {
     if (!isAuthenticated || !userId) {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          settingsRef.current = parsed;
-          setSettings(parsed);
-        } catch {}
+      const localSettings = readLocalSettings();
+
+      if (localSettings) {
+        settingsRef.current = localSettings;
+        setSettings(localSettings);
       } else {
         settingsRef.current = null;
         setSettings(null);
       }
+
       setIsLoading(false);
       return;
     }
 
-    const currentRequestVersion = ++requestVersionRef.current;
+    // Every GET receives a version.
+    const requestVersion = ++requestVersionRef.current;
+
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/settings', { cache: 'no-store' });
-      const json = await res.json();
+      const response = await fetch("/api/settings", {
+        method: "GET",
+        cache: "no-store",
+      });
 
-      // If a newer GET was started or a mutation is currently in flight, ignore this GET response
-      if (currentRequestVersion !== requestVersionRef.current || isMutationInFlight.current > 0) {
+      const result = await response.json();
+
+      /**
+       * Ignore this GET if:
+       *
+       * 1. A newer GET started, or
+       * 2. A PATCH happened while this GET was running.
+       */
+      if (
+        requestVersion !== requestVersionRef.current ||
+        mutationCountRef.current > 0
+      ) {
         return;
       }
 
-      if (res.ok && json.success && json.data) {
-        const mappedSettings: UserSettings = {
-          theme: json.data.theme || DEFAULT_SETTINGS.theme,
-          language: json.data.language || DEFAULT_SETTINGS.language,
-          writing_tone: json.data.writing_tone || DEFAULT_SETTINGS.writing_tone,
-          default_ai_model: json.data.default_ai_model || DEFAULT_SETTINGS.default_ai_model,
-          email_notifications: typeof json.data.email_notifications === "boolean" ? json.data.email_notifications : DEFAULT_SETTINGS.email_notifications,
-          push_notifications: typeof json.data.push_notifications === "boolean" ? json.data.push_notifications : DEFAULT_SETTINGS.push_notifications,
-          generation_alerts: typeof json.data.generation_alerts === "boolean" ? json.data.generation_alerts : DEFAULT_SETTINGS.generation_alerts,
+      if (
+        response.ok &&
+        result?.success &&
+        result?.data
+      ) {
+        const data = result.data;
+
+        const serverSettings: UserSettings = {
+          theme:
+            data.theme ??
+            DEFAULT_SETTINGS.theme,
+
+          language:
+            data.language ??
+            DEFAULT_SETTINGS.language,
+
+          writing_tone:
+            data.writing_tone ??
+            DEFAULT_SETTINGS.writing_tone,
+
+          default_ai_model:
+            data.default_ai_model ??
+            DEFAULT_SETTINGS.default_ai_model,
+
+          email_notifications:
+            data.email_notifications ??
+            DEFAULT_SETTINGS.email_notifications,
+
+          push_notifications:
+            data.push_notifications ??
+            DEFAULT_SETTINGS.push_notifications,
+
+          generation_alerts:
+            data.generation_alerts ??
+            DEFAULT_SETTINGS.generation_alerts,
         };
-        settingsRef.current = mappedSettings;
-        setSettings(mappedSettings);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem("user_settings_fallback", JSON.stringify(mappedSettings));
-        }
+
+        settingsRef.current = serverSettings;
+        setSettings(serverSettings);
+        writeLocalSettings(serverSettings);
       } else {
-        const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            settingsRef.current = parsed;
-            setSettings(parsed);
-          } catch {
-            settingsRef.current = DEFAULT_SETTINGS;
-            setSettings(DEFAULT_SETTINGS);
-          }
+        const localSettings = readLocalSettings();
+
+        if (localSettings) {
+          settingsRef.current = localSettings;
+          setSettings(localSettings);
         } else {
           settingsRef.current = DEFAULT_SETTINGS;
           setSettings(DEFAULT_SETTINGS);
         }
       }
-    } catch (err) {
-      console.warn("Failed to fetch settings from API:", err);
-      if (currentRequestVersion !== requestVersionRef.current || isMutationInFlight.current > 0) {
+    } catch (error) {
+      console.warn(
+        "Failed to fetch settings:",
+        error
+      );
+
+      /**
+       * Do not replace current state with localStorage
+       * if a mutation has happened.
+       */
+      if (
+        requestVersion !== requestVersionRef.current ||
+        mutationCountRef.current > 0
+      ) {
         return;
       }
-      const saved = typeof window !== 'undefined' ? localStorage.getItem("user_settings_fallback") : null;
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          settingsRef.current = parsed;
-          setSettings(parsed);
-        } catch {
-          settingsRef.current = DEFAULT_SETTINGS;
-          setSettings(DEFAULT_SETTINGS);
-        }
+
+      const localSettings = readLocalSettings();
+
+      if (localSettings) {
+        settingsRef.current = localSettings;
+        setSettings(localSettings);
       } else {
         settingsRef.current = DEFAULT_SETTINGS;
         setSettings(DEFAULT_SETTINGS);
       }
     } finally {
-      if (currentRequestVersion === requestVersionRef.current) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
-  }, [userId, isAuthenticated]);
+  }, [
+    isAuthenticated,
+    userId,
+    readLocalSettings,
+    writeLocalSettings,
+  ]);
 
+  // Fetch whenever authentication/user changes.
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
 
-  // Apply theme when settings load/change
+  // ─── Theme ────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (settings?.theme) {
       setTheme(settings.theme);
     }
   }, [settings?.theme, setTheme]);
 
+  // ─── Update Settings ──────────────────────────────────────────────────────
+
   const updateSettings = useCallback(
     async (newSettings: Partial<UserSettings>) => {
-      if (!userId) return { success: false, error: "Not authenticated" };
+      if (!userId) {
+        return {
+          success: false,
+          error: "Not authenticated",
+        };
+      }
 
-      const currentMutationVersion = ++mutationVersionRef.current;
-      const prevSettings = settingsRef.current ?? DEFAULT_SETTINGS;
+      /**
+       * Invalidate all GET requests currently running.
+       */
+      requestVersionRef.current += 1;
 
-      // Optimistic functional update
-      const nextSettings: UserSettings = {
-        ...prevSettings,
+      /**
+       * This mutation becomes the newest mutation.
+       */
+      const mutationId =
+        ++latestMutationRef.current;
+
+      const previousSettings =
+        settingsRef.current ?? DEFAULT_SETTINGS;
+
+      /**
+       * Create the complete next state locally.
+       */
+      const optimisticSettings: UserSettings = {
+        ...previousSettings,
         ...newSettings,
       };
 
-      settingsRef.current = nextSettings;
-      setSettings(nextSettings);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("user_settings_fallback", JSON.stringify(nextSettings));
-      }
+      /**
+       * Update React state IMMEDIATELY.
+       */
+      settingsRef.current = optimisticSettings;
+      setSettings(optimisticSettings);
 
-      isMutationInFlight.current += 1;
+      /**
+       * Persist optimistic state locally as a fallback.
+       */
+      writeLocalSettings(optimisticSettings);
+
+      mutationCountRef.current += 1;
 
       try {
-        const res = await fetch('/api/settings', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/settings", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify(newSettings),
         });
 
-        const json = await res.json();
+        const result = await response.json();
 
-        if (!res.ok || !json.success) {
-          const errorMessage = json.error?.message || "Failed to update settings";
-          // Only revert if no newer mutation has taken over
-          if (currentMutationVersion === mutationVersionRef.current) {
-            settingsRef.current = prevSettings;
-            setSettings(prevSettings);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
-            }
+        // ─── PATCH Failed ────────────────────────────────────────────────
+
+        if (!response.ok || !result?.success) {
+          const errorMessage =
+            result?.error?.message ||
+            result?.error ||
+            "Failed to update settings";
+
+          /**
+           * Only rollback if this is still the newest mutation.
+           */
+          if (
+            mutationId === latestMutationRef.current
+          ) {
+            settingsRef.current = previousSettings;
+            setSettings(previousSettings);
+            writeLocalSettings(previousSettings);
           }
-          return { success: false, error: errorMessage };
-        }
 
-        // Only update with server response if this is still the latest mutation
-        if (currentMutationVersion === mutationVersionRef.current) {
-          const serverSettings: UserSettings = {
-            theme: json.data.theme || nextSettings.theme,
-            language: json.data.language || nextSettings.language,
-            writing_tone: json.data.writing_tone || nextSettings.writing_tone,
-            default_ai_model: json.data.default_ai_model || nextSettings.default_ai_model,
-            email_notifications: typeof json.data.email_notifications === "boolean" ? json.data.email_notifications : nextSettings.email_notifications,
-            push_notifications: typeof json.data.push_notifications === "boolean" ? json.data.push_notifications : nextSettings.push_notifications,
-            generation_alerts: typeof json.data.generation_alerts === "boolean" ? json.data.generation_alerts : nextSettings.generation_alerts,
+          return {
+            success: false,
+            error: errorMessage,
           };
-
-          settingsRef.current = serverSettings;
-          setSettings(serverSettings);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem("user_settings_fallback", JSON.stringify(serverSettings));
-          }
         }
 
-        return { success: true };
-      } catch (err: any) {
-        // Only revert if no newer mutation has taken over
-        if (currentMutationVersion === mutationVersionRef.current) {
-          settingsRef.current = prevSettings;
-          setSettings(prevSettings);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem("user_settings_fallback", JSON.stringify(prevSettings));
-          }
+        // ─── Ignore stale PATCH responses ───────────────────────────────
+
+        if (
+          mutationId !== latestMutationRef.current
+        ) {
+          return {
+            success: true,
+          };
         }
-        return { success: false, error: err?.message || "Network error" };
+
+        /**
+         * IMPORTANT:
+         *
+         * Start from the optimistic state and only replace
+         * values that the API actually returned.
+         *
+         * This prevents false/undefined values from being
+         * accidentally replaced by defaults.
+         */
+        const data = result?.data ?? {};
+
+        const confirmedSettings: UserSettings = {
+          ...optimisticSettings,
+
+          ...(typeof data.theme === "string"
+            ? { theme: data.theme }
+            : {}),
+
+          ...(typeof data.language === "string"
+            ? { language: data.language }
+            : {}),
+
+          ...(typeof data.writing_tone === "string"
+            ? {
+              writing_tone:
+                data.writing_tone,
+            }
+            : {}),
+
+          ...(typeof data.default_ai_model ===
+            "string"
+            ? {
+              default_ai_model:
+                data.default_ai_model,
+            }
+            : {}),
+
+          ...(typeof data.email_notifications ===
+            "boolean"
+            ? {
+              email_notifications:
+                data.email_notifications,
+            }
+            : {}),
+
+          ...(typeof data.push_notifications ===
+            "boolean"
+            ? {
+              push_notifications:
+                data.push_notifications,
+            }
+            : {}),
+
+          ...(typeof data.generation_alerts ===
+            "boolean"
+            ? {
+              generation_alerts:
+                data.generation_alerts,
+            }
+            : {}),
+        };
+
+        /**
+         * Server-confirmed state.
+         */
+        settingsRef.current = confirmedSettings;
+        setSettings(confirmedSettings);
+        writeLocalSettings(confirmedSettings);
+
+        return {
+          success: true,
+        };
+      } catch (error) {
+        console.error(
+          "Failed to update settings:",
+          error
+        );
+
+        /**
+         * Only rollback if this is still the newest mutation.
+         */
+        if (
+          mutationId === latestMutationRef.current
+        ) {
+          settingsRef.current = previousSettings;
+          setSettings(previousSettings);
+          writeLocalSettings(previousSettings);
+        }
+
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Network error",
+        };
       } finally {
-        isMutationInFlight.current = Math.max(0, isMutationInFlight.current - 1);
+        mutationCountRef.current = Math.max(
+          0,
+          mutationCountRef.current - 1
+        );
       }
     },
-    [userId]
+    [userId, writeLocalSettings]
   );
+
+  // ─── Context Value ────────────────────────────────────────────────────────
 
   const value = useMemo<SettingsContextType>(
     () => ({
@@ -245,18 +470,30 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       isLoading,
       updateSettings,
     }),
-    [settings, isLoading, updateSettings]
+    [
+      settings,
+      isLoading,
+      updateSettings,
+    ]
   );
 
-  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+  return (
+    <SettingsContext.Provider value={value}>
+      {children}
+    </SettingsContext.Provider>
+  );
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useSettings(): SettingsContextType {
   const context = useContext(SettingsContext);
+
   if (!context) {
-    throw new Error("useSettings must be used within a SettingsProvider");
+    throw new Error(
+      "useSettings must be used within a SettingsProvider"
+    );
   }
+
   return context;
 }

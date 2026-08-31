@@ -47,6 +47,19 @@ export type UserTemplateRecord = {
   updated_at?: string;
 };
 
+export type SeoAnalysisRecord = {
+  id: string;
+  user_id: string;
+  focus_keyword: string;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  content?: string | null;
+  score: number;
+  analysis_result: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+};
+
 export type QueryTemplatesParams = {
   search?: string;
   category?: string;
@@ -578,5 +591,76 @@ export class DbService {
     }
 
     return data as UserTemplateRecord;
+  }
+
+  // ─── SEO Analysis Operations ──────────────────────────────────────────────
+
+  async createSeoAnalysis(params: {
+    id?: string;
+    focus_keyword: string;
+    meta_title?: string;
+    meta_description?: string;
+    content?: string;
+    score: number;
+    analysis_result: Record<string, any>;
+  }): Promise<SeoAnalysisRecord> {
+    const insertPayload: Record<string, any> = {
+      user_id: this.userId,
+      focus_keyword: params.focus_keyword,
+      meta_title: params.meta_title ?? null,
+      meta_description: params.meta_description ?? null,
+      content: params.content ?? null,
+      score: params.score,
+      analysis_result: params.analysis_result,
+    };
+
+    if (params.id) {
+      insertPayload.id = params.id;
+    }
+
+    const { data, error } = await this.supabase
+      .from('seo_analyses')
+      .insert(insertPayload)
+      .select()
+      .single();
+
+    if (error) {
+      throw new ApiError(`Failed to save SEO analysis: ${error.message}`, 'DB_ERROR', 500);
+    }
+
+    return data as SeoAnalysisRecord;
+  }
+
+  async getSeoAnalyses(limit: number = 10): Promise<SeoAnalysisRecord[]> {
+    const { data, error } = await this.supabase
+      .from('seo_analyses')
+      .select('*')
+      .eq('user_id', this.userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new ApiError(`Failed to fetch SEO analyses: ${error.message}`, 'DB_ERROR', 500);
+    }
+
+    return (data || []) as SeoAnalysisRecord[];
+  }
+
+  async getSeoAnalysisById(id: string): Promise<SeoAnalysisRecord | null> {
+    const { data, error } = await this.supabase
+      .from('seo_analyses')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', this.userId)
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '22P02') {
+        return null;
+      }
+      throw new ApiError(`Failed to fetch SEO analysis: ${error.message}`, 'DB_ERROR', 500);
+    }
+
+    return data as SeoAnalysisRecord | null;
   }
 }

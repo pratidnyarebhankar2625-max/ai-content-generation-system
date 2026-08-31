@@ -98,16 +98,17 @@ CREATE TABLE IF NOT EXISTS public.generations (
 );
 
 -- --------------------------------------------
--- 4. user_templates
+-- 5. seo_analyses
 -- --------------------------------------------
-CREATE TABLE IF NOT EXISTS public.user_templates (
+CREATE TABLE IF NOT EXISTS public.seo_analyses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  category TEXT NOT NULL,
-  content TEXT NOT NULL DEFAULT '',
-  is_favorite BOOLEAN DEFAULT false NOT NULL,
+  focus_keyword TEXT NOT NULL,
+  meta_title TEXT,
+  meta_description TEXT,
+  content TEXT,
+  score INTEGER NOT NULL,
+  analysis_result JSONB NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -124,6 +125,10 @@ CREATE INDEX IF NOT EXISTS generations_user_id_status_idx ON public.generations(
 
 -- User Templates indexes
 CREATE INDEX IF NOT EXISTS user_templates_user_id_idx ON public.user_templates(user_id);
+
+-- SEO Analyses indexes
+CREATE INDEX IF NOT EXISTS seo_analyses_user_id_idx ON public.seo_analyses(user_id);
+CREATE INDEX IF NOT EXISTS seo_analyses_user_id_created_at_idx ON public.seo_analyses(user_id, created_at DESC);
 
 -- ============================================
 -- TRIGGERS
@@ -156,6 +161,11 @@ CREATE TRIGGER update_user_templates_updated_at
   BEFORE UPDATE ON public.user_templates
   FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_seo_analyses_updated_at ON public.seo_analyses;
+CREATE TRIGGER update_seo_analyses_updated_at
+  BEFORE UPDATE ON public.seo_analyses
+  FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
+
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
@@ -164,6 +174,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.generations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.seo_analyses ENABLE ROW LEVEL SECURITY;
 
 -- --------------------------------------------
 -- Profiles RLS policies
@@ -246,3 +257,27 @@ DROP POLICY IF EXISTS "Users can delete their own templates." ON public.user_tem
 CREATE POLICY "Users can delete their own templates."
   ON public.user_templates FOR DELETE
   USING ( auth.uid() = user_id );
+
+-- --------------------------------------------
+-- SEO Analyses RLS policies
+-- --------------------------------------------
+DROP POLICY IF EXISTS "Users can view their own seo analyses." ON public.seo_analyses;
+CREATE POLICY "Users can view their own seo analyses."
+  ON public.seo_analyses FOR SELECT
+  USING ( auth.uid() = user_id );
+
+DROP POLICY IF EXISTS "Users can insert their own seo analyses." ON public.seo_analyses;
+CREATE POLICY "Users can insert their own seo analyses."
+  ON public.seo_analyses FOR INSERT
+  WITH CHECK ( auth.uid() = user_id );
+
+DROP POLICY IF EXISTS "Users can update their own seo analyses." ON public.seo_analyses;
+CREATE POLICY "Users can update their own seo analyses."
+  ON public.seo_analyses FOR UPDATE
+  USING ( auth.uid() = user_id );
+
+DROP POLICY IF EXISTS "Users can delete their own seo analyses." ON public.seo_analyses;
+CREATE POLICY "Users can delete their own seo analyses."
+  ON public.seo_analyses FOR DELETE
+  USING ( auth.uid() = user_id );
+
