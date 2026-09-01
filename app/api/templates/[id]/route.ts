@@ -89,7 +89,10 @@ export const PATCH = withAuth(async (req: Request, user: User, supabase: Supabas
     throw new ApiError("Invalid JSON request body", "VALIDATION_ERROR", 400);
   }
 
-  validateRequest(body, updateTemplateSchema);
+  validateRequest(body, updateTemplateSchema, {
+    allowUnknown: false,
+    requireAtLeastOne: true,
+  });
 
   const updates: Record<string, any> = {};
   if (body.title !== undefined) updates.title = body.title.trim();

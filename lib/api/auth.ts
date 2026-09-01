@@ -3,7 +3,12 @@ import { cookies } from 'next/headers';
 import { ApiError } from './errors';
 
 export async function getAuthenticatedUser() {
-  const cookieStore = await cookies();
+  let cookieStore;
+  try {
+    cookieStore = await cookies();
+  } catch {
+    throw new ApiError('Unauthorized', 'UNAUTHORIZED', 401);
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

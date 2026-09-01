@@ -128,7 +128,7 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
     throw new ApiError("Invalid JSON request body", "VALIDATION_ERROR", 400);
   }
 
-  validateRequest(body, createGenerationSchema);
+  validateRequest(body, createGenerationSchema, { allowUnknown: false });
 
   const title = body.title?.trim();
   const template = body.template?.trim() || "Custom Template";

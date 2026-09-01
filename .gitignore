@@ -43,3 +43,6 @@ next-env.d.ts
 scratch/
 .temp/
 supabase/.temp/
+.postman/
+postman/
+

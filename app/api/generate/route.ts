@@ -18,18 +18,22 @@ const generateSchema = {
   template: {
     required: false,
     type: "string" as const,
+    maxLength: 200,
   },
   category: {
     required: false,
     type: "string" as const,
+    maxLength: 100,
   },
   tone: {
     required: false,
     type: "string" as const,
+    maxLength: 100,
   },
   language: {
     required: false,
     type: "string" as const,
+    maxLength: 100,
   },
   isContinue: {
     required: false,
@@ -38,6 +42,31 @@ const generateSchema = {
   generationId: {
     required: false,
     type: "string" as const,
+    maxLength: 100,
+  },
+  keywords: {
+    required: false,
+    type: "string" as const,
+    maxLength: 500,
+  },
+  length: {
+    required: false,
+    type: "string" as const,
+    maxLength: 100,
+  },
+  context: {
+    required: false,
+    type: "string" as const,
+    maxLength: 5000,
+  },
+  previousContent: {
+    required: false,
+    type: "string" as const,
+    maxLength: 50000,
+  },
+  messages: {
+    required: false,
+    type: "array" as const,
   },
 };
 
@@ -49,8 +78,8 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
     body = {};
   }
 
-  // 1. Validate request payload
-  validateRequest(body, generateSchema);
+  // 1. Validate request payload (strictly disallow unexpected/injected fields)
+  validateRequest(body, generateSchema, { allowUnknown: false });
 
   const {
     prompt,

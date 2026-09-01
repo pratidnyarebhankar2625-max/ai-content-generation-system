@@ -60,7 +60,7 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
     throw new ApiError("Invalid JSON request body", "VALIDATION_ERROR", 400);
   }
 
-  validateRequest(body, restoreGenerationSchema);
+  validateRequest(body, restoreGenerationSchema, { allowUnknown: false });
 
   const id = body.id;
   const title = body.title?.trim();
