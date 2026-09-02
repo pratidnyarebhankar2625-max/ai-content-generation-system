@@ -60,6 +60,21 @@ export type SeoAnalysisRecord = {
   updated_at?: string;
 };
 
+export type AiUsageRecord = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  model: string;
+  status: 'attempt' | 'completed' | 'failed';
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
+  error_message?: string | null;
+  created_at: string;
+  updated_at?: string;
+};
+
+
 export type QueryTemplatesParams = {
   search?: string;
   category?: string;
@@ -663,4 +678,148 @@ export class DbService {
 
     return data as SeoAnalysisRecord | null;
   }
+
+  async reserveAiQuota(params: {
+    endpoint: string;
+    model: string;
+    burstLimit: number;
+    dailyLimit: number;
+    monthlyLimit: number;
+  }): Promise<{ allowed: boolean; reason?: string; usageId?: string }> {
+    try {
+      const { data, error } = await this.supabase.rpc('check_and_reserve_ai_quota', {
+        p_user_id: this.userId,
+        p_endpoint: params.endpoint,
+        p_model: params.model,
+        p_burst_limit: params.burstLimit,
+        p_daily_limit: params.dailyLimit,
+        p_monthly_limit: params.monthlyLimit,
+      });
+
+      if (!error && data) {
+        return {
+          allowed: Boolean(data.allowed),
+          reason: data.reason || undefined,
+          usageId: data.usage_id || undefined,
+        };
+      }
+    } catch {
+      // Fall back to direct table query if RPC is not installed in environment
+    }
+
+    const now = new Date();
+    const sixtySecsAgo = new Date(now.getTime() - 60000).toISOString();
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
+    const { count: burstCount } = await this.supabase
+      .from('ai_usage_logs')
+      .select('id', { count: 'exact' })
+      .eq('user_id', this.userId)
+      .eq('endpoint', params.endpoint)
+      .gte('created_at', sixtySecsAgo);
+
+    if ((burstCount || 0) >= params.burstLimit) {
+      return { allowed: false, reason: 'burst_exceeded' };
+    }
+
+    const { count: dailyCount } = await this.supabase
+      .from('ai_usage_logs')
+      .select('id', { count: 'exact' })
+      .eq('user_id', this.userId)
+      .gte('created_at', startOfDay);
+
+    if ((dailyCount || 0) >= params.dailyLimit) {
+      return { allowed: false, reason: 'daily_exceeded' };
+    }
+
+    const { count: monthlyCount } = await this.supabase
+      .from('ai_usage_logs')
+      .select('id', { count: 'exact' })
+      .eq('user_id', this.userId)
+      .gte('created_at', startOfMonth);
+
+    if ((monthlyCount || 0) >= params.monthlyLimit) {
+      return { allowed: false, reason: 'monthly_exceeded' };
+    }
+
+    const usageId = `usage-${Math.random().toString(36).substring(2, 9)}`;
+    const { data: newRow } = await this.supabase
+      .from('ai_usage_logs')
+      .insert({
+        id: usageId,
+        user_id: this.userId,
+        endpoint: params.endpoint,
+        model: params.model,
+        status: 'attempt',
+      })
+      .select()
+      .single();
+
+    return {
+      allowed: true,
+      usageId: newRow?.id || usageId,
+    };
+  }
+
+  async markAiUsageCompleted(params: {
+    usageId?: string;
+    promptTokens?: number | null;
+    completionTokens?: number | null;
+    totalTokens?: number | null;
+  }): Promise<void> {
+    if (!params.usageId) return;
+
+    try {
+      const { error } = await this.supabase.rpc('update_ai_usage_status', {
+        p_usage_id: params.usageId,
+        p_user_id: this.userId,
+        p_status: 'completed',
+        p_prompt_tokens: params.promptTokens ?? null,
+        p_completion_tokens: params.completionTokens ?? null,
+        p_total_tokens: params.totalTokens ?? null,
+      });
+      if (!error) return;
+    } catch {}
+
+    await this.supabase
+      .from('ai_usage_logs')
+      .update({
+        status: 'completed',
+        prompt_tokens: params.promptTokens ?? null,
+        completion_tokens: params.completionTokens ?? null,
+        total_tokens: params.totalTokens ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', params.usageId)
+      .eq('user_id', this.userId);
+  }
+
+  async markAiUsageFailed(params: {
+    usageId?: string;
+    errorMessage: string;
+  }): Promise<void> {
+    if (!params.usageId) return;
+
+    try {
+      const { error } = await this.supabase.rpc('update_ai_usage_status', {
+        p_usage_id: params.usageId,
+        p_user_id: this.userId,
+        p_status: 'failed',
+        p_error_message: params.errorMessage,
+      });
+      if (!error) return;
+    } catch {}
+
+    await this.supabase
+      .from('ai_usage_logs')
+      .update({
+        status: 'failed',
+        error_message: params.errorMessage,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', params.usageId)
+      .eq('user_id', this.userId);
+  }
 }
+

@@ -1,6 +1,8 @@
 import { withAuth } from '@/lib/api/auth';
 import { validateRequest, type Schema } from '@/lib/api/validator';
 import { ApiError } from '@/lib/api/errors';
+import { DbService } from '@/lib/api/services/db';
+import { RateLimiterService } from '@/lib/api/services/rate-limiter';
 import { SeoAiAssistant } from '@/lib/seo/ai-assistant';
 import type { User, SupabaseClient } from '@supabase/supabase-js';
 
@@ -31,7 +33,7 @@ const optimizeMetaSchema: Schema = {
   },
 };
 
-export const POST = withAuth(async (req: Request, _user: User, _supabase: SupabaseClient) => {
+export const POST = withAuth(async (req: Request, user: User, supabase: SupabaseClient) => {
   let body: unknown;
   try {
     body = await req.json();
@@ -51,16 +53,34 @@ export const POST = withAuth(async (req: Request, _user: User, _supabase: Supaba
     content?: string;
   };
 
-  const aiAssistant = new SeoAiAssistant();
-  const optimized = await aiAssistant.optimizeMetaTags({
-    focusKeyword: payload.focus_keyword,
-    existingTitle: payload.existing_title,
-    existingDescription: payload.existing_description,
-    content: payload.content,
-  });
+  const dbService = new DbService(supabase, user.id);
+  const usageId = await RateLimiterService.checkAndReserveQuota(
+    dbService,
+    'seo-optimize-meta',
+    'google/gemini-3.7-flash'
+  );
+
+  let optimized;
+  try {
+    const aiAssistant = new SeoAiAssistant();
+    optimized = await aiAssistant.optimizeMetaTags({
+      focusKeyword: payload.focus_keyword,
+      existingTitle: payload.existing_title,
+      existingDescription: payload.existing_description,
+      content: payload.content,
+    });
+    await dbService.markAiUsageCompleted({ usageId });
+  } catch (err: any) {
+    await dbService.markAiUsageFailed({
+      usageId,
+      errorMessage: err?.message || 'Meta optimization failed',
+    });
+    throw err;
+  }
 
   return Response.json({
     success: true,
     data: optimized,
   });
 });
+

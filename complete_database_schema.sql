@@ -281,3 +281,147 @@ CREATE POLICY "Users can delete their own seo analyses."
   ON public.seo_analyses FOR DELETE
   USING ( auth.uid() = user_id );
 
+-- --------------------------------------------
+-- 6. ai_usage_logs
+-- --------------------------------------------
+CREATE TABLE IF NOT EXISTS public.ai_usage_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  endpoint TEXT NOT NULL,
+  model TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('attempt', 'completed', 'failed')),
+  prompt_tokens INTEGER,
+  completion_tokens INTEGER,
+  total_tokens INTEGER,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- AI Usage Indexes for fast quota checking and reporting
+CREATE INDEX IF NOT EXISTS ai_usage_logs_user_id_created_at_idx ON public.ai_usage_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS ai_usage_logs_user_id_endpoint_idx ON public.ai_usage_logs(user_id, endpoint, created_at DESC);
+
+-- Trigger for updated_at auto-update
+DROP TRIGGER IF EXISTS update_ai_usage_logs_updated_at ON public.ai_usage_logs;
+CREATE TRIGGER update_ai_usage_logs_updated_at
+  BEFORE UPDATE ON public.ai_usage_logs
+  FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
+
+-- --------------------------------------------
+-- AI Usage Logs RLS policies
+-- --------------------------------------------
+ALTER TABLE public.ai_usage_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own usage logs." ON public.ai_usage_logs;
+CREATE POLICY "Users can view their own usage logs."
+  ON public.ai_usage_logs FOR SELECT
+  USING ( auth.uid() = user_id );
+
+DROP POLICY IF EXISTS "Users can insert their own usage logs." ON public.ai_usage_logs;
+CREATE POLICY "Users can insert their own usage logs."
+  ON public.ai_usage_logs FOR INSERT
+  WITH CHECK ( auth.uid() = user_id );
+
+DROP POLICY IF EXISTS "Users can update their own usage logs." ON public.ai_usage_logs;
+CREATE POLICY "Users can update their own usage logs."
+  ON public.ai_usage_logs FOR UPDATE
+  USING ( auth.uid() = user_id );
+
+-- ============================================
+-- ATOMIC RATE LIMITING & USAGE RPC FUNCTIONS
+-- ============================================
+
+-- Function to check quotas and atomically reserve an AI request slot
+CREATE OR REPLACE FUNCTION public.check_and_reserve_ai_quota(
+  p_user_id UUID,
+  p_endpoint TEXT,
+  p_model TEXT,
+  p_burst_limit INT,
+  p_daily_limit INT,
+  p_monthly_limit INT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_burst_count INT;
+  v_daily_count INT;
+  v_monthly_count INT;
+  v_new_usage_id UUID;
+  v_now TIMESTAMP WITH TIME ZONE := timezone('utc'::text, now());
+BEGIN
+  -- 1. Lock user's usage entries for current check timeframe to prevent race conditions
+  PERFORM id FROM public.ai_usage_logs WHERE user_id = p_user_id AND created_at >= (v_now - interval '60 seconds') FOR UPDATE;
+
+  -- 2. Count per-minute endpoint burst attempts
+  SELECT COUNT(*) INTO v_burst_count
+  FROM public.ai_usage_logs
+  WHERE user_id = p_user_id
+    AND endpoint = p_endpoint
+    AND created_at >= (v_now - interval '60 seconds');
+
+  IF v_burst_count >= p_burst_limit THEN
+    RETURN jsonb_build_object('allowed', false, 'reason', 'burst_exceeded', 'usage_id', NULL);
+  END IF;
+
+  -- 3. Count global daily attempts across all AI endpoints in current UTC day
+  SELECT COUNT(*) INTO v_daily_count
+  FROM public.ai_usage_logs
+  WHERE user_id = p_user_id
+    AND created_at >= date_trunc('day', v_now);
+
+  IF v_daily_count >= p_daily_limit THEN
+    RETURN jsonb_build_object('allowed', false, 'reason', 'daily_exceeded', 'usage_id', NULL);
+  END IF;
+
+  -- 4. Count global monthly attempts across all AI endpoints in current UTC month
+  SELECT COUNT(*) INTO v_monthly_count
+  FROM public.ai_usage_logs
+  WHERE user_id = p_user_id
+    AND created_at >= date_trunc('month', v_now);
+
+  IF v_monthly_count >= p_monthly_limit THEN
+    RETURN jsonb_build_object('allowed', false, 'reason', 'monthly_exceeded', 'usage_id', NULL);
+  END IF;
+
+  -- 5. All quota checks passed: Reserve request slot atomically
+  INSERT INTO public.ai_usage_logs (user_id, endpoint, model, status, created_at, updated_at)
+  VALUES (p_user_id, p_endpoint, p_model, 'attempt', v_now, v_now)
+  RETURNING id INTO v_new_usage_id;
+
+  RETURN jsonb_build_object('allowed', true, 'usage_id', v_new_usage_id);
+END;
+$$;
+
+-- Function to update status and token usage of an existing AI request log
+CREATE OR REPLACE FUNCTION public.update_ai_usage_status(
+  p_usage_id UUID,
+  p_user_id UUID,
+  p_status TEXT,
+  p_prompt_tokens INT DEFAULT NULL,
+  p_completion_tokens INT DEFAULT NULL,
+  p_total_tokens INT DEFAULT NULL,
+  p_error_message TEXT DEFAULT NULL
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.ai_usage_logs
+  SET
+    status = p_status,
+    prompt_tokens = p_prompt_tokens,
+    completion_tokens = p_completion_tokens,
+    total_tokens = p_total_tokens,
+    error_message = p_error_message,
+    updated_at = timezone('utc'::text, now())
+  WHERE id = p_usage_id AND user_id = p_user_id;
+
+  RETURN FOUND;
+END;
+$$;
+
+

@@ -1,4 +1,5 @@
 import { ApiError } from '../errors';
+import { RateLimiterService } from './rate-limiter';
 
 export type OpenRouterMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -14,7 +15,9 @@ export type OpenRouterStreamOptions = {
   frequencyPenalty?: number;
   presencePenalty?: number;
   signal?: AbortSignal;
+  onUsage?: (usage: { promptTokens?: number; completionTokens?: number; totalTokens?: number }) => void;
 };
+
 
 export class OpenRouterService {
   private static readonly BASE_URL = 'https://openrouter.ai/api/v1';
@@ -61,7 +64,7 @@ export class OpenRouterService {
    */
   public async streamCompletion(options: OpenRouterStreamOptions): Promise<ReadableStream<Uint8Array>> {
     const model = OpenRouterService.normalizeModel(options.model);
-    const maxTokens = options.maxTokens || 4000;
+    const maxTokens = RateLimiterService.getEffectiveMaxTokens(options.maxTokens);
     const temperature = options.temperature ?? 0.7;
 
     const requestBody = {
@@ -73,7 +76,9 @@ export class OpenRouterService {
       top_p: options.topP ?? 0.95,
       frequency_penalty: options.frequencyPenalty ?? 0,
       presence_penalty: options.presencePenalty ?? 0,
+      stream_options: { include_usage: true },
     };
+
 
     // 60-second timeout controller combined with external signal if provided
     const timeoutController = new AbortController();
@@ -167,6 +172,15 @@ export class OpenRouterService {
                 const jsonStr = trimmed.slice(6);
                 try {
                   const parsed = JSON.parse(jsonStr);
+
+                  if (parsed.usage && options.onUsage) {
+                    options.onUsage({
+                      promptTokens: parsed.usage.prompt_tokens,
+                      completionTokens: parsed.usage.completion_tokens,
+                      totalTokens: parsed.usage.total_tokens,
+                    });
+                  }
+
                   const choice = parsed.choices?.[0];
 
                   if (choice?.finish_reason === 'length') {

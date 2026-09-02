@@ -3,6 +3,7 @@ import { validateRequest } from "@/lib/api/validator";
 import { DbService } from "@/lib/api/services/db";
 import { PromptService } from "@/lib/api/services/prompt";
 import { OpenRouterService, type OpenRouterMessage } from "@/lib/api/services/openrouter";
+import { RateLimiterService } from "@/lib/api/services/rate-limiter";
 import type { User, SupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -103,7 +104,14 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
   const finalLanguage = requestedLanguage || userSettings?.language || "English (US)";
   const configuredModel = userSettings?.default_ai_model || OpenRouterService.DEFAULT_MODEL;
 
-  // 3. Build prompts via PromptService
+  // 3. Database-backed Rate Limit & Quota Check (BEFORE calling OpenRouter)
+  const usageId = await RateLimiterService.checkAndReserveQuota(
+    dbService,
+    "generate",
+    configuredModel
+  );
+
+  // 4. Build prompts via PromptService
   const systemPrompt = PromptService.buildSystemPrompt({
     prompt,
     template,
@@ -129,7 +137,7 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
     previousContent,
   });
 
-  // 4. Construct messages array for OpenRouter
+  // 5. Construct messages array for OpenRouter
   let openRouterMessages: OpenRouterMessage[] = [];
 
   if (messages && Array.isArray(messages) && messages.length > 0) {
@@ -150,12 +158,34 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
     ];
   }
 
-  // 5. Initialize OpenRouter service & stream response
-  const openRouter = new OpenRouterService();
-  const stream = await openRouter.streamCompletion({
-    messages: openRouterMessages,
-    model: configuredModel,
-    signal: req.signal,
+  // 6. Initialize OpenRouter service & stream response
+  let stream: ReadableStream<Uint8Array>;
+  let reportedTokens: { promptTokens?: number; completionTokens?: number; totalTokens?: number } = {};
+
+  try {
+    const openRouter = new OpenRouterService();
+    stream = await openRouter.streamCompletion({
+      messages: openRouterMessages,
+      model: configuredModel,
+      signal: req.signal,
+      onUsage: (u) => {
+        reportedTokens = u;
+      },
+    });
+  } catch (err: any) {
+    await dbService.markAiUsageFailed({
+      usageId,
+      errorMessage: err?.message || 'Generation failed',
+    });
+    throw err;
+  }
+
+  // Mark usage completed when stream starts successfully
+  await dbService.markAiUsageCompleted({
+    usageId,
+    promptTokens: reportedTokens.promptTokens ?? null,
+    completionTokens: reportedTokens.completionTokens ?? null,
+    totalTokens: reportedTokens.totalTokens ?? null,
   });
 
   return new Response(stream, {
@@ -166,6 +196,8 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
       "X-Content-Type-Options": "nosniff",
       "X-User-Id": user.id,
       "X-Model-Used": configuredModel,
+      "X-Usage-Id": usageId,
     },
   });
 });
+
