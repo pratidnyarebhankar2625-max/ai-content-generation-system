@@ -135,7 +135,6 @@ export const POST = withAuth(async (req: Request, user: User, supabase: Supabase
   let createdAt = new Date().toISOString();
 
   try {
-    const dbService = new DbService(supabase, user.id);
     const savedRecord = await dbService.createSeoAnalysis({
       focus_keyword: payload.focus_keyword,
       meta_title: payload.meta_title,

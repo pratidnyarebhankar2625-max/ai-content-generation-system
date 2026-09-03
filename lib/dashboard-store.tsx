@@ -227,15 +227,44 @@ function computeActivity(generations: Generation[]): EnrichedActivity[] {
   });
 }
 
+function areDashboardValuesEqual(a: DashboardData | null, b: DashboardData): boolean {
+  if (!a) return false;
+  if (
+    a.totalGenerations !== b.totalGenerations ||
+    a.completed !== b.completed ||
+    a.drafts !== b.drafts ||
+    a.failed !== b.failed ||
+    a.totalWords !== b.totalWords ||
+    a.templatesUsed !== b.templatesUsed ||
+    a.thisWeek !== b.thisWeek ||
+    a.userName !== b.userName ||
+    a.greeting !== b.greeting ||
+    a.recentActivity.length !== b.recentActivity.length
+  ) {
+    return false;
+  }
+
+  for (let i = 0; i < a.recentActivity.length; i++) {
+    if (
+      a.recentActivity[i].id !== b.recentActivity[i].id ||
+      a.recentActivity[i].status !== b.recentActivity[i].status ||
+      a.recentActivity[i].time !== b.recentActivity[i].time
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
 
 const AUTO_REFRESH_INTERVAL = 30_000; // 30 seconds
-const INITIAL_LOAD_DELAY = 600; // Simulate API delay for skeleton demo
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const { generations, stats, isLoaded: contentLoaded } = useContent();
+  const { generations, stats, isLoaded: contentLoaded, refreshGenerations } = useContent();
   const { user } = useAuth();
 
   const [data, setData] = useState<DashboardData | null>(null);
@@ -278,49 +307,49 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     };
   }, [generations, stats, user]);
 
-  // ── Initial load with simulated delay ────────────────────────────────────
+  // ── Instant initial load as soon as content store is ready ───────────────
   useEffect(() => {
-    if (!contentLoaded || initialLoadDone.current) return;
+    if (!contentLoaded) return;
 
-    const timeout = setTimeout(() => {
+    if (!initialLoadDone.current) {
       setData(computeData());
       setIsLoading(false);
       initialLoadDone.current = true;
-    }, INITIAL_LOAD_DELAY);
-
-    return () => clearTimeout(timeout);
+    }
   }, [contentLoaded, computeData]);
 
   // ── Live update when content changes (after initial load) ────────────────
   useEffect(() => {
     if (!initialLoadDone.current || !contentLoaded) return;
-    setData(computeData());
+    const nextData = computeData();
+    setData((prev) => (areDashboardValuesEqual(prev, nextData) ? prev : nextData));
   }, [generations, stats, computeData, contentLoaded]);
 
-  // ── Auto-refresh ─────────────────────────────────────────────────────────
+  // ── Auto-refresh with smart value comparison to prevent unneeded re-renders ─
   useEffect(() => {
     if (!initialLoadDone.current) return;
 
     const interval = setInterval(() => {
       setIsRefreshing(true);
-      // Brief flash to show refresh happened
-      setTimeout(() => {
-        setData(computeData());
+      refreshGenerations().finally(() => {
+        const nextData = computeData();
+        setData((prev) => (areDashboardValuesEqual(prev, nextData) ? prev : nextData));
         setIsRefreshing(false);
-      }, 300);
+      });
     }, AUTO_REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [computeData]);
+  }, [computeData, refreshGenerations]);
 
   // ── Manual refresh ───────────────────────────────────────────────────────
   const refresh = useCallback(() => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setData(computeData());
+    refreshGenerations().finally(() => {
+      const nextData = computeData();
+      setData((prev) => (areDashboardValuesEqual(prev, nextData) ? prev : nextData));
       setIsRefreshing(false);
-    }, 300);
-  }, [computeData]);
+    });
+  }, [computeData, refreshGenerations]);
 
   const value = useMemo<DashboardContextType>(
     () => ({ data, isLoading, isRefreshing, refresh, filterStatus, setFilterStatus }),

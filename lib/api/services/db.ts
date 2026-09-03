@@ -176,6 +176,23 @@ export class DbService {
     return data as UserSettingsRecord;
   }
 
+  async getGenerationSettings(): Promise<Pick<UserSettingsRecord, 'writing_tone' | 'language' | 'default_ai_model'>> {
+    const { data, error } = await this.supabase
+      .from('user_settings')
+      .select('writing_tone, language, default_ai_model')
+      .eq('id', this.userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return {
+        writing_tone: 'professional',
+        language: 'en-US',
+        default_ai_model: 'gemini-2.5-pro',
+      };
+    }
+    return data as Pick<UserSettingsRecord, 'writing_tone' | 'language' | 'default_ai_model'>;
+  }
+
   async updateSettings(updates: {
     theme?: string;
     language?: string;
@@ -712,34 +729,34 @@ export class DbService {
     const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
 
-    const { count: burstCount } = await this.supabase
-      .from('ai_usage_logs')
-      .select('id', { count: 'exact' })
-      .eq('user_id', this.userId)
-      .eq('endpoint', params.endpoint)
-      .gte('created_at', sixtySecsAgo);
+    const [burstRes, dailyRes, monthlyRes] = await Promise.all([
+      this.supabase
+        .from('ai_usage_logs')
+        .select('id', { count: 'exact' })
+        .eq('user_id', this.userId)
+        .eq('endpoint', params.endpoint)
+        .gte('created_at', sixtySecsAgo),
+      this.supabase
+        .from('ai_usage_logs')
+        .select('id', { count: 'exact' })
+        .eq('user_id', this.userId)
+        .gte('created_at', startOfDay),
+      this.supabase
+        .from('ai_usage_logs')
+        .select('id', { count: 'exact' })
+        .eq('user_id', this.userId)
+        .gte('created_at', startOfMonth),
+    ]);
 
-    if ((burstCount || 0) >= params.burstLimit) {
+    if ((burstRes.count || 0) >= params.burstLimit) {
       return { allowed: false, reason: 'burst_exceeded' };
     }
 
-    const { count: dailyCount } = await this.supabase
-      .from('ai_usage_logs')
-      .select('id', { count: 'exact' })
-      .eq('user_id', this.userId)
-      .gte('created_at', startOfDay);
-
-    if ((dailyCount || 0) >= params.dailyLimit) {
+    if ((dailyRes.count || 0) >= params.dailyLimit) {
       return { allowed: false, reason: 'daily_exceeded' };
     }
 
-    const { count: monthlyCount } = await this.supabase
-      .from('ai_usage_logs')
-      .select('id', { count: 'exact' })
-      .eq('user_id', this.userId)
-      .gte('created_at', startOfMonth);
-
-    if ((monthlyCount || 0) >= params.monthlyLimit) {
+    if ((monthlyRes.count || 0) >= params.monthlyLimit) {
       return { allowed: false, reason: 'monthly_exceeded' };
     }
 

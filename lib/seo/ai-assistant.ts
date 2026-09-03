@@ -34,7 +34,7 @@ export class SeoAiAssistant {
   private openRouter: OpenRouterService;
 
   constructor(apiKey?: string) {
-    this.openRouter = new OpenRouterService(apiKey);
+    this.openRouter = OpenRouterService.getInstance(apiKey);
   }
 
   /**

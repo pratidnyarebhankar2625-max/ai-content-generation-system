@@ -82,3 +82,58 @@ export class RateLimiterService {
     return result.usageId || `usage-${Math.random().toString(36).substring(2, 9)}`;
   }
 }
+
+export class InFlightGenerationTracker {
+  private static activeKeys = new Map<string, number>();
+
+  public static createSignature(params: {
+    userId: string;
+    prompt: string;
+    template?: string;
+    category?: string;
+    tone?: string;
+    language?: string;
+    isContinue?: boolean;
+  }): string {
+    const p = (params.prompt || '').trim().slice(0, 200);
+    const t = (params.template || '').trim();
+    const c = (params.category || '').trim();
+    const tone = (params.tone || '').trim();
+    const lang = (params.language || '').trim();
+    const isCont = Boolean(params.isContinue);
+    return `${params.userId}:${t}:${c}:${tone}:${lang}:${isCont}:${p}`;
+  }
+
+  /**
+   * Attempts to acquire an in-flight execution lock for a request signature.
+   * Throws HTTP 429 ApiError if an identical request is actively processing.
+   */
+  public static acquire(key: string, ttlMs = 15000): () => void {
+    const now = Date.now();
+    const existing = this.activeKeys.get(key);
+
+    if (existing && now < existing) {
+      throw new ApiError(
+        'A generation request with identical parameters is currently in progress. Please wait a moment.',
+        'DUPLICATE_REQUEST_IN_FLIGHT',
+        429
+      );
+    }
+
+    if (this.activeKeys.size > 100) {
+      for (const [k, exp] of this.activeKeys.entries()) {
+        if (now >= exp) this.activeKeys.delete(k);
+      }
+    }
+
+    this.activeKeys.set(key, now + ttlMs);
+
+    let released = false;
+    return () => {
+      if (!released) {
+        released = true;
+        this.activeKeys.delete(key);
+      }
+    };
+  }
+}

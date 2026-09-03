@@ -122,9 +122,15 @@ CREATE INDEX IF NOT EXISTS generations_user_id_idx ON public.generations(user_id
 CREATE INDEX IF NOT EXISTS generations_user_id_created_at_idx ON public.generations(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS generations_user_id_category_idx ON public.generations(user_id, category);
 CREATE INDEX IF NOT EXISTS generations_user_id_status_idx ON public.generations(user_id, status);
+CREATE INDEX IF NOT EXISTS generations_user_id_word_count_idx ON public.generations(user_id, word_count DESC);
+CREATE INDEX IF NOT EXISTS generations_user_id_category_created_at_idx ON public.generations(user_id, category, created_at DESC);
+CREATE INDEX IF NOT EXISTS generations_user_id_status_created_at_idx ON public.generations(user_id, status, created_at DESC);
 
--- User Templates indexes
+-- User Templates indexes for fast filtering, favoriting, and sorting
 CREATE INDEX IF NOT EXISTS user_templates_user_id_idx ON public.user_templates(user_id);
+CREATE INDEX IF NOT EXISTS user_templates_user_id_is_favorite_idx ON public.user_templates(user_id, is_favorite);
+CREATE INDEX IF NOT EXISTS user_templates_user_id_category_idx ON public.user_templates(user_id, category);
+CREATE INDEX IF NOT EXISTS user_templates_user_id_created_at_idx ON public.user_templates(user_id, created_at DESC);
 
 -- SEO Analyses indexes
 CREATE INDEX IF NOT EXISTS seo_analyses_user_id_idx ON public.seo_analyses(user_id);

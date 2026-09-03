@@ -56,83 +56,48 @@ export class PromptService {
 
     switch (contentType) {
       case "blog":
-        typeGuidelines = `
-- STRUCTURE: Compelling H1 Title, Engaging Introduction with Hook, Clear Subheadings (H2, H3), Actionable Takeaway Sections, Bullet Points/Numbered Lists, Summary/Conclusion, and a Strong Call to Action (CTA).
-- LENGTH & DEPTH: Thorough, educational, and engaging. Never cut sections short.
-- SEO & READABILITY: Clear paragraph breaks, scannable format, bolding for emphasis on key phrases.`;
+        typeGuidelines = `- STRUCTURE: H1 Title, Hook Intro, H2/H3 Subheadings, Key Takeaways, Bullet Lists, Conclusion, Call to Action (CTA).
+- STYLE: Educational, engaging, clear paragraph breaks, bold key phrases for readability.`;
         break;
 
       case "email":
-        typeGuidelines = `
-- STRUCTURE:
-  1. Subject Line options (3 catchy, high-open-rate subject lines)
-  2. Preview Text / Preheader
-  3. Personalized Greeting
-  4. Engaging Opening & Core Message
-  5. Value Proposition & Key Points (bulleted)
-  6. Compelling Call to Action (CTA)
-  7. Professional Sign-off & Signature Block
-- STYLE: Direct, relationship-building, clear value delivery with zero fluff.`;
+        typeGuidelines = `- STRUCTURE: 3 Subject Line options, Preheader, Greeting, Core Message, Bulleted Value Points, CTA, Signature Block.
+- STYLE: Direct, relationship-building, clear value delivery.`;
         break;
 
       case "social":
-        typeGuidelines = `
-- STRUCTURE:
-  1. Attention-grabbing opening hook (first 2 lines must stop scrolling).
-  2. Core narrative / value nuggets with strategic spacing and whitespace.
-  3. Punchy bullet points or insights.
-  4. Engaging closing question / discussion prompt.
-  5. 3-5 relevant, high-traffic hashtags.
-- STYLE: Highly readable, authentic, social-native tone with appropriate emoji accents.`;
+        typeGuidelines = `- STRUCTURE: Scroll-stopping Hook (first 2 lines), Core Narrative with whitespace, Bullet Insights, Closing Question, 3-5 Hashtags.
+- STYLE: Highly readable, authentic, social-native tone.`;
         break;
 
       case "ad":
-        typeGuidelines = `
-- STRUCTURE:
-  1. 3 Powerful Headline Variations (Hook-based, Benefit-based, Urgency-based).
-  2. Primary Ad Body Copy (short & long variations).
-  3. Core Value Proposition & Pain Point Solution.
-  4. Bulleted Key Features / Benefits.
-  5. High-Converting Call to Action (CTA button copy + prompt).
-- STYLE: Persuasive, psychology-backed, conversion-focused copywriting.`;
+        typeGuidelines = `- STRUCTURE: 3 Headlines (Hook/Benefit/Urgency), Body Copy (short & long), Value Proposition, Key Features, High-Converting CTA.
+- STYLE: Persuasive, conversion-focused copywriting.`;
         break;
 
       case "product":
-        typeGuidelines = `
-- STRUCTURE:
-  1. Catchy, SEO-optimized Product Title.
-  2. Compelling Elevator Pitch / Product Overview.
-  3. Key Features & Specifications (structured bullet list).
-  4. Concrete Customer Benefits & Transformation.
-  5. Best For / Target User Callout.
-  6. Strong Purchase Call to Action.
-- STYLE: Descriptive, sensory-rich, benefit-driven and commercially persuasive.`;
+        typeGuidelines = `- STRUCTURE: SEO Product Title, Elevator Pitch, Key Features & Specifications, Customer Benefits, Target User Callout, Purchase CTA.
+- STYLE: Descriptive, benefit-driven, commercially persuasive.`;
         break;
 
       default:
-        typeGuidelines = `
-- STRUCTURE: Well-organized with clear Markdown headings, subheadings, structured bullet lists, and concluding thoughts.
-- STYLE: Informative, polished, and structured specifically for the requested format: ${options.template || "Standard"}.`;
+        typeGuidelines = `- STRUCTURE: Markdown headings, subheadings, bullet lists, conclusion.
+- STYLE: Polished and structured for: ${options.template || "Standard"}.`;
         break;
     }
 
-    let prompt = `You are Writeora AI, an elite AI copywriting and content generation assistant.
-Your goal is to produce exceptional, high-converting, publication-ready content.
+    let prompt = `You are Writeora AI, an expert content generation assistant.
+RULES:
+1. QUALITY & COMPLETENESS: Output 100% complete, publication-ready content without placeholders or abrupt truncation.
+2. FORMATTING: Use clean standard Markdown (H1 #, H2 ##, H3 ###, bold **text**, bullet lists -, numbered lists 1.).
+3. TONE & LANGUAGE: Write strictly in "${tone}" tone and "${language}".
 
-GLOBAL RULES:
-1. OUTPUT QUALITY: Deliver 100% complete, polished, and original content. Never leave placeholders like "[Insert text here]" unless specific personalization variables (like [Name]) are standard for email/ad templates.
-2. CONTINUITY: Complete every sentence and section properly. Never truncate or abruptly stop mid-thought.
-3. FORMATTING: Use clean, standard Markdown (H1 #, H2 ##, H3 ###, bold **text**, bullet lists -, numbered lists 1., blockquotes >).
-4. TONE OF VOICE: Write strictly in a "${tone}" tone.
-5. LANGUAGE: Respond strictly in "${language}".
-
-CONTENT TYPE SPECIFIC INSTRUCTIONS (${options.template || contentType.toUpperCase()}):
+INSTRUCTIONS (${options.template || contentType.toUpperCase()}):
 ${typeGuidelines.trim()}
 `;
 
     if (options.isContinue) {
-      prompt += `\n\nIMPORTANT CONTINUATION INSTRUCTION:\nThe user has requested to CONTINUE generating content from where the previous output left off.
-Do NOT repeat headings or paragraphs already generated. Start immediately and seamlessly from the exact continuation point.`;
+      prompt += `\nCONTINUATION INSTRUCTION:\nContinue generating seamlessly from where the previous output left off without repeating headings or paragraphs already generated.`;
     }
 
     return prompt.trim();

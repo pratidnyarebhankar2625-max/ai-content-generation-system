@@ -45,6 +45,18 @@ export class OpenRouterService {
     return OpenRouterService.DEFAULT_MODEL;
   }
 
+  private static defaultInstance: OpenRouterService | null = null;
+
+  public static getInstance(apiKey?: string): OpenRouterService {
+    if (apiKey) {
+      return new OpenRouterService(apiKey);
+    }
+    if (!OpenRouterService.defaultInstance) {
+      OpenRouterService.defaultInstance = new OpenRouterService();
+    }
+    return OpenRouterService.defaultInstance;
+  }
+
   private apiKey: string;
 
   constructor(apiKey?: string) {
