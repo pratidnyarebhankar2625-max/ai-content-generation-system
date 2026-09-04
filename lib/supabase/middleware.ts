@@ -41,7 +41,8 @@ export async function updateSession(request: NextRequest) {
                            request.nextUrl.pathname.startsWith('/templates') ||
                            request.nextUrl.pathname.startsWith('/profile') || 
                            request.nextUrl.pathname.startsWith('/settings') ||
-                           request.nextUrl.pathname === '/generate'
+                           request.nextUrl.pathname.startsWith('/generate') ||
+                           request.nextUrl.pathname.startsWith('/seo')
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone()

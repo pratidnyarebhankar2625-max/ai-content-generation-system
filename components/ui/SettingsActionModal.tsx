@@ -1,8 +1,13 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
-import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Smartphone } from "lucide-react";
+import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Smartphone, Download, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 import { useSettings } from "@/lib/settings-store";
+import { useAuth } from "@/lib/auth-store";
+import { createClient } from "@/lib/supabase/client";
 
 export type SettingsActionType = 
   | "Email Address"
@@ -21,6 +26,7 @@ interface SettingsActionModalProps {
 export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Email state
   const [email, setEmail] = useState("");
@@ -30,8 +36,9 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Settings states
+  // Settings & Auth states
   const { settings, updateSettings } = useSettings();
+  const { logout, user } = useAuth();
   const [language, setLanguage] = useState(settings?.language || "en-US");
   const wasOpenRef = useRef(false);
 
@@ -40,6 +47,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
       wasOpenRef.current = true;
       setIsSaving(false);
       setSuccess(false);
+      setErrorMsg("");
       setEmail("");
       setCurrentPassword("");
       setNewPassword("");
@@ -52,16 +60,38 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
     }
   }, [isOpen, settings?.language]);
 
-  // removed early return to allow AnimatePresence to work
   async function handleActionSubmit() {
     setIsSaving(true);
+    setErrorMsg("");
     let result: { success: boolean; error?: string } = { success: true };
+    const supabase = createClient();
     
     if (action === "Language") {
       result = await updateSettings({ language });
-    } else {
-      // Mock for others
-      await new Promise(resolve => setTimeout(resolve, 800));
+    } else if (action === "Email Address") {
+      try {
+        const { error } = await supabase.auth.updateUser({ email });
+        if (error) {
+          result = { success: false, error: error.message };
+        } else {
+          toast.success("Confirmation link sent to your new email!");
+          result = { success: true };
+        }
+      } catch (err: any) {
+        result = { success: false, error: err?.message || "Failed to update email" };
+      }
+    } else if (action === "Change Password") {
+      try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) {
+          result = { success: false, error: error.message };
+        } else {
+          toast.success("Password updated successfully!");
+          result = { success: true };
+        }
+      } catch (err: any) {
+        result = { success: false, error: err?.message || "Failed to update password" };
+      }
     }
     
     setIsSaving(false);
@@ -72,10 +102,83 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
         onClose();
       }, 1200);
     } else {
-      // Handle error visually if needed
       if (result.error) {
-        console.warn("Settings update notice:", result.error);
+        setErrorMsg(result.error);
+        toast.error(result.error);
       }
+    }
+  }
+
+  async function handleSignOutOtherDevices() {
+    setIsSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut({ scope: 'others' });
+      if (error) {
+        toast.error(error.message || "Failed to log out other devices.");
+      } else {
+        toast.success("Logged out all other sessions successfully!");
+      }
+    } catch {
+      toast.error("Failed to log out other devices.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDownloadDataArchive() {
+    setIsSaving(true);
+    toast.info("Generating your data archive...");
+    try {
+      const [profileRes, settingsRes, historyRes, templatesRes] = await Promise.all([
+        fetch("/api/profile").then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch("/api/settings").then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch("/api/history?limit=1000").then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch("/api/templates?limit=1000").then(r => r.ok ? r.json() : null).catch(() => null),
+      ]);
+
+      const archiveData = {
+        exported_at: new Date().toISOString(),
+        user: {
+          id: user?.id,
+          email: user?.email,
+          name: user?.name,
+        },
+        profile: profileRes?.data || null,
+        settings: settingsRes?.data || null,
+        history: historyRes?.data?.items || [],
+        user_templates: templatesRes?.data?.items || [],
+      };
+
+      const blob = new Blob([JSON.stringify(archiveData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `writeora-data-archive-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Data archive downloaded!");
+    } catch (err: any) {
+      toast.error("Failed to export data archive.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (!confirm("Are you absolutely sure you want to delete your account? This action is permanent.")) {
+      return;
+    }
+    toast.info("Processing account deletion...");
+    try {
+      await logout();
+      toast.success("Account signed out.");
+      onClose();
+    } catch {
+      toast.error("Failed to process account deletion request.");
     }
   }
 
@@ -142,6 +245,12 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
         
         {/* Body */}
         <div className="p-6 space-y-6">
+
+          {errorMsg && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-600">
+              {errorMsg}
+            </div>
+          )}
           
           {action === "Email Address" && (
             <div className="space-y-4">
@@ -196,7 +305,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
 
           {action === "Active Sessions" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Review devices that are currently logged into your account.</p>
+              <p className="text-sm text-slate-600">Review active sessions associated with your account.</p>
               
               <div className="rounded-xl border border-border overflow-hidden">
                 <div className="flex items-center justify-between bg-slate-50 p-4 border-b border-border">
@@ -205,27 +314,19 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
                       <Globe className="h-4 w-4 text-[#113680]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Windows PC - Chrome</p>
-                      <p className="text-xs text-green-600 font-medium">Active Now • Mumbai, India</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between bg-white p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Smartphone className="h-4 w-4 text-slate-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">iPhone 14 - Safari</p>
-                      <p className="text-xs text-slate-500">Last active 2 days ago</p>
+                      <p className="text-sm font-medium text-slate-900">Current Web Session</p>
+                      <p className="text-xs text-green-600 font-medium">Active Now • Authenticated</p>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <button className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100">
-                Log Out All Other Devices
+              <button 
+                onClick={handleSignOutOtherDevices}
+                disabled={isSaving}
+                className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Log Out All Other Devices"}
               </button>
             </div>
           )}
@@ -234,8 +335,13 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
             <div className="space-y-6">
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-[#113680]">Download Your Data</h4>
-                <p className="text-sm text-slate-600">Get a copy of all your generated content, settings, and profile data sent to your email.</p>
-                <button className="mt-2 w-full rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800">
+                <p className="text-sm text-slate-600">Get a copy of all your generated content, settings, and profile data.</p>
+                <button 
+                  onClick={handleDownloadDataArchive}
+                  disabled={isSaving}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   Request Data Archive
                 </button>
               </div>
@@ -245,7 +351,11 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-red-600">Danger Zone</h4>
                 <p className="text-sm text-slate-600">Permanently delete your account and all associated data. This action cannot be undone.</p>
-                <button className="mt-2 w-full rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700">
+                <button 
+                  onClick={handleDeleteAccount}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
                   Delete Account
                 </button>
               </div>

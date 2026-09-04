@@ -52,6 +52,16 @@ export default function Templates() {
     "AI Utility",
   ];
 
+  const [builtInFavorites, setBuiltInFavorites] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = localStorage.getItem("built_in_favorites");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Fetch custom user templates from the backend API
   const fetchUserTemplates = useCallback(async () => {
     try {
@@ -89,12 +99,12 @@ export default function Templates() {
 
     const formattedBuiltIn: DisplayTemplate[] = builtInTemplates.map((t) => ({
       ...t,
-      is_favorite: false,
+      is_favorite: builtInFavorites.includes(t.id),
       isUserTemplate: false,
     }));
 
     return [...formattedUserTemplates, ...formattedBuiltIn];
-  }, [userTemplates]);
+  }, [userTemplates, builtInFavorites]);
 
   // Handle template creation via API
   const handleCreateTemplate = async (templateData: {
@@ -187,12 +197,23 @@ export default function Templates() {
     }
   };
 
-  // Handle favorite toggling via API
+  // Handle favorite toggling via API (or local storage for built-in system presets)
   const handleToggleFavorite = async (id: string | number) => {
-    if (typeof id !== "string") {
-      // Built-in templates are read-only and not stored in user_templates
+    if (typeof id === "number" || (!isNaN(Number(id)) && typeof id !== "string")) {
+      const numId = Number(id);
+      setBuiltInFavorites((prev) => {
+        const next = prev.includes(numId)
+          ? prev.filter((i) => i !== numId)
+          : [...prev, numId];
+        try {
+          localStorage.setItem("built_in_favorites", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
       return;
     }
+
+    if (typeof id !== "string") return;
 
     const target = userTemplates.find((t) => t.id === id);
     if (!target) return;
