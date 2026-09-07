@@ -222,15 +222,28 @@ export default function GenerateWorkspace({ templateId }: GenerateWorkspaceProps
         const plainText = htmlContent.replace(/<[^>]*>?/gm, "").trim();
         const wordCount = plainText.split(/\s+/).filter((w: string) => w.length > 0).length;
 
-        try {
-          await updateGeneration(currentGenerationId, {
-            status: "completed",
-            preview: htmlContent,
-            wordCount,
-          });
-          toast.success("Content generated and saved successfully!");
-        } catch (dbErr: any) {
-          toast.error("Generation complete, but failed to save to database. Content is kept in the editor.");
+        if (!plainText) {
+          toast.error("AI returned an empty response. Please try again.");
+          try {
+            await updateGeneration(currentGenerationId, {
+              status: "failed",
+              preview: "AI returned an empty response.",
+              wordCount: 0,
+            });
+          } catch {
+            // ignore
+          }
+        } else {
+          try {
+            await updateGeneration(currentGenerationId, {
+              status: "completed",
+              preview: htmlContent,
+              wordCount,
+            });
+            toast.success("Content generated and saved successfully!");
+          } catch (dbErr: any) {
+            toast.error("Generation complete, but failed to save to database. Content is kept in the editor.");
+          }
         }
       }
     } catch (err: any) {

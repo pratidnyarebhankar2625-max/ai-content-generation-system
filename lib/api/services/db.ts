@@ -362,6 +362,12 @@ export class DbService {
       .single();
 
     if (error) {
+      if (error.code === '22P02') {
+        throw new ApiError('Invalid ID format', 'VALIDATION_ERROR', 400);
+      }
+      if (error.code === '23505') {
+        throw new ApiError('Resource with this ID already exists', 'CONFLICT', 409);
+      }
       throw new ApiError(`Failed to save generation: ${error.message}`, 'DB_ERROR', 500);
     }
 
@@ -557,6 +563,12 @@ export class DbService {
       .single();
 
     if (error) {
+      if (error.code === '22P02') {
+        throw new ApiError('Invalid ID format', 'VALIDATION_ERROR', 400);
+      }
+      if (error.code === '23505') {
+        throw new ApiError('Resource with this ID already exists', 'CONFLICT', 409);
+      }
       throw new ApiError(`Failed to save template: ${error.message}`, 'DB_ERROR', 500);
     }
 
@@ -657,6 +669,12 @@ export class DbService {
       .single();
 
     if (error) {
+      if (error.code === '22P02') {
+        throw new ApiError('Invalid ID format', 'VALIDATION_ERROR', 400);
+      }
+      if (error.code === '23505') {
+        throw new ApiError('Resource with this ID already exists', 'CONFLICT', 409);
+      }
       throw new ApiError(`Failed to save SEO analysis: ${error.message}`, 'DB_ERROR', 500);
     }
 
