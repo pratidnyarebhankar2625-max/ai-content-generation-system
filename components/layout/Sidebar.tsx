@@ -58,14 +58,14 @@ export default function Sidebar() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.04,
       }
     }
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, x: -15 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: "easeOut" } }
+    hidden: { opacity: 0, x: -8 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.15, ease: "easeOut" } }
   };
 
   return (
@@ -98,11 +98,15 @@ export default function Sidebar() {
 
             return (
               <motion.div key={item.name} variants={itemVariants}>
-                <Link href={item.href} onClick={() => {
-                  if (window.innerWidth < 1024) {
-                    toggleSidebar();
-                  }
-                }}>
+                <Link
+                  href={item.href}
+                  prefetch={true}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
+                      toggleSidebar();
+                    }
+                  }}
+                >
                   <Button
                     variant="ghost"
                     className={`

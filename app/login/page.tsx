@@ -43,7 +43,7 @@ export default function LoginPage() {
 
     if (result.success) {
       setSuccess(result.message || "Login successful!");
-      setTimeout(() => router.push("/"), 500);
+      router.push("/");
     } else {
       setError(result.error || "Login failed.");
     }
@@ -57,7 +57,7 @@ export default function LoginPage() {
 
     if (result.success) {
       setSuccess(result.message || "Signed in!");
-      setTimeout(() => router.push("/"), 500);
+      router.push("/");
     } else {
       setError(result.error || "Google sign-in failed.");
     }

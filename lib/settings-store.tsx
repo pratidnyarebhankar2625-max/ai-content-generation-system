@@ -94,12 +94,20 @@ export function SettingsProvider({
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      const savedTheme = localStorage.getItem("theme");
 
       if (!stored) {
+        if (savedTheme) {
+          return { ...DEFAULT_SETTINGS, theme: savedTheme };
+        }
         return null;
       }
 
-      return JSON.parse(stored) as UserSettings;
+      const parsed = JSON.parse(stored) as UserSettings;
+      if (savedTheme) {
+        parsed.theme = savedTheme;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -113,6 +121,9 @@ export function SettingsProvider({
 
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+        if (value.theme) {
+          localStorage.setItem("theme", value.theme);
+        }
       } catch {
         // Ignore localStorage errors.
       }
@@ -151,12 +162,6 @@ export function SettingsProvider({
 
       const result = await response.json();
 
-      /**
-       * Ignore this GET if:
-       *
-       * 1. A newer GET started, or
-       * 2. A PATCH happened while this GET was running.
-       */
       if (
         requestVersion !== requestVersionRef.current ||
         mutationCountRef.current > 0
@@ -170,10 +175,12 @@ export function SettingsProvider({
         result?.data
       ) {
         const data = result.data;
+        const savedTheme = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
 
         const serverSettings: UserSettings = {
           theme:
-            data.theme ??
+            savedTheme ||
+            data.theme ||
             DEFAULT_SETTINGS.theme,
 
           language:
@@ -221,10 +228,6 @@ export function SettingsProvider({
         error
       );
 
-      /**
-       * Do not replace current state with localStorage
-       * if a mutation has happened.
-       */
       if (
         requestVersion !== requestVersionRef.current ||
         mutationCountRef.current > 0
@@ -261,6 +264,11 @@ export function SettingsProvider({
   useEffect(() => {
     if (settings?.theme) {
       setTheme(settings.theme);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("theme", settings.theme);
+        } catch {}
+      }
     }
   }, [settings?.theme, setTheme]);
 

@@ -66,14 +66,7 @@ export default function RegisterPage() {
 
     if (result.success) {
       setSuccess(result.message || "Account created!");
-      if (result.data?.requireVerification) {
-        if (result.data?.verifyToken) {
-          sessionStorage.setItem("pendingVerifyToken", result.data.verifyToken);
-        }
-        setTimeout(() => router.push("/verify-email"), 800);
-      } else {
-        setTimeout(() => router.push("/"), 800);
-      }
+      router.push("/");
     } else {
       setError(result.error || "Registration failed.");
     }
@@ -87,7 +80,7 @@ export default function RegisterPage() {
 
     if (result.success) {
       setSuccess(result.message || "Signed in!");
-      setTimeout(() => router.push("/"), 500);
+      router.push("/");
     } else {
       setError(result.error || "Google sign-in failed.");
     }

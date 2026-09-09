@@ -13,6 +13,7 @@ import {
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "next-themes";
+import ToggleSwitch from "@/components/ui/ToggleSwitch";
 
 import {
   Settings,
@@ -57,18 +58,6 @@ const settingSections = [
     description: "Choose what notifications you receive",
     icon: Bell,
     items: [
-      {
-        label: "Email Notifications",
-        description: "Receive updates via email",
-        icon: Mail,
-        toggle: true,
-      },
-      {
-        label: "Push Notifications",
-        description: "Browser push notifications",
-        icon: Smartphone,
-        toggle: true,
-      },
       {
         label: "Generation Alerts",
         description: "Get notified when content is ready",
@@ -273,9 +262,10 @@ export default function SettingsPage() {
                     : false;
 
                 return (
-                  <button
+                  <div
                     key={item.label}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       if (isToggle) {
                         handleToggle(item.label);
@@ -283,7 +273,17 @@ export default function SettingsPage() {
                         handleAction(item.label);
                       }
                     }}
-                    className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 dark:hover:border-[#F8FAFC]/30 hover:bg-card hover:shadow-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (isToggle) {
+                          handleToggle(item.label);
+                        } else {
+                          handleAction(item.label);
+                        }
+                      }
+                    }}
+                    className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 dark:hover:border-[#F8FAFC]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
                   >
                     <div className="flex items-center gap-3.5">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8 dark:group-hover:bg-[#F8FAFC]/10">
@@ -314,23 +314,15 @@ export default function SettingsPage() {
                     </div>
 
                     {isToggle ? (
-                      <div
-                        className={`h-7 w-12 rounded-full p-0.5 transition-colors shadow-inner ${toggleValue
-                          ? "bg-[#fe4443]"
-                          : "bg-slate-200 dark:bg-slate-700"
-                          }`}
-                      >
-                        <div
-                          className={`h-6 w-6 rounded-full bg-white shadow-md transition-transform ${toggleValue
-                            ? "translate-x-5"
-                            : "translate-x-0"
-                            }`}
-                        />
-                      </div>
+                      <ToggleSwitch
+                        checked={toggleValue}
+                        onChange={() => handleToggle(item.label)}
+                        ariaLabel={`Toggle ${item.label}`}
+                      />
                     ) : (
                       <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680] group-hover:dark:text-[#F8FAFC]" />
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>

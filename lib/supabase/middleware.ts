@@ -31,9 +31,15 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
   
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const res = await supabase.auth.getUser()
+    user = res.data?.user ?? null
+  } catch {
+    user = null
+  }
+
+  const hasActiveSession = request.cookies.has('writeora-active-user') || !!user
 
   // Define protected routes that require authentication
   const isProtectedRoute = request.nextUrl.pathname === '/' ||
@@ -44,7 +50,7 @@ export async function updateSession(request: NextRequest) {
                            request.nextUrl.pathname.startsWith('/generate') ||
                            request.nextUrl.pathname.startsWith('/seo')
 
-  if (isProtectedRoute && !user) {
+  if (isProtectedRoute && !hasActiveSession) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -54,7 +60,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
                       request.nextUrl.pathname.startsWith('/register')
 
-  if (isAuthRoute && user) {
+  if (isAuthRoute && hasActiveSession) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

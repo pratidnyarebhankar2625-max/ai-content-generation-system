@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   PenSquare,
   Mail,
@@ -87,16 +88,23 @@ export default function TemplateCard({
 
         <button
           onClick={() => onFavorite?.(id)}
-          className={`group/fav flex h-9 w-9 items-center justify-center rounded-full border border-transparent transition-all duration-300 ${
+          className={`group/fav relative flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 active:scale-90 ${
             isFavorite
-              ? "bg-amber-50 text-amber-500 hover:bg-amber-100 border-amber-200/50"
-              : "text-muted-foreground hover:bg-muted hover:text-amber-500"
+              ? "bg-amber-500/10 text-amber-500 border-amber-300/40 shadow-[0_0_10px_rgba(245,158,11,0.25)]"
+              : "border-transparent text-muted-foreground hover:bg-muted hover:text-amber-500"
           }`}
           aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         >
-          <Star
-            className={`h-[18px] w-[18px] transition-transform duration-300 group-hover/fav:scale-110 ${isFavorite ? "fill-current" : ""}`}
-          />
+          <motion.div
+            key={isFavorite ? "fav" : "unfav"}
+            initial={{ scale: 0.6, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          >
+            <Star
+              className={`h-[18px] w-[18px] transition-colors duration-300 ${isFavorite ? "fill-amber-500 text-amber-500" : ""}`}
+            />
+          </motion.div>
         </button>
       </div>
 

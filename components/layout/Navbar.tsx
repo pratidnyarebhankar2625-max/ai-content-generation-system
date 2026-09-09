@@ -105,14 +105,21 @@ export default function Navbar() {
                       updateSettings({ theme: newTheme });
                     }
                   }}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-xs"
                   aria-label="Toggle theme"
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-[22px] w-[22px]" />
-                  ) : (
-                    <Moon className="h-[22px] w-[22px]" />
-                  )}
+                  <motion.div
+                    key={theme}
+                    initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.25, type: "spring", stiffness: 300 }}
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-[20px] w-[20px] text-amber-400" />
+                    ) : (
+                      <Moon className="h-[20px] w-[20px] text-[#113680]" />
+                    )}
+                  </motion.div>
                 </button>
               )}
 
