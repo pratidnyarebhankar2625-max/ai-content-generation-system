@@ -6,25 +6,16 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Settings, ChevronDown, Menu, Bell, Sparkles, Sun, Moon } from "lucide-react";
+import { LogOut, ChevronDown, Menu, Bell, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
-import { useSettings } from "@/lib/settings-store";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { toggleSidebar } = useSidebar();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const { updateSettings } = useSettings();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Handle scroll for dynamic shadow/border
   useEffect(() => {
@@ -95,34 +86,6 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           {isAuthenticated && user ? (
             <>
-              {/* Theme Toggle */}
-              {mounted && (
-                <button
-                  onClick={() => {
-                    const newTheme = theme === "dark" ? "light" : "dark";
-                    setTheme(newTheme);
-                    if (isAuthenticated && user) {
-                      updateSettings({ theme: newTheme });
-                    }
-                  }}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/40 text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-xs"
-                  aria-label="Toggle theme"
-                >
-                  <motion.div
-                    key={theme}
-                    initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
-                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.25, type: "spring", stiffness: 300 }}
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="h-[20px] w-[20px] text-amber-400" />
-                    ) : (
-                      <Moon className="h-[20px] w-[20px] text-[#113680]" />
-                    )}
-                  </motion.div>
-                </button>
-              )}
-
               {/* Notification Bell */}
               <button 
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"

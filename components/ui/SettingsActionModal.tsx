@@ -223,7 +223,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-border"
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-card shadow-2xl border border-border"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border bg-[#113680] p-5 text-white">
@@ -232,7 +232,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
               {getIcon()}
             </div>
             <div>
-              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">{getTitle()}</h3>
+              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-white">{getTitle()}</h3>
             </div>
           </div>
           <button 
@@ -247,21 +247,21 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
         <div className="p-6 space-y-6">
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-600">
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900 text-xs text-red-600 dark:text-red-400">
               {errorMsg}
             </div>
           )}
           
           {action === "Email Address" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Enter your new email address below. We'll send a verification link to confirm the change.</p>
+              <p className="text-sm text-slate-600 dark:text-muted-foreground">Enter your new email address below. We'll send a verification link to confirm the change.</p>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#113680]">New Email Address</label>
+                <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">New Email Address</label>
                 <input 
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
                   placeholder="name@example.com"
                 />
               </div>
@@ -271,32 +271,32 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
           {action === "Change Password" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#113680]">Current Password</label>
+                <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Current Password</label>
                 <input 
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
                   placeholder="••••••••"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#113680]">New Password</label>
+                <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">New Password</label>
                 <input 
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
                   placeholder="••••••••"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#113680]">Confirm New Password</label>
+                <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Confirm New Password</label>
                 <input 
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
                   placeholder="••••••••"
                 />
               </div>
@@ -305,17 +305,17 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
 
           {action === "Active Sessions" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Review active sessions associated with your account.</p>
+              <p className="text-sm text-slate-600 dark:text-muted-foreground">Review active sessions associated with your account.</p>
               
               <div className="rounded-xl border border-border overflow-hidden">
-                <div className="flex items-center justify-between bg-slate-50 p-4 border-b border-border">
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-muted p-4 border-b border-border">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-[#113680]/10 flex items-center justify-center">
-                      <Globe className="h-4 w-4 text-[#113680]" />
+                    <div className="h-8 w-8 rounded-full bg-[#113680]/10 dark:bg-white/10 flex items-center justify-center">
+                      <Globe className="h-4 w-4 text-[#113680] dark:text-[#F8FAFC]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Current Web Session</p>
-                      <p className="text-xs text-green-600 font-medium">Active Now • Authenticated</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-foreground">Current Web Session</p>
+                      <p className="text-xs text-green-600 dark:text-green-400 font-medium">Active Now • Authenticated</p>
                     </div>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
               <button 
                 onClick={handleSignOutOtherDevices}
                 disabled={isSaving}
-                className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                className="w-full rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Log Out All Other Devices"}
               </button>
@@ -334,12 +334,12 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
           {action === "Data & Privacy" && (
             <div className="space-y-6">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#113680]">Download Your Data</h4>
-                <p className="text-sm text-slate-600">Get a copy of all your generated content, settings, and profile data.</p>
+                <h4 className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Download Your Data</h4>
+                <p className="text-sm text-slate-600 dark:text-muted-foreground">Get a copy of all your generated content, settings, and profile data.</p>
                 <button 
                   onClick={handleDownloadDataArchive}
                   disabled={isSaving}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-primary py-2.5 text-sm font-medium text-white dark:text-primary-foreground transition-colors hover:bg-slate-800 disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   Request Data Archive
@@ -349,8 +349,8 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
               <hr className="border-border" />
               
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-red-600">Danger Zone</h4>
-                <p className="text-sm text-slate-600">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</h4>
+                <p className="text-sm text-slate-600 dark:text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
                 <button 
                   onClick={handleDeleteAccount}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm shadow-red-600/20 transition-all hover:bg-red-700"
@@ -364,19 +364,15 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
           
           {action === "Language" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Select your preferred language.</p>
+              <p className="text-sm text-slate-600 dark:text-muted-foreground">Select your preferred language.</p>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#113680]">Language</label>
+                <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Language</label>
                 <select 
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+                  className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
                 >
                   <option value="en-US">English (US)</option>
-                  <option value="en-GB">English (UK)</option>
-                  <option value="fr-FR">French</option>
-                  <option value="es-ES">Spanish</option>
-                  <option value="de-DE">German</option>
                 </select>
               </div>
             </div>
@@ -386,10 +382,10 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
         
         {/* Footer */}
         {action !== "Active Sessions" && action !== "Data & Privacy" && (
-          <div className="flex items-center justify-end gap-3 border-t border-border bg-slate-50 p-5">
+          <div className="flex items-center justify-end gap-3 border-t border-border bg-slate-50 dark:bg-muted/50 p-5">
             <button
               onClick={onClose}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+              className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-muted-foreground transition-colors hover:bg-slate-200 dark:hover:bg-accent"
             >
               Cancel
             </button>

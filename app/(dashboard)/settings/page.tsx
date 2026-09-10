@@ -12,20 +12,15 @@ import {
 } from "@/components/ui/SettingsActionModal";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTheme } from "next-themes";
-import ToggleSwitch from "@/components/ui/ToggleSwitch";
 
 import {
   Settings,
   User,
-  Bell,
   Shield,
   Palette,
   Globe,
   ChevronRight,
-  Moon,
   Mail,
-  Smartphone,
   Key,
   Eye,
 } from "lucide-react";
@@ -54,19 +49,6 @@ const settingSections = [
     ],
   },
   {
-    title: "Notifications",
-    description: "Choose what notifications you receive",
-    icon: Bell,
-    items: [
-      {
-        label: "Generation Alerts",
-        description: "Get notified when content is ready",
-        icon: Bell,
-        toggle: true,
-      },
-    ],
-  },
-  {
     title: "Privacy & Security",
     description: "Control your privacy and security settings",
     icon: Shield,
@@ -85,15 +67,9 @@ const settingSections = [
   },
   {
     title: "Appearance & Localization",
-    description: "Customize how the app looks",
+    description: "Customize regional and language preferences",
     icon: Palette,
     items: [
-      {
-        label: "Dark Theme",
-        description: "Toggle dark mode",
-        icon: Moon,
-        toggle: true,
-      },
       {
         label: "Language",
         description: "English (US)",
@@ -105,50 +81,11 @@ const settingSections = [
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { settings, updateSettings, isLoading } = useSettings();
-  const { theme, setTheme } = useTheme();
+  const { settings, isLoading } = useSettings();
 
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [activeAction, setActiveAction] = useState<SettingsActionType>(null);
-
-  const getToggleValue = (label: string): boolean => {
-    if (!settings) return false;
-    switch (label) {
-      case "Email Notifications":
-        return settings.email_notifications;
-      case "Push Notifications":
-        return settings.push_notifications;
-      case "Generation Alerts":
-        return settings.generation_alerts;
-      case "Dark Theme":
-        return settings.theme === "dark" || theme === "dark";
-      default:
-        return false;
-    }
-  };
-
-  const handleToggle = (label: string) => {
-    if (!settings) return;
-
-    switch (label) {
-      case "Email Notifications":
-        updateSettings({ email_notifications: !settings.email_notifications });
-        break;
-      case "Push Notifications":
-        updateSettings({ push_notifications: !settings.push_notifications });
-        break;
-      case "Generation Alerts":
-        updateSettings({ generation_alerts: !settings.generation_alerts });
-        break;
-      case "Dark Theme": {
-        const newTheme = (settings.theme === "dark" || theme === "dark") ? "light" : "dark";
-        setTheme(newTheme);
-        updateSettings({ theme: newTheme });
-        break;
-      }
-    }
-  };
 
   const openModal = (action: SettingsActionType) => {
     setActiveAction(action);
@@ -176,7 +113,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3].map((i) => (
             <Skeleton
               key={i}
               className="h-48 w-full rounded-[24px]"
@@ -217,7 +154,7 @@ export default function SettingsPage() {
           </h1>
 
           <p className="text-muted-foreground text-base leading-relaxed">
-            Manage your account, notifications, and preferences.
+            Manage your account, privacy, and preferences.
           </p>
         </div>
       </div>
@@ -251,80 +188,45 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2.5">
-              {section.items.map((item) => {
-                const isToggle =
-                  "toggle" in item &&
-                  item.toggle === true;
-
-                const toggleValue =
-                  isToggle
-                    ? getToggleValue(item.label)
-                    : false;
-
-                return (
-                  <div
-                    key={item.label}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      if (isToggle) {
-                        handleToggle(item.label);
-                      } else {
-                        handleAction(item.label);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        if (isToggle) {
-                          handleToggle(item.label);
-                        } else {
-                          handleAction(item.label);
-                        }
-                      }
-                    }}
-                    className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 dark:hover:border-[#F8FAFC]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8 dark:group-hover:bg-[#F8FAFC]/10">
-                        <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680] dark:group-hover:text-[#F8FAFC]" />
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {item.label}
-                        </p>
-
-                        <p className="text-xs text-foreground/70">
-                          {item.label ===
-                            "Edit Profile" &&
-                            user?.name
-                            ? `Update ${user.name}'s profile`
-                            : item.label ===
-                              "Email Address" &&
-                              user?.email
-                              ? user.email
-                              : item.label ===
-                                "Language" &&
-                                settings?.language
-                                ? settings.language
-                                : item.description}
-                        </p>
-                      </div>
+              {section.items.map((item) => (
+                <div
+                  key={item.label}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleAction(item.label)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleAction(item.label);
+                    }
+                  }}
+                  className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 dark:hover:border-[#F8FAFC]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8 dark:group-hover:bg-[#F8FAFC]/10">
+                      <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680] dark:group-hover:text-[#F8FAFC]" />
                     </div>
 
-                    {isToggle ? (
-                      <ToggleSwitch
-                        checked={toggleValue}
-                        onChange={() => handleToggle(item.label)}
-                        ariaLabel={`Toggle ${item.label}`}
-                      />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680] group-hover:dark:text-[#F8FAFC]" />
-                    )}
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {item.label}
+                      </p>
+
+                      <p className="text-xs text-foreground/70">
+                        {item.label === "Edit Profile" && user?.name
+                          ? `Update ${user.name}'s profile`
+                          : item.label === "Email Address" && user?.email
+                            ? user.email
+                            : item.label === "Language" && settings?.language
+                              ? settings.language
+                              : item.description}
+                      </p>
+                    </div>
                   </div>
-                );
-              })}
+
+                  <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680] group-hover:dark:text-[#F8FAFC]" />
+                </div>
+              ))}
             </div>
           </div>
         )

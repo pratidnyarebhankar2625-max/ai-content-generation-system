@@ -79,13 +79,7 @@ export function SettingsProvider({
   // Used to ensure an older PATCH cannot overwrite a newer PATCH.
   const latestMutationRef = useRef(0);
 
-  // ─── Keep ref synchronized ───────────────────────────────────────────────
-
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
-
-  // ─── Local Storage ────────────────────────────────────────────────────────
+  // ─── Local Storage Helpers ────────────────────────────────────────────────
 
   const readLocalSettings = useCallback((): UserSettings | null => {
     if (typeof window === "undefined") {
@@ -130,6 +124,21 @@ export function SettingsProvider({
     },
     []
   );
+
+  // ─── Keep ref synchronized & load local cache on mount ───────────────────
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  useEffect(() => {
+    const cached = readLocalSettings();
+    if (cached && !settingsRef.current) {
+      settingsRef.current = cached;
+      setSettings(cached);
+      setIsLoading(false);
+    }
+  }, [readLocalSettings]);
 
   // ─── Fetch Settings ───────────────────────────────────────────────────────
 
@@ -176,50 +185,63 @@ export function SettingsProvider({
       ) {
         const data = result.data;
         const savedTheme = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+        const localSettings = readLocalSettings();
 
         const serverSettings: UserSettings = {
           theme:
-            savedTheme ||
             data.theme ||
+            localSettings?.theme ||
+            savedTheme ||
             DEFAULT_SETTINGS.theme,
 
           language:
             data.language ??
+            localSettings?.language ??
             DEFAULT_SETTINGS.language,
 
           writing_tone:
             data.writing_tone ??
+            localSettings?.writing_tone ??
             DEFAULT_SETTINGS.writing_tone,
 
           default_ai_model:
             data.default_ai_model ??
+            localSettings?.default_ai_model ??
             DEFAULT_SETTINGS.default_ai_model,
 
           email_notifications:
             data.email_notifications ??
+            localSettings?.email_notifications ??
             DEFAULT_SETTINGS.email_notifications,
 
           push_notifications:
             data.push_notifications ??
+            localSettings?.push_notifications ??
             DEFAULT_SETTINGS.push_notifications,
 
           generation_alerts:
             data.generation_alerts ??
+            localSettings?.generation_alerts ??
             DEFAULT_SETTINGS.generation_alerts,
         };
 
         settingsRef.current = serverSettings;
         setSettings(serverSettings);
         writeLocalSettings(serverSettings);
+        if (serverSettings.theme) {
+          setTheme(serverSettings.theme);
+        }
       } else {
         const localSettings = readLocalSettings();
 
         if (localSettings) {
           settingsRef.current = localSettings;
           setSettings(localSettings);
+          if (localSettings.theme) setTheme(localSettings.theme);
         } else {
           settingsRef.current = DEFAULT_SETTINGS;
           setSettings(DEFAULT_SETTINGS);
+          if (DEFAULT_SETTINGS.theme) setTheme(DEFAULT_SETTINGS.theme);
         }
       }
     } catch (error) {
@@ -240,9 +262,11 @@ export function SettingsProvider({
       if (localSettings) {
         settingsRef.current = localSettings;
         setSettings(localSettings);
+        if (localSettings.theme) setTheme(localSettings.theme);
       } else {
         settingsRef.current = DEFAULT_SETTINGS;
         setSettings(DEFAULT_SETTINGS);
+        if (DEFAULT_SETTINGS.theme) setTheme(DEFAULT_SETTINGS.theme);
       }
     } finally {
       setIsLoading(false);
@@ -252,6 +276,7 @@ export function SettingsProvider({
     userId,
     readLocalSettings,
     writeLocalSettings,
+    setTheme,
   ]);
 
   // Fetch whenever authentication/user changes.
@@ -276,13 +301,6 @@ export function SettingsProvider({
 
   const updateSettings = useCallback(
     async (newSettings: Partial<UserSettings>) => {
-      if (!userId) {
-        return {
-          success: false,
-          error: "Not authenticated",
-        };
-      }
-
       /**
        * Invalidate all GET requests currently running.
        */
@@ -295,7 +313,7 @@ export function SettingsProvider({
         ++latestMutationRef.current;
 
       const previousSettings =
-        settingsRef.current ?? DEFAULT_SETTINGS;
+        settingsRef.current ?? readLocalSettings() ?? DEFAULT_SETTINGS;
 
       /**
        * Create the complete next state locally.
@@ -315,6 +333,16 @@ export function SettingsProvider({
        * Persist optimistic state locally as a fallback.
        */
       writeLocalSettings(optimisticSettings);
+
+      if (newSettings.theme) {
+        setTheme(newSettings.theme);
+      }
+
+      if (!userId) {
+        return {
+          success: true,
+        };
+      }
 
       mutationCountRef.current += 1;
 
@@ -378,22 +406,22 @@ export function SettingsProvider({
         const confirmedSettings: UserSettings = {
           ...optimisticSettings,
 
-          ...(typeof data.theme === "string"
+          ...("theme" in newSettings && typeof data.theme === "string"
             ? { theme: data.theme }
             : {}),
 
-          ...(typeof data.language === "string"
+          ...("language" in newSettings && typeof data.language === "string"
             ? { language: data.language }
             : {}),
 
-          ...(typeof data.writing_tone === "string"
+          ...("writing_tone" in newSettings && typeof data.writing_tone === "string"
             ? {
               writing_tone:
                 data.writing_tone,
             }
             : {}),
 
-          ...(typeof data.default_ai_model ===
+          ...("default_ai_model" in newSettings && typeof data.default_ai_model ===
             "string"
             ? {
               default_ai_model:
@@ -401,7 +429,7 @@ export function SettingsProvider({
             }
             : {}),
 
-          ...(typeof data.email_notifications ===
+          ...("email_notifications" in newSettings && typeof data.email_notifications ===
             "boolean"
             ? {
               email_notifications:
@@ -409,7 +437,7 @@ export function SettingsProvider({
             }
             : {}),
 
-          ...(typeof data.push_notifications ===
+          ...("push_notifications" in newSettings && typeof data.push_notifications ===
             "boolean"
             ? {
               push_notifications:
@@ -417,7 +445,7 @@ export function SettingsProvider({
             }
             : {}),
 
-          ...(typeof data.generation_alerts ===
+          ...("generation_alerts" in newSettings && typeof data.generation_alerts ===
             "boolean"
             ? {
               generation_alerts:

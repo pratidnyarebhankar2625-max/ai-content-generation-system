@@ -71,7 +71,7 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl border border-border"
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-card shadow-2xl border border-border"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border bg-[#113680] p-5 text-white">
@@ -80,7 +80,7 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
               <Sparkles className="h-5 w-5 text-[#fe4443]" />
             </div>
             <div>
-              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">Edit Profile</h3>
+              <h3 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-white">Edit Profile</h3>
               <p className="text-xs text-white/70">Customize your avatar and name</p>
             </div>
           </div>
@@ -97,12 +97,12 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
           
           {/* Display Name */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#113680]">Display Name</label>
+            <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Display Name</label>
             <input 
               type="text" 
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
+              className="w-full rounded-xl border border-border bg-slate-50 dark:bg-muted px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white dark:focus:bg-card focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
               placeholder="Your name"
             />
           </div>
@@ -110,7 +110,7 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
           {/* Avatar Selection */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-[#113680]">Choose an Avatar</label>
+              <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">Choose an Avatar</label>
             </div>
             
             <div className="grid grid-cols-4 gap-3">
@@ -121,7 +121,7 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
                   className={`group relative aspect-square overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                     selectedAvatar === avatar 
                       ? "border-[#fe4443] shadow-[0_0_15px_rgba(254,68,67,0.3)] scale-105" 
-                      : "border-transparent bg-slate-50 hover:border-[#113680]/30 hover:scale-105"
+                      : "border-transparent bg-slate-50 dark:bg-muted hover:border-[#113680]/30 hover:scale-105"
                   }`}
                 >
                   <img src={avatar} alt={`Avatar ${idx + 1}`} className="h-full w-full object-cover" />
@@ -138,10 +138,10 @@ export function AvatarSelectionModal({ isOpen, onClose }: AvatarSelectionModalPr
         </div>
         
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-border bg-slate-50 p-5">
+        <div className="flex items-center justify-end gap-3 border-t border-border bg-slate-50 dark:bg-muted/50 p-5">
           <button
             onClick={onClose}
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200"
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-muted-foreground transition-colors hover:bg-slate-200 dark:hover:bg-accent"
           >
             Cancel
           </button>
