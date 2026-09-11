@@ -56,13 +56,13 @@ export default function Navbar() {
     <nav 
       className={`sticky top-0 z-50 h-16 w-full transition-all duration-300 ${
         scrolled 
-          ? "border-b border-border/50 bg-white/85 dark:bg-[#0B192C]/85 backdrop-blur-xl shadow-sm" 
-          : "border-b border-border bg-white dark:bg-[#0B192C]"
+          ? "border-b border-border/50 bg-white/85 backdrop-blur-xl shadow-sm" 
+          : "border-b border-border bg-white"
       }`}
     >
       <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between px-4 sm:px-6">
 
-        {/* Left Side: Toggle & Logo */}
+        {/* Left Side: Navigation Menu & Logo */}
         <div className="flex items-center gap-4 sm:gap-6">
           <button
             onClick={toggleSidebar}
@@ -86,14 +86,14 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-4">
           {isAuthenticated && user ? (
             <>
-              {/* Notification Bell */}
-              <button 
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-300 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              {/* Notification Indicator */}
+              <div 
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground"
                 aria-label="Notifications"
               >
                 <Bell className="h-[22px] w-[22px]" />
                 <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-background"></span>
-              </button>
+              </div>
 
               {/* Separator */}
               <div className="hidden h-6 w-px bg-border sm:block"></div>
@@ -106,14 +106,14 @@ export default function Navbar() {
                   aria-expanded={showDropdown}
                   aria-haspopup="true"
                 >
-                  <Avatar className="h-9 w-9 shadow-sm ring-2 ring-transparent transition-all duration-300 group-hover:ring-[#113680]/20 dark:group-hover:ring-white/20">
+                  <Avatar className="h-9 w-9 shadow-sm ring-2 ring-transparent transition-all duration-300 group-hover:ring-[#113680]/20">
                     {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                     <AvatarFallback className="bg-gradient-to-br from-[#113680] to-[#3b82f6] text-white font-semibold text-xs">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden text-left md:block">
-                    <p className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC] leading-none">
+                    <p className="text-sm font-semibold text-[#113680] leading-none">
                       {user.name}
                     </p>
                     <p className="text-xs font-medium text-muted-foreground mt-1">
@@ -139,12 +139,10 @@ export default function Navbar() {
                         <p className="font-heading text-lg font-semibold text-foreground tracking-tight">{user.name}</p>
                         <p className="text-sm font-medium text-muted-foreground truncate">{user.email}</p>
                       </div>
-                      
-
 
                       <button
                         onClick={handleLogout}
-                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10"
+                        className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50"
                       >
                         <LogOut className="h-[18px] w-[18px] transition-transform group-hover:-translate-x-0.5" />
                         Sign Out
@@ -158,7 +156,7 @@ export default function Navbar() {
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/login"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-sidebar/80 dark:text-foreground/80 transition-all hover:bg-muted hover:text-sidebar dark:hover:text-foreground"
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-sidebar/80 transition-all hover:bg-muted hover:text-sidebar"
               >
                 Sign In
               </Link>

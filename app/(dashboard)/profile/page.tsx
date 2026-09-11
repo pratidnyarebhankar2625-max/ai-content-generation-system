@@ -26,7 +26,8 @@ import {
   LogOut,
   Edit3,
   CreditCard,
-  Lock
+  Lock,
+  Sparkles
 } from "lucide-react";
 
 function ProfileContent() {
@@ -134,12 +135,12 @@ function ProfileContent() {
                 Pro Member
               </span>
               {isVerified ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 border border-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700">
                   <CheckCircle2 className="h-4 w-4" />
                   Verified
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 border border-amber-100 px-4 py-2 text-sm font-semibold text-amber-700">
                   <AlertCircle className="h-4 w-4" />
                   Unverified
                 </span>
@@ -164,8 +165,8 @@ function ProfileContent() {
         {/* Account Details */}
         <div className="group rounded-[20px] border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10">
-              <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
+              <Briefcase className="h-5 w-5 text-blue-600" />
             </div>
             <h3 className="font-heading text-lg font-semibold text-foreground">Account Details</h3>
           </div>
@@ -189,7 +190,7 @@ function ProfileContent() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-foreground">Current Plan</span>
               </div>
-              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Pro</span>
+              <span className="text-sm font-semibold text-blue-600">Pro</span>
             </div>
           </div>
         </div>
@@ -197,8 +198,8 @@ function ProfileContent() {
         {/* Security */}
         <div className="group rounded-[20px] border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10">
-              <Lock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+              <Lock className="h-5 w-5 text-emerald-600" />
             </div>
             <h3 className="font-heading text-lg font-semibold text-foreground">Security</h3>
           </div>
@@ -221,7 +222,7 @@ function ProfileContent() {
                 <Smartphone className="h-4 w-4 text-muted-foreground" />
                 <div className="text-left">
                   <p className="text-sm font-medium text-foreground">2-Factor Auth</p>
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Enabled</p>
+                  <p className="text-xs text-emerald-600 font-medium">Enabled</p>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -245,10 +246,10 @@ function ProfileContent() {
         {/* Preferences */}
         <div className="group rounded-[20px] border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-500/10">
-              <Monitor className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50">
+              <Sparkles className="h-5 w-5 text-purple-600" />
             </div>
-            <h3 className="font-heading text-lg font-semibold text-foreground">Preferences</h3>
+            <h3 className="font-heading text-lg font-semibold text-foreground">AI Preferences</h3>
           </div>
           <div className="space-y-4">
             <button 
@@ -256,27 +257,15 @@ function ProfileContent() {
               className="flex w-full items-center justify-between rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Notifications</span>
+                <Sparkles className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Default AI Model</span>
               </div>
               <span className="text-xs font-medium text-muted-foreground bg-background rounded-md px-2 py-1 border border-border">
-                {[settings?.email_notifications && "Email", settings?.push_notifications && "Push"].filter(Boolean).join(", ") || "None"}
+                {settings?.default_ai_model || "Gemini 2.5 Pro"}
               </span>
             </button>
             <button 
-              onClick={() => updateSettings({ theme: settings?.theme === "dark" ? "light" : "dark" })}
-              className="flex w-full items-center justify-between rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
-            >
-              <div className="flex items-center gap-3">
-                <Monitor className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Theme</span>
-              </div>
-              <span className="text-xs font-medium text-muted-foreground bg-background rounded-md px-2 py-1 border border-border capitalize">
-                {settings?.theme || "System"}
-              </span>
-            </button>
-            <button 
-              onClick={() => openModal("Language")}
+              onClick={() => router.push('/settings')}
               className="flex w-full items-center justify-between rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
@@ -296,7 +285,7 @@ function ProfileContent() {
       <div className="flex justify-end pt-4 animate-fade-in-up stagger-3">
         <button 
           onClick={logout}
-          className="inline-flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-500/10 px-6 py-3 text-sm font-medium text-red-600 dark:text-red-400 transition-all hover:bg-red-100 dark:hover:bg-red-500/20"
+          className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-6 py-3 text-sm font-medium text-red-600 transition-all hover:bg-red-100"
         >
           <LogOut className="h-4 w-4" />
           Sign Out

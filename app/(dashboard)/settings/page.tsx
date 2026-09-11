@@ -1,34 +1,32 @@
 "use client";
 
 import { useState } from "react";
-
 import { useAuth } from "@/lib/auth-store";
 import { useSettings } from "@/lib/settings-store";
-
 import { AvatarSelectionModal } from "@/components/ui/AvatarSelectionModal";
 import {
   SettingsActionModal,
   type SettingsActionType,
 } from "@/components/ui/SettingsActionModal";
-
 import { Skeleton } from "@/components/ui/skeleton";
-
 import {
   Settings,
   User,
   Shield,
-  Palette,
+  Sparkles,
   Globe,
   ChevronRight,
   Mail,
   Key,
   Eye,
+  Bot,
+  MessageSquare,
 } from "lucide-react";
 
 const settingSections = [
   {
     title: "Account",
-    description: "Manage your account details and preferences",
+    description: "Manage your account details and security",
     icon: User,
     items: [
       {
@@ -38,7 +36,7 @@ const settingSections = [
       },
       {
         label: "Email Address",
-        description: "pratidnya@example.com",
+        description: "Update your account email address",
         icon: Mail,
       },
       {
@@ -49,30 +47,40 @@ const settingSections = [
     ],
   },
   {
-    title: "Privacy & Security",
-    description: "Control your privacy and security settings",
-    icon: Shield,
+    title: "AI Preferences",
+    description: "Customize your default generation model and tone",
+    icon: Sparkles,
     items: [
       {
-        label: "Active Sessions",
-        description: "Manage your active sessions",
-        icon: Eye,
+        label: "Default AI Model",
+        description: "Gemini 2.5 Pro",
+        icon: Bot,
       },
       {
-        label: "Data & Privacy",
-        description: "Download or delete your data",
+        label: "Writing Tone",
+        description: "Professional",
+        icon: MessageSquare,
+      },
+      {
+        label: "Output Language",
+        description: "English (US)",
         icon: Globe,
       },
     ],
   },
   {
-    title: "Appearance & Localization",
-    description: "Customize regional and language preferences",
-    icon: Palette,
+    title: "Privacy & Security",
+    description: "Control your privacy and session security",
+    icon: Shield,
     items: [
       {
-        label: "Language",
-        description: "English (US)",
+        label: "Active Sessions",
+        description: "Manage your active browser sessions",
+        icon: Eye,
+      },
+      {
+        label: "Data & Privacy",
+        description: "Download data archive or delete account",
         icon: Globe,
       },
     ],
@@ -105,7 +113,6 @@ export default function SettingsPage() {
       <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">
         <div className="flex items-center gap-3">
           <Skeleton className="h-12 w-12 rounded-2xl" />
-
           <div className="space-y-2">
             <Skeleton className="h-8 w-64 rounded-md" />
             <Skeleton className="h-4 w-48 rounded-md" />
@@ -114,10 +121,7 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton
-              key={i}
-              className="h-48 w-full rounded-[24px]"
-            />
+            <Skeleton key={i} className="h-48 w-full rounded-[24px]" />
           ))}
         </div>
       </div>
@@ -128,21 +132,16 @@ export default function SettingsPage() {
     <div className="mx-auto w-full max-w-5xl space-y-8 p-6 md:p-8 animate-fade-in">
       <AvatarSelectionModal
         isOpen={isAvatarModalOpen}
-        onClose={() =>
-          setIsAvatarModalOpen(false)
-        }
+        onClose={() => setIsAvatarModalOpen(false)}
       />
 
       <SettingsActionModal
         isOpen={actionModalOpen}
-        onClose={() =>
-          setActionModalOpen(false)
-        }
+        onClose={() => setActionModalOpen(false)}
         action={activeAction}
       />
 
       {/* Header */}
-
       <div className="flex items-center gap-3 animate-fade-in-up">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
           <Settings className="h-6 w-6 text-primary-foreground" />
@@ -154,83 +153,83 @@ export default function SettingsPage() {
           </h1>
 
           <p className="text-muted-foreground text-base leading-relaxed">
-            Manage your account, privacy, and preferences.
+            Manage your account, AI preferences, and security.
           </p>
         </div>
       </div>
 
       {/* Settings Sections */}
-
-      {settingSections.map(
-        (section, sectionIndex) => (
-          <div
-            key={section.title}
-            className="rounded-[20px] border border-border bg-card p-7 shadow-[var(--shadow-card)] animate-fade-in-up"
-            style={{
-              animationDelay: `${(sectionIndex + 1) * 100
-                }ms`,
-            }}
-          >
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#113680]/8">
-                <section.icon className="h-5 w-5 text-[#113680]" />
-              </div>
-
-              <div>
-                <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">
-                  {section.title}
-                </h2>
-
-                <p className="text-sm font-medium text-muted-foreground">
-                  {section.description}
-                </p>
-              </div>
+      {settingSections.map((section, sectionIndex) => (
+        <div
+          key={section.title}
+          className="rounded-[20px] border border-border bg-card p-7 shadow-[var(--shadow-card)] animate-fade-in-up"
+          style={{
+            animationDelay: `${(sectionIndex + 1) * 100}ms`,
+          }}
+        >
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#113680]/8">
+              <section.icon className="h-5 w-5 text-[#113680]" />
             </div>
 
-            <div className="space-y-2.5">
-              {section.items.map((item) => (
-                <div
-                  key={item.label}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleAction(item.label)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleAction(item.label);
-                    }
-                  }}
-                  className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8">
-                      <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680]" />
-                    </div>
+            <div>
+              <h2 className="font-heading text-[22px] font-semibold leading-snug tracking-tight text-foreground">
+                {section.title}
+              </h2>
 
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {item.label}
-                      </p>
-
-                      <p className="text-xs text-foreground/70">
-                        {item.label === "Edit Profile" && user?.name
-                          ? `Update ${user.name}'s profile`
-                          : item.label === "Email Address" && user?.email
-                            ? user.email
-                            : item.label === "Language" && settings?.language
-                              ? settings.language
-                              : item.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680]" />
-                </div>
-              ))}
+              <p className="text-sm font-medium text-muted-foreground">
+                {section.description}
+              </p>
             </div>
           </div>
-        )
-      )}
+
+          <div className="space-y-2.5">
+            {section.items.map((item) => (
+              <div
+                key={item.label}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleAction(item.label)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleAction(item.label);
+                  }
+                }}
+                className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8">
+                    <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680]" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {item.label}
+                    </p>
+
+                    <p className="text-xs text-foreground/70">
+                      {item.label === "Edit Profile" && user?.name
+                        ? `Update ${user.name}'s profile`
+                        : item.label === "Email Address" && user?.email
+                          ? user.email
+                          : item.label === "Default AI Model" && settings?.default_ai_model
+                            ? settings.default_ai_model
+                            : item.label === "Writing Tone" && settings?.writing_tone
+                              ? settings.writing_tone
+                              : item.label === "Output Language" && settings?.language
+                                ? settings.language
+                                : item.description}
+                    </p>
+                  </div>
+                </div>
+
+                <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
