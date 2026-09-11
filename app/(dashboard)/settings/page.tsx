@@ -172,8 +172,8 @@ export default function SettingsPage() {
             }}
           >
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#113680]/8 dark:bg-[#F8FAFC]/10">
-                <section.icon className="h-5 w-5 text-[#113680] dark:text-[#F8FAFC]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#113680]/8">
+                <section.icon className="h-5 w-5 text-[#113680]" />
               </div>
 
               <div>
@@ -200,11 +200,11 @@ export default function SettingsPage() {
                       handleAction(item.label);
                     }
                   }}
-                  className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 dark:hover:border-[#F8FAFC]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
+                  className="group flex w-full items-center justify-between rounded-xl border border-border bg-[var(--surface-page)] p-4 text-left transition-all duration-300 hover:border-[#113680]/30 hover:bg-card hover:shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#113680]/40"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8 dark:group-hover:bg-[#F8FAFC]/10">
-                      <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680] dark:group-hover:text-[#F8FAFC]" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--muted)] transition-colors duration-300 group-hover:bg-[#113680]/8">
+                      <item.icon className="h-[18px] w-[18px] text-foreground/70 transition-colors duration-300 group-hover:text-[#113680]" />
                     </div>
 
                     <div>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680] group-hover:dark:text-[#F8FAFC]" />
+                  <ChevronRight className="h-4 w-4 text-foreground/70 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#113680]" />
                 </div>
               ))}
             </div>

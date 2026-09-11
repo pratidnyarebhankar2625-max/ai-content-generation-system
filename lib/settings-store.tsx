@@ -12,7 +12,6 @@ import {
 } from "react";
 
 import { useAuth } from "@/lib/auth-store";
-import { useTheme } from "next-themes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -63,7 +62,6 @@ export function SettingsProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   const { user, isAuthenticated } = useAuth();
-  const { setTheme } = useTheme();
 
   const userId = user?.id;
 
@@ -228,20 +226,15 @@ export function SettingsProvider({
         settingsRef.current = serverSettings;
         setSettings(serverSettings);
         writeLocalSettings(serverSettings);
-        if (serverSettings.theme) {
-          setTheme(serverSettings.theme);
-        }
       } else {
         const localSettings = readLocalSettings();
 
         if (localSettings) {
           settingsRef.current = localSettings;
           setSettings(localSettings);
-          if (localSettings.theme) setTheme(localSettings.theme);
         } else {
           settingsRef.current = DEFAULT_SETTINGS;
           setSettings(DEFAULT_SETTINGS);
-          if (DEFAULT_SETTINGS.theme) setTheme(DEFAULT_SETTINGS.theme);
         }
       }
     } catch (error) {
@@ -262,11 +255,9 @@ export function SettingsProvider({
       if (localSettings) {
         settingsRef.current = localSettings;
         setSettings(localSettings);
-        if (localSettings.theme) setTheme(localSettings.theme);
       } else {
         settingsRef.current = DEFAULT_SETTINGS;
         setSettings(DEFAULT_SETTINGS);
-        if (DEFAULT_SETTINGS.theme) setTheme(DEFAULT_SETTINGS.theme);
       }
     } finally {
       setIsLoading(false);
@@ -276,26 +267,12 @@ export function SettingsProvider({
     userId,
     readLocalSettings,
     writeLocalSettings,
-    setTheme,
   ]);
 
   // Fetch whenever authentication/user changes.
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
-
-  // ─── Theme ────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (settings?.theme) {
-      setTheme(settings.theme);
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("theme", settings.theme);
-        } catch {}
-      }
-    }
-  }, [settings?.theme, setTheme]);
 
   // ─── Update Settings ──────────────────────────────────────────────────────
 
@@ -333,10 +310,6 @@ export function SettingsProvider({
        * Persist optimistic state locally as a fallback.
        */
       writeLocalSettings(optimisticSettings);
-
-      if (newSettings.theme) {
-        setTheme(newSettings.theme);
-      }
 
       if (!userId) {
         return {
