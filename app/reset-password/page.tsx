@@ -56,7 +56,7 @@ function ResetPasswordForm() {
     if (!confirmCheck.valid) { setError(confirmCheck.error); return; }
 
     setIsSubmitting(true);
-    const result = await resetPassword(token, password);
+    const result = await resetPassword(password);
     setIsSubmitting(false);
 
     if (result.success) {

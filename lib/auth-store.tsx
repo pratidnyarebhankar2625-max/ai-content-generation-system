@@ -33,8 +33,10 @@ type AuthContextType = {
   register: (name: string, email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
   googleSignIn: () => Promise<AuthResult>;
-  forgotPassword: (email: string) => Promise<AuthResult>;
-  resetPassword: (token: string, newPassword: string) => Promise<AuthResult>;
+  forgotPassword: (identifier: string) => Promise<AuthResult>;
+  verifyRecoveryOtp: (identifier: string, token: string) => Promise<AuthResult>;
+  resendForgotPasswordOtp: (identifier: string) => Promise<AuthResult>;
+  resetPassword: (newPassword: string, token?: string) => Promise<AuthResult>;
   verifyEmail: (token: string) => Promise<AuthResult>;
   resendVerification: () => Promise<AuthResult>;
   updateUser: (data: Partial<AuthUser>) => Promise<AuthResult>;
@@ -352,8 +354,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Forgot Password ──────────────────────────────────────────────────────
   const forgotPassword = useCallback(
-    async (email: string): Promise<AuthResult> => {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    async (identifier: string): Promise<AuthResult> => {
+      const cleanId = identifier.trim();
+      const isPhone = /^\+?[0-9\s\-()]{7,20}$/.test(cleanId) && !cleanId.includes("@");
+
+      if (isPhone) {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: cleanId,
+        });
+
+        if (error) {
+          const lower = error.message.toLowerCase();
+          if (
+            lower.includes("sms") ||
+            lower.includes("provider") ||
+            lower.includes("disabled") ||
+            lower.includes("not supported") ||
+            lower.includes("unsupported") ||
+            lower.includes("phone_provider_disabled")
+          ) {
+            return {
+              success: false,
+              error:
+                "Mobile SMS recovery requires Supabase Phone Auth with an SMS provider (e.g. Twilio) configured in your Supabase Dashboard. Please use your registered email address.",
+            };
+          }
+          return { success: false, error: error.message };
+        }
+
+        return {
+          success: true,
+          message: "OTP sent to your mobile number.",
+          data: { isPhone: true, identifier: cleanId },
+        };
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanId, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
@@ -363,17 +399,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return {
         success: true,
-        message: "If an account exists, a reset link has been sent.",
+        message: "Recovery OTP sent to your registered email address.",
+        data: { isPhone: false, identifier: cleanId },
       };
     },
     [supabase.auth]
   );
 
+  // ── Verify Recovery OTP ──────────────────────────────────────────────────
+  const verifyRecoveryOtp = useCallback(
+    async (identifier: string, token: string): Promise<AuthResult> => {
+      const cleanToken = token.trim();
+      const cleanId = identifier.trim();
+
+      if (!cleanToken || cleanToken.length < 6) {
+        return { success: false, error: "Please enter a valid 6-digit OTP." };
+      }
+
+      const isPhone = /^\+?[0-9\s\-()]{7,20}$/.test(cleanId) && !cleanId.includes("@");
+
+      if (isPhone) {
+        const { error } = await supabase.auth.verifyOtp({
+          phone: cleanId,
+          token: cleanToken,
+          type: "sms",
+        });
+
+        if (error) {
+          const lower = error.message.toLowerCase();
+          if (lower.includes("expired")) {
+            return { success: false, error: "The OTP code has expired. Please request a new code." };
+          }
+          if (lower.includes("invalid") || lower.includes("token")) {
+            return { success: false, error: "Invalid OTP code. Please check and try again." };
+          }
+          return { success: false, error: error.message };
+        }
+
+        return { success: true, message: "OTP verified successfully!" };
+      }
+
+      const { error } = await supabase.auth.verifyOtp({
+        email: cleanId,
+        token: cleanToken,
+        type: "recovery",
+      });
+
+      if (error) {
+        const lower = error.message.toLowerCase();
+        if (lower.includes("expired")) {
+          return { success: false, error: "The OTP code has expired. Please request a new code." };
+        }
+        if (lower.includes("invalid") || lower.includes("token")) {
+          return { success: false, error: "Invalid OTP code. Please check and try again." };
+        }
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, message: "OTP verified successfully!" };
+    },
+    [supabase.auth]
+  );
+
+  // ── Resend Forgot Password OTP ──────────────────────────────────────────
+  const resendForgotPasswordOtp = useCallback(
+    async (identifier: string): Promise<AuthResult> => {
+      return forgotPassword(identifier);
+    },
+    [forgotPassword]
+  );
+
   // ── Reset Password ───────────────────────────────────────────────────────
   const resetPassword = useCallback(
-    async (token: string, newPassword: string): Promise<AuthResult> => {
-      // In Supabase Auth flow, the user clicks the link in email and returns authenticated.
-      // We just update the password.
+    async (newPassword: string, token?: string): Promise<AuthResult> => {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -384,7 +482,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return {
         success: true,
-        message: "Password reset successfully! You can now log in.",
+        message: "Password updated successfully! You can now log in with your new password.",
       };
     },
     [supabase.auth]
@@ -498,6 +596,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       googleSignIn,
       forgotPassword,
+      verifyRecoveryOtp,
+      resendForgotPasswordOtp,
       resetPassword,
       verifyEmail,
       resendVerification,
@@ -511,6 +611,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       googleSignIn,
       forgotPassword,
+      verifyRecoveryOtp,
+      resendForgotPasswordOtp,
       resetPassword,
       verifyEmail,
       resendVerification,
