@@ -89,8 +89,8 @@ function formatAuthError(err: any): string {
   if (lower.includes("failed to fetch") || lower.includes("fetch failed") || lower.includes("networkerror")) {
     return "Unable to connect to the authentication server. Please check your network connection and try again.";
   }
-  if (lower.includes("user_already_exists") || lower.includes("already registered") || lower.includes("already exists")) {
-    return "An account with this email already exists. Please sign in instead.";
+  if (lower.includes("user_already_exists") || lower.includes("already registered") || lower.includes("already exists") || lower.includes("user already registered")) {
+    return "An account with this email already exists. Please log in instead.";
   }
   if (lower.includes("invalid login credentials") || lower.includes("invalid_credentials")) {
     return "The email or password you entered is incorrect.";
@@ -158,16 +158,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }).catch(() => {
       if (!isMounted) return;
       const cached = getLocalAuthSession();
-      if (cached) {
+      if (cached && isMounted) {
         setUser(cached);
         setLocalAuthCookie(cached);
       }
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: any, session: any) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      async (event: string, session: { user: User | null } | null) => {
         if (!isMounted) return;
         if (session?.user) {
           const mappedUser = await mapSupabaseUser(supabase, session.user);
@@ -175,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(mappedUser);
             setLocalAuthCookie(mappedUser);
           }
-        } else if (!getLocalAuthSession()) {
+        } else if (event === "SIGNED_OUT") {
           if (isMounted) {
             setUser(null);
             clearLocalAuthCookie();
@@ -203,38 +205,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               full_name: name,
             },
           },
-        }).catch((err: any) => ({ data: null, error: err }));
+        });
 
         if (error) {
           const lower = (error.message || "").toLowerCase();
-          if (lower.includes("user_already_exists") || lower.includes("already registered") || lower.includes("already exists")) {
-            return { success: false, error: "An account with this email already exists. Please sign in instead." };
+          if (
+            lower.includes("user_already_exists") ||
+            lower.includes("already registered") ||
+            lower.includes("already exists") ||
+            lower.includes("user already registered") ||
+            lower.includes("email_exists") ||
+            lower.includes("email address is already in use")
+          ) {
+            return {
+              success: false,
+              error: "An account with this email already exists. Please log in instead.",
+            };
           }
+          return {
+            success: false,
+            error: formatAuthError(error),
+          };
         }
 
-        const newUser: AuthUser = {
-          id: data?.user?.id || `usr-${Date.now()}`,
-          name: name || email.split("@")[0],
-          email,
-          isVerified: true,
-          provider: "credentials",
-          createdAt: new Date().toISOString(),
-        };
+        // Supabase identity check for duplicate email (when email enumeration protection is active)
+        if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          return {
+            success: false,
+            error: "An account with this email already exists. Please log in instead.",
+          };
+        }
 
-        if (data?.session?.user) {
-          const mappedUser = await mapSupabaseUser(supabase, data.session.user);
+        if (data?.user) {
+          const mappedUser = await mapSupabaseUser(supabase, data.user);
           setUser(mappedUser);
           setLocalAuthCookie(mappedUser);
-        } else {
-          setUser(newUser);
-          setLocalAuthCookie(newUser);
+
+          return {
+            success: true,
+            message: "Account created successfully!",
+          };
         }
 
-        return {
-          success: true,
-          message: "Account created successfully!",
-        };
-      } catch (err: any) {
         const newUser: AuthUser = {
           id: `usr-${Date.now()}`,
           name: name || email.split("@")[0],
@@ -249,6 +261,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {
           success: true,
           message: "Account created successfully!",
+        };
+      } catch (err: any) {
+        return {
+          success: false,
+          error: formatAuthError(err),
         };
       }
     },

@@ -91,9 +91,19 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Error / Success Messages */}
         {error && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 animate-fade-in-down">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {error}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-700 animate-fade-in-down">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+              <span>{error}</span>
+            </div>
+            {error.includes("already exists") && (
+              <Link
+                href="/login"
+                className="inline-flex items-center text-xs font-bold text-[#113680] hover:underline shrink-0"
+              >
+                Log in now &rarr;
+              </Link>
+            )}
           </div>
         )}
         {success && (
