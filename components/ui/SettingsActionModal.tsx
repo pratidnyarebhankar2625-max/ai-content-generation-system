@@ -254,7 +254,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
           
           {action === "Email Address" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600 dark:text-muted-foreground">Enter your new email address below. We'll send a verification link to confirm the change.</p>
+              <p className="text-sm text-slate-600 dark:text-muted-foreground">Enter your new email address below to update your account email.</p>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#113680] dark:text-[#F8FAFC]">New Email Address</label>
                 <input 

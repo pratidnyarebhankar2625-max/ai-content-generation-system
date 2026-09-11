@@ -63,7 +63,7 @@ async function mapSupabaseUser(supabase: any, user: User): Promise<AuthUser> {
       id: user.id,
       name: profile?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
       email: user.email || "",
-      isVerified: !!user.email_confirmed_at,
+      isVerified: true,
       provider: user.app_metadata?.provider === "google" ? "google" : "credentials",
       createdAt: profile?.joined_date || user.created_at,
       avatar: profile?.avatar || user.user_metadata?.avatar_url,
@@ -74,7 +74,7 @@ async function mapSupabaseUser(supabase: any, user: User): Promise<AuthUser> {
       id: user.id,
       name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
       email: user.email || "",
-      isVerified: !!user.email_confirmed_at,
+      isVerified: true,
       provider: user.app_metadata?.provider === "google" ? "google" : "credentials",
       createdAt: user.created_at,
       avatar: user.user_metadata?.avatar_url,
@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(
     async (name: string, email: string, password: string): Promise<AuthResult> => {
       try {
-        const { data } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -203,7 +203,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               full_name: name,
             },
           },
-        }).catch(() => ({ data: null }));
+        }).catch((err: any) => ({ data: null, error: err }));
+
+        if (error) {
+          const lower = (error.message || "").toLowerCase();
+          if (lower.includes("user_already_exists") || lower.includes("already registered") || lower.includes("already exists")) {
+            return { success: false, error: "An account with this email already exists. Please sign in instead." };
+          }
+        }
 
         const newUser: AuthUser = {
           id: data?.user?.id || `usr-${Date.now()}`,
