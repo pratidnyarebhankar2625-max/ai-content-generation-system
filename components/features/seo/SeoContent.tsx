@@ -173,29 +173,29 @@ export default function SeoContent() {
     <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div>
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground">
           SEO Assistant
         </h1>
-        <p className="mt-2 text-lg text-muted-foreground max-w-2xl">
+        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-lg text-muted-foreground max-w-2xl">
           Optimize your content for search engines. Analyze keywords, meta tags, and readability scores to rank higher.
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-12">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-12">
         
         {/* Left Column: Inputs */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-6">
-              <Search className="h-5 w-5 text-primary" />
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-sm">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2 mb-4 sm:mb-6">
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
               Content Optimization
             </h2>
             
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               {/* Focus Keyword */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">Focus Keyword</label>
-                <div className="flex gap-3">
+                <label className="text-xs sm:text-sm font-semibold text-foreground">Focus Keyword</label>
+                <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                   <input
                     type="text"
                     value={focusKeyword}
@@ -206,7 +206,7 @@ export default function SeoContent() {
                   <button 
                     onClick={handleAnalyze}
                     disabled={isAnalyzing || !focusKeyword.trim()}
-                    className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                   >
                     {isAnalyzing ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />

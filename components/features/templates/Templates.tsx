@@ -267,18 +267,18 @@ export default function Templates() {
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between animate-fade-in-up">
-        <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
+        <div className="space-y-1.5 sm:space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
-              <Sparkles className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20 shrink-0">
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
-            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
+            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">
               Content Templates
             </h1>
           </div>
 
-          <p className="text-muted-foreground text-base leading-relaxed">
+          <p className="text-muted-foreground text-xs sm:text-sm md:text-base leading-relaxed">
             Choose a template and generate content faster.
           </p>
         </div>
@@ -288,7 +288,7 @@ export default function Templates() {
             setEditingTemplate(null);
             setShowCreateForm(true);
           }}
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-transparent hover:scale-[1.02]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-xs sm:text-sm font-semibold text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-transparent hover:scale-[1.02]"
         >
           <Plus className="h-4 w-4" />
           Create Template
@@ -345,7 +345,7 @@ export default function Templates() {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`group flex flex-shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-300 ${
+              className={`group flex flex-shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all duration-300 ${
                 selectedCategory === category
                   ? "bg-[#113680] text-white border-[#113680] shadow-md hover:bg-[#113680]/90 hover:-translate-y-0.5"
                   : "border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground hover:-translate-y-0.5"
@@ -368,7 +368,7 @@ export default function Templates() {
 
       {/* Templates Grid */}
       {filteredTemplates.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredTemplates.map((template, index) => (
             <TemplateCard
               key={template.id}

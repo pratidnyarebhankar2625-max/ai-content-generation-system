@@ -564,17 +564,17 @@ export default function HistoryContent() {
   return (
     <div className="space-y-6 md:space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between animate-fade-in-up">
-        <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
+        <div className="space-y-1.5 sm:space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20">
-              <Clock className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary shadow-lg shadow-primary/20 shrink-0">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
-            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-foreground">
+            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight text-foreground">
               Generation History
             </h1>
           </div>
-          <p className="max-w-2xl text-muted-foreground text-base leading-relaxed">
+          <p className="max-w-2xl text-muted-foreground text-xs sm:text-sm md:text-base leading-relaxed">
             Browse and manage all your AI-generated content in one place.
           </p>
         </div>
@@ -582,7 +582,7 @@ export default function HistoryContent() {
         {/* Import Button */}
         <button
           onClick={() => setShowImport(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-transparent hover:scale-[1.02]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-xs sm:text-sm font-semibold text-primary-foreground border-transparent shadow-[var(--shadow-button)] transition-all duration-300 hover:shadow-[var(--shadow-card-hover)] hover:border-transparent hover:scale-[1.02]"
         >
           <Upload className="h-4 w-4" />
           Import Content
@@ -789,7 +789,7 @@ export default function HistoryContent() {
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex shrink-0 items-center gap-2 md:ml-6 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="flex flex-wrap shrink-0 items-center gap-1.5 sm:gap-2 md:ml-6 transition-opacity duration-300">
                     <button
                       onClick={() => setViewingGen(item)}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-[var(--shadow-button)] transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"

@@ -50,7 +50,7 @@ function Sparkline({ data }: { data: number[] }) {
   const chartData = data.map((value, i) => ({ v: value, i }));
 
   return (
-    <div className="mt-4 h-[40px] w-full">
+    <div className="mt-3 h-[32px] sm:h-[40px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
           <defs>
@@ -94,25 +94,25 @@ export default function StatCard({
       onClick={onClick}
       whileHover={{ y: -6, boxShadow: "0px 10px 30px rgba(17,54,128,0.08)" }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={`card-shimmer primary-glow rounded-[20px] border border-border bg-card p-7 ${onClick ? "cursor-pointer" : ""}`}
+      className={`card-shimmer primary-glow rounded-[20px] border border-border bg-card p-4 sm:p-6 md:p-7 ${onClick ? "cursor-pointer" : ""}`}
     >
       {/* Icon */}
-      <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-3 text-[#113680]">
+      <div className="inline-flex items-center justify-center rounded-2xl bg-[#113680]/10 p-2 sm:p-3 text-[#113680]">
         {icon}
       </div>
 
       {/* Title */}
-      <h3 className="mt-5 text-sm font-medium text-muted-foreground">
+      <h3 className="mt-3 sm:mt-5 text-xs sm:text-sm font-medium text-muted-foreground">
         {title}
       </h3>
 
       {/* Animated Value */}
-      <h2 className="mt-2 font-heading text-[40px] font-bold tracking-tight leading-none text-foreground">
+      <h2 className="mt-1 sm:mt-2 font-heading text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-none text-foreground">
         {animatedValue.toLocaleString()}
       </h2>
 
       {/* Trend */}
-      <div className="mt-3 flex items-center gap-1.5">
+      <div className="mt-2.5 sm:mt-3 flex items-center gap-1.5">
         {trend === "up" ? (
           <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
             <TrendingUp className="h-3 w-3" />

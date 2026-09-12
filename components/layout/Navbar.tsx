@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, ChevronDown, Menu, Bell, Sparkles } from "lucide-react";
+import { LogOut, ChevronDown, Menu, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
@@ -82,22 +82,10 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Side: Notifications & User */}
+        {/* Right Side: User */}
         <div className="flex items-center gap-2 sm:gap-4">
           {isAuthenticated && user ? (
             <>
-              {/* Notification Indicator */}
-              <div 
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent text-muted-foreground"
-                aria-label="Notifications"
-              >
-                <Bell className="h-[22px] w-[22px]" />
-                <span className="absolute right-2.5 top-2.5 flex h-2 w-2 rounded-full bg-[#fe4443] ring-2 ring-background"></span>
-              </div>
-
-              {/* Separator */}
-              <div className="hidden h-6 w-px bg-border sm:block"></div>
-
               {/* User Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button

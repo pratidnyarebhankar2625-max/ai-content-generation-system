@@ -40,7 +40,7 @@ export default function StatsCards() {
       value: data.totalGenerations,
       change: `${data.thisWeek} this week`,
       trend: data.thisWeek > 0 ? ("up" as const) : ("neutral" as const),
-      icon: <FolderKanban className="h-7 w-7" />,
+      icon: <FolderKanban className="h-5 w-5 sm:h-6 sm:w-6" />,
       sparklineData: data.generationsTrend,
       filterAction: () => setFilterStatus("all"),
     },
@@ -49,7 +49,7 @@ export default function StatsCards() {
       value: data.completed,
       change: `${data.drafts} drafts pending`,
       trend: data.completed > 0 ? ("up" as const) : ("neutral" as const),
-      icon: <CheckCircle2 className="h-7 w-7" />,
+      icon: <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />,
       sparklineData: data.completedTrend,
       filterAction: () => setFilterStatus("completed"),
     },
@@ -58,7 +58,7 @@ export default function StatsCards() {
       value: data.drafts,
       change: `${data.drafts} drafts pending`,
       trend: "neutral" as const,
-      icon: <FolderKanban className="h-7 w-7" />,
+      icon: <FolderKanban className="h-5 w-5 sm:h-6 sm:w-6" />,
       sparklineData: data.generationsTrend,
       filterAction: () => setFilterStatus("draft"),
     },
@@ -67,7 +67,7 @@ export default function StatsCards() {
       value: data.templatesUsed,
       change: `${data.templatesUsed} total uses`,
       trend: data.templatesUsed > 0 ? ("up" as const) : ("neutral" as const),
-      icon: <FileText className="h-7 w-7" />,
+      icon: <FileText className="h-5 w-5 sm:h-6 sm:w-6" />,
       sparklineData: data.templatesTrend,
       filterAction: () => setFilterStatus("all"),
     },
@@ -76,7 +76,7 @@ export default function StatsCards() {
       value: data.totalWords,
       change: `${data.thisWeek} generations this week`,
       trend: data.totalWords > 0 ? ("up" as const) : ("neutral" as const),
-      icon: <Zap className="h-7 w-7" />,
+      icon: <Zap className="h-5 w-5 sm:h-6 sm:w-6" />,
       sparklineData: data.wordsTrend,
       filterAction: () => setFilterStatus("all"),
     },
@@ -88,7 +88,7 @@ export default function StatsCards() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
       >
         {cards.map((stat, index) => (
           <motion.div key={stat.title} variants={itemVariants}>

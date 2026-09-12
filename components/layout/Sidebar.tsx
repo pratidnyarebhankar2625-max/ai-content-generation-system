@@ -80,7 +80,7 @@ export default function Sidebar() {
 
       <aside 
         className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-sidebar transition-all duration-300 ease-in-out h-full ${
-          isOpen ? "translate-x-0 w-[85vw] max-w-sm lg:w-72" : "-translate-x-full lg:translate-x-0 lg:w-20"
+          isOpen ? "translate-x-0 w-64 max-w-[75vw] lg:w-72" : "-translate-x-full lg:translate-x-0 lg:w-20"
         }`}
       >
         {/* Navigation */}
@@ -88,7 +88,7 @@ export default function Sidebar() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex-1 space-y-2 px-4 py-6 overflow-y-auto"
+          className="flex-1 space-y-1.5 px-3 py-4 sm:px-4 sm:py-6 overflow-y-auto"
         >
           {menuItems.map((item, index) => {
             const isActive =
@@ -113,9 +113,10 @@ export default function Sidebar() {
                       relative
                       group
                       w-full
-                      ${isOpen ? "px-4 justify-between" : "px-0 justify-center"}
-                      py-6
-                      text-base
+                      ${isOpen ? "px-3.5 justify-between" : "px-0 justify-center"}
+                      py-3 lg:py-4
+                      h-11 lg:h-12
+                      text-sm sm:text-base
                       transition-all
                       duration-300
                       ease-out
@@ -127,12 +128,12 @@ export default function Sidebar() {
                     `}
                   >
                     {isActive && (
-                      <span className="absolute left-0 top-2.5 bottom-2.5 w-1.5 rounded-r-full bg-primary" />
+                      <span className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r-full bg-primary" />
                     )}
 
-                    <div className={`flex items-center ${isOpen ? "gap-3.5" : "justify-center"}`}>
+                    <div className={`flex items-center ${isOpen ? "gap-3" : "justify-center"}`}>
                       <item.icon
-                        className={`h-[22px] w-[22px] shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 ${
+                        className={`h-5 w-5 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 ${
                           isActive ? "text-primary" : ""
                         }`}
                       />

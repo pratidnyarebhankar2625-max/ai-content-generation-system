@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Download, Trash2, Bot, MessageSquare, Sparkles } from "lucide-react";
+import { X, Shield, Mail, Key, Eye, Globe, Loader2, Check, Download, Trash2, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -12,9 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 export type SettingsActionType = 
   | "Email Address"
   | "Change Password"
-  | "Default AI Model"
   | "Writing Tone"
-  | "Output Language"
   | "Active Sessions"
   | "Data & Privacy"
   | null;
@@ -42,8 +40,6 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
   const { settings, updateSettings } = useSettings();
   const { logout, user } = useAuth();
   
-  const [language, setLanguage] = useState(settings?.language || "en-US");
-  const [aiModel, setAiModel] = useState(settings?.default_ai_model || "gemini-2.5-pro");
   const [writingTone, setWritingTone] = useState(settings?.writing_tone || "professional");
 
   const wasOpenRef = useRef(false);
@@ -58,13 +54,11 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      if (settings?.language) setLanguage(settings.language);
-      if (settings?.default_ai_model) setAiModel(settings.default_ai_model);
       if (settings?.writing_tone) setWritingTone(settings.writing_tone);
     } else if (!isOpen) {
       wasOpenRef.current = false;
     }
-  }, [isOpen, settings?.language, settings?.default_ai_model, settings?.writing_tone]);
+  }, [isOpen, settings?.writing_tone]);
 
   async function handleActionSubmit() {
     setIsSaving(true);
@@ -72,11 +66,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
     let result: { success: boolean; error?: string } = { success: true };
     const supabase = createClient();
     
-    if (action === "Output Language") {
-      result = await updateSettings({ language });
-    } else if (action === "Default AI Model") {
-      result = await updateSettings({ default_ai_model: aiModel });
-    } else if (action === "Writing Tone") {
+    if (action === "Writing Tone") {
       result = await updateSettings({ writing_tone: writingTone });
     } else if (action === "Email Address") {
       try {
@@ -196,9 +186,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
     switch (action) {
       case "Email Address": return <Mail className="h-5 w-5 text-[#113680]" />;
       case "Change Password": return <Key className="h-5 w-5 text-[#113680]" />;
-      case "Default AI Model": return <Bot className="h-5 w-5 text-[#113680]" />;
       case "Writing Tone": return <MessageSquare className="h-5 w-5 text-[#113680]" />;
-      case "Output Language": return <Globe className="h-5 w-5 text-[#113680]" />;
       case "Active Sessions": return <Eye className="h-5 w-5 text-[#113680]" />;
       case "Data & Privacy": return <Globe className="h-5 w-5 text-[#113680]" />;
       default: return <Shield className="h-5 w-5 text-[#113680]" />;
@@ -209,9 +197,7 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
     switch (action) {
       case "Email Address": return "Update Email";
       case "Change Password": return "Change Password";
-      case "Default AI Model": return "Default AI Model";
       case "Writing Tone": return "Writing Tone";
-      case "Output Language": return "Output Language";
       case "Active Sessions": return "Manage Sessions";
       case "Data & Privacy": return "Data & Privacy";
       default: return action;
@@ -316,24 +302,6 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
                 </div>
               )}
 
-              {action === "Default AI Model" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-slate-600">Select your preferred AI model for content generation.</p>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#113680]">AI Model</label>
-                    <select 
-                      value={aiModel}
-                      onChange={(e) => setAiModel(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
-                    >
-                      <option value="gemini-2.5-pro">Google Gemini 2.5 Pro (Recommended)</option>
-                      <option value="gpt-4o">OpenAI GPT-4o</option>
-                      <option value="claude-3-5-sonnet">Anthropic Claude 3.5 Sonnet</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
               {action === "Writing Tone" && (
                 <div className="space-y-4">
                   <p className="text-sm text-slate-600">Select your default writing tone for generated drafts.</p>
@@ -348,25 +316,6 @@ export function SettingsActionModal({ isOpen, onClose, action }: SettingsActionM
                       <option value="friendly">Friendly & Conversational</option>
                       <option value="persuasive">Persuasive & Engaging</option>
                       <option value="academic">Academic & Analytical</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {action === "Output Language" && (
-                <div className="space-y-4">
-                  <p className="text-sm text-slate-600">Select your default output language.</p>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#113680]">Output Language</label>
-                    <select 
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-slate-50 px-4 py-2.5 text-sm text-foreground transition-colors focus:border-[#113680]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#113680]/10"
-                    >
-                      <option value="en-US">English (US)</option>
-                      <option value="es-ES">Spanish (Español)</option>
-                      <option value="fr-FR">French (Français)</option>
-                      <option value="de-DE">German (Deutsch)</option>
                     </select>
                   </div>
                 </div>

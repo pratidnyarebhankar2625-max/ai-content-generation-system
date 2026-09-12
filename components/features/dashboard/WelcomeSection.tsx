@@ -25,26 +25,26 @@ export default function WelcomeSection() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#113680] to-[#fe4443] dark:from-[#112A46] dark:to-[#0B192C] p-10 shadow-[var(--shadow-elevated)] border border-transparent dark:border-[rgba(248,250,252,0.1)]">
+      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-r from-[#113680] to-[#fe4443] p-5 sm:p-8 md:p-10 shadow-[var(--shadow-elevated)] border border-transparent">
         {/* Decorative accent */}
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#fe4443]/20 blur-3xl" />
         <div className="absolute -left-6 -bottom-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
 
-        <div className="relative flex items-center justify-between">
-          <div className="space-y-4">
-            <h1 className="font-heading text-[40px] md:text-[56px] font-bold tracking-tight leading-[1.1] text-white dark:text-[#F8FAFC]">
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-4">
+          <div className="space-y-3 sm:space-y-4">
+            <h1 className="font-heading text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-white break-words">
               {data.greeting}, {data.userName}!
             </h1>
 
-            <div className="flex items-center gap-4">
-              <p className="max-w-2xl text-lg leading-relaxed text-white/90 dark:text-[#F8FAFC]/90">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/90">
                 Create amazing content faster with Writeora.
               </p>
 
               {/* Refresh indicator */}
               <button
                 onClick={refresh}
-                className="group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-white/70 dark:text-[#F8FAFC]/70 transition-colors duration-300 hover:bg-white/10 hover:text-white dark:hover:text-[#F8FAFC]"
+                className="group flex items-center gap-2 rounded-xl px-2.5 py-1 text-xs text-white/70 transition-colors duration-300 hover:bg-white/10 hover:text-white"
                 title="Refresh dashboard"
               >
                 <RefreshCw
@@ -73,9 +73,9 @@ export default function WelcomeSection() {
           <Button
             size="lg"
             onClick={() => router.push("/templates")}
-            className="rounded-2xl bg-white dark:bg-[#FE4443] px-8 py-3 text-[#113680] dark:text-white font-semibold shadow-lg shadow-black/5"
+            className="w-full sm:w-auto shrink-0 rounded-2xl bg-white px-6 py-3 text-sm sm:text-base font-bold text-[#113680] shadow-lg shadow-black/5 hover:bg-white/95"
           >
-            <Sparkles className="mr-2 h-5 w-5" />
+            <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
             Create Content
           </Button>
         </div>

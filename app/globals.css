@@ -149,6 +149,7 @@
     @apply bg-background text-foreground;
     background-image: radial-gradient(rgba(17, 54, 128, 0.08) 1px, transparent 1px);
     background-size: 24px 24px;
+    overflow-x: hidden;
   }
 
   html {
